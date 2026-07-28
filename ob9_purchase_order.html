@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — รายการสั่งซื้อ</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1150px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; line-height:1.6; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 4px; color:var(--navy-dk); }
+  .panel .phint { font-size:11.5px; color:var(--text3); margin-bottom:14px; line-height:1.6; }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:110px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--text3); font-weight:600; padding:8px 10px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  td { padding:9px 10px; border-bottom:1px solid #F0F2F6; vertical-align:middle; }
+  tr:hover td { background:#FAFBFD; }
+  .empty { text-align:center; color:var(--text3); padding:20px; font-size:12.5px; }
+
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; margin-right:4px; cursor:pointer; border:1px solid transparent; }
+  .badge.off { background:#F0F2F6; color:var(--text3); }
+  .badge.on { background:#DCFCE7; color:var(--green); }
+  .badge.status-pending { background:#FEF3C7; color:var(--amber); }
+  .badge.status-ordered { background:#EEF4FF; color:var(--navy); }
+  .badge.status-received { background:#DCFCE7; color:var(--green); }
+
+  .form-row { display:grid; grid-template-columns: 1.6fr 1fr .8fr 1fr 1fr 1fr auto; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .form-row input[type=text], .form-row input[type=number], .form-row select { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.danger { background:#fff; color:var(--red); border:1.5px solid var(--red); padding:5px 10px; font-size:11.5px; }
+  select.status-select { padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; }
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>รายการสั่งซื้อ</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>รายการสั่งซื้อ (Admin เท่านั้น)</h1>
+  <div class="sub">รวมสถานะการสั่งซื้ออะไหล่ (MEMO → RO → RFS) จากหน้า Dashboard → Spare Parts มาไว้ที่เดียว พร้อมรายการสั่งซื้ออื่นๆ ที่ไม่ใช่อะไหล่ในแคตตาล็อก (เช่น เครื่องมือ, บริการภายนอก)</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <!-- SECTION A: Spare parts procurement (จากข้อมูลเดิมในหน้า Dashboard) -->
+  <div class="panel">
+    <h2>📦 สถานะสั่งซื้ออะไหล่ (จากระบบ Spare Parts เดิม)</h2>
+    <div class="phint">
+      แสดงเฉพาะอะไหล่ที่มีการเริ่มขั้นตอนสั่งซื้อแล้ว (ติ๊ก MEMO/RO/RFS ไว้ในหน้า Dashboard → Spare Parts)
+      กดที่ป้าย MEMO/RO/RFS เพื่อเปลี่ยนสถานะได้จากหน้านี้เลย ข้อมูลจะซิงก์กับหน้า Dashboard อัตโนมัติ
+      (ถ้าต้องการเริ่มสั่งซื้ออะไหล่ตัวใหม่ที่ยังไม่มีในลิสต์นี้ ให้ไปเริ่มที่หน้า Dashboard → Spare Parts ก่อน)
+    </div>
+    <table>
+      <thead><tr>
+        <th>เครื่องจักร</th><th>ระบบ / Position</th><th>ชิ้นส่วน</th><th>Stock คงเหลือ</th>
+        <th>MEMO</th><th>RO</th><th>RFS</th>
+      </tr></thead>
+      <tbody id="procureTbody"></tbody>
+    </table>
+  </div>
+
+  <!-- SECTION B: Custom purchase orders -->
+  <div class="panel">
+    <h2>➕ รายการสั่งซื้ออื่นๆ</h2>
+    <div class="phint">สำหรับของที่ไม่ใช่อะไหล่ในแคตตาล็อกเดิม เช่น เครื่องมือช่าง, อุปกรณ์เซฟตี้, บริการซ่อมจากผู้รับเหมาภายนอก</div>
+    <div class="form-row">
+      <div>
+        <label>ชื่อรายการ</label>
+        <input type="text" id="fItem" placeholder="เช่น ประแจทอร์ค 1/2 นิ้ว">
+      </div>
+      <div>
+        <label>จำนวน</label>
+        <input type="number" id="fQty" placeholder="1" min="1">
+      </div>
+      <div>
+        <label>หน่วย</label>
+        <input type="text" id="fUnit" placeholder="ชิ้น">
+      </div>
+      <div>
+        <label>ราคา/หน่วย (บาท)</label>
+        <input type="number" id="fCost" placeholder="0">
+      </div>
+      <div>
+        <label>ผู้จำหน่าย</label>
+        <input type="text" id="fSupplier" placeholder="ชื่อร้าน/บริษัท">
+      </div>
+      <div>
+        <label>สถานะ</label>
+        <select id="fStatus">
+          <option value="pending">รออนุมัติ</option>
+          <option value="ordered">สั่งซื้อแล้ว</option>
+          <option value="received">ได้รับของแล้ว</option>
+        </select>
+      </div>
+      <button class="btn" onclick="addCustomPO()">เพิ่ม</button>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr">
+      <div>
+        <label>หมายเหตุ (ไม่บังคับ)</label>
+        <input type="text" id="fNotes" placeholder="เช่น เลขที่ใบสั่งซื้อ, เหตุผลที่ต้องซื้อ">
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <thead><tr>
+        <th>รายการ</th><th>จำนวน</th><th>ราคารวม</th><th>ผู้จำหน่าย</th><th>สถานะ</th><th>หมายเหตุ</th><th></th>
+      </tr></thead>
+      <tbody id="customTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const PROCURE_KEY = 'ob9_spare_procure';
+  const STOCK_KEY = 'ob9_spare_stock';
+  const CUSTOM_PO_KEY = 'ob9_custom_purchase_orders';
+  const PROCURE_STAGES = ['memo','ro','rfs'];
+  const PROCURE_STAGE_LABEL = { memo:'MEMO', ro:'RO', rfs:'RFS' };
+  const STATUS_LABEL = { pending:'รออนุมัติ', ordered:'สั่งซื้อแล้ว', received:'ได้รับของแล้ว' };
+
+  function loadProcureMap() {
+    try { return JSON.parse(localStorage.getItem(PROCURE_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function saveProcureMap(m) { localStorage.setItem(PROCURE_KEY, JSON.stringify(m)); }
+  function loadStockMap() {
+    try { return JSON.parse(localStorage.getItem(STOCK_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function loadCustomPOs() {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_PO_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function saveCustomPOs(arr) { localStorage.setItem(CUSTOM_PO_KEY, JSON.stringify(arr)); }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmt(n) { return Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 }); }
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  // ── SECTION A: อะไหล่ที่มีการเริ่มขั้นตอนสั่งซื้อแล้ว (ดึงจากคีย์เดิมของ Dashboard) ──
+  function toggleProcureStage(key, stage) {
+    const map = loadProcureMap();
+    const cur = map[key] || {};
+    const st = cur[stage] || {};
+    st.done = !st.done;
+    st.updatedAt = new Date().toISOString();
+    cur[stage] = st;
+    map[key] = cur;
+    saveProcureMap(map);
+    renderProcureTable();
+  }
+
+  function renderProcureTable() {
+    const procureMap = loadProcureMap();
+    const stockMap = loadStockMap();
+    const keys = Object.keys(procureMap).filter(k => {
+      const st = procureMap[k];
+      return PROCURE_STAGES.some(s => st[s] && st[s].done);
+    });
+
+    let memoCount = 0, roCount = 0, rfsCount = 0;
+    keys.forEach(k => {
+      const st = procureMap[k];
+      if (st.memo && st.memo.done) memoCount++;
+      if (st.ro && st.ro.done) roCount++;
+      if (st.rfs && st.rfs.done) rfsCount++;
+    });
+
+    document.getElementById('summaryBox').innerHTML = `
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${keys.length}</div><div class="sl">อะไหล่ที่กำลังติดตามสั่งซื้อ</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--amber)">${memoCount}</div><div class="sl">ทำ MEMO แล้ว</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${roCount}</div><div class="sl">ออก RO แล้ว</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--green)">${rfsCount}</div><div class="sl">พร้อมใช้งาน (RFS)</div></div>
+    `;
+
+    if (keys.length === 0) {
+      document.getElementById('procureTbody').innerHTML = `<tr><td colspan="7" class="empty">ยังไม่มีอะไหล่ที่เริ่มขั้นตอนสั่งซื้อ — ไปเริ่มที่หน้า Dashboard → Spare Parts ก่อน</td></tr>`;
+      return;
+    }
+
+    let rows = '';
+    keys.forEach(key => {
+      const parts = key.split('|'); // m|sys|pos|part
+      const m = parts[0] || '—', sys = parts[1] || '', pos = parts[2] || '', part = parts[3] || '';
+      const stock = stockMap[key];
+      const stockVal = stock && stock.stock != null ? stock.stock : '—';
+      const st = procureMap[key];
+      rows += `<tr>
+        <td>${escHtml(m)}</td>
+        <td>${escHtml(sys)}${pos && pos !== '—' ? ' · ' + escHtml(pos) : ''}</td>
+        <td>${escHtml(part)}</td>
+        <td>${stockVal}</td>
+        ${PROCURE_STAGES.map(stage => {
+          const done = st[stage] && st[stage].done;
+          return `<td><span class="badge ${done ? 'on' : 'off'}" onclick="toggleProcureStage('${key.replace(/'/g,"\\'")}','${stage}')" title="กดเพื่อ${done?'ยกเลิก':'ทำเครื่องหมาย'}">${PROCURE_STAGE_LABEL[stage]}</span></td>`;
+        }).join('')}
+      </tr>`;
+    });
+    document.getElementById('procureTbody').innerHTML = rows;
+  }
+
+  // ── SECTION B: รายการสั่งซื้ออื่นๆ ──
+  function addCustomPO() {
+    const item = document.getElementById('fItem').value.trim();
+    if (!item) { showMsg('กรุณากรอกชื่อรายการ', false); return; }
+    const qty = parseFloat(document.getElementById('fQty').value) || 1;
+    const cost = parseFloat(document.getElementById('fCost').value) || 0;
+    const list = loadCustomPOs();
+    list.unshift({
+      id: 'PO-' + Date.now(),
+      item: item,
+      qty: qty,
+      unit: document.getElementById('fUnit').value.trim() || 'ชิ้น',
+      unitCost: cost,
+      totalCost: qty * cost,
+      supplier: document.getElementById('fSupplier').value.trim(),
+      status: document.getElementById('fStatus').value,
+      notes: document.getElementById('fNotes').value.trim(),
+      createdAt: new Date().toISOString()
+    });
+    saveCustomPOs(list);
+    ['fItem','fQty','fUnit','fCost','fSupplier','fNotes'].forEach(id => document.getElementById(id).value = '');
+    showMsg('เพิ่มรายการสั่งซื้อเรียบร้อยแล้ว ✅', true);
+    renderCustomTable();
+  }
+
+  function updateCustomStatus(id, newStatus) {
+    const list = loadCustomPOs();
+    const po = list.find(p => p.id === id);
+    if (!po) return;
+    po.status = newStatus;
+    saveCustomPOs(list);
+    renderCustomTable();
+  }
+
+  function deleteCustomPO(id) {
+    if (!confirm('ลบรายการสั่งซื้อนี้ใช่ไหม?')) return;
+    saveCustomPOs(loadCustomPOs().filter(p => p.id !== id));
+    renderCustomTable();
+  }
+
+  function renderCustomTable() {
+    const list = loadCustomPOs();
+    if (list.length === 0) {
+      document.getElementById('customTbody').innerHTML = `<tr><td colspan="7" class="empty">ยังไม่มีรายการสั่งซื้ออื่นๆ</td></tr>`;
+      return;
+    }
+    let rows = '';
+    list.forEach(po => {
+      rows += `<tr>
+        <td>${escHtml(po.item)}</td>
+        <td>${po.qty} ${escHtml(po.unit)}</td>
+        <td>฿${fmt(po.totalCost)}</td>
+        <td>${escHtml(po.supplier || '—')}</td>
+        <td>
+          <select class="status-select" onchange="updateCustomStatus('${po.id}', this.value)">
+            <option value="pending" ${po.status==='pending'?'selected':''}>รออนุมัติ</option>
+            <option value="ordered" ${po.status==='ordered'?'selected':''}>สั่งซื้อแล้ว</option>
+            <option value="received" ${po.status==='received'?'selected':''}>ได้รับของแล้ว</option>
+          </select>
+        </td>
+        <td style="color:var(--text3)">${escHtml(po.notes || '—')}</td>
+        <td><button class="btn danger" onclick="deleteCustomPO('${po.id}')">ลบ</button></td>
+      </tr>`;
+    });
+    document.getElementById('customTbody').innerHTML = rows;
+  }
+
+  renderProcureTable();
+  renderCustomTable();
+</script>
+</body>
+</html>

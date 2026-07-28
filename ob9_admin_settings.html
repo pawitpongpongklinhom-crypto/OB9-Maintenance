@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — ตั้งค่าสิทธิ์การเข้าใช้งาน</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:900px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  /* manual add form */
+  .form-row { display:grid; grid-template-columns: 1.2fr 1fr auto auto auto auto; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .form-row input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+  .chk-col { text-align:center; }
+  .chk-col input { width:18px; height:18px; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.secondary { background:#fff; color:var(--navy); border:1.5px solid var(--navy); }
+  .btn.danger { background:#fff; color:var(--red); border:1.5px solid var(--red); padding:5px 10px; font-size:11.5px; }
+
+  /* excel upload */
+  .upload-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .upload-row input[type=file] { font-size:12.5px; }
+  .hint { font-size:11px; color:var(--text3); margin-top:8px; line-height:1.5; }
+  .hint code { background:#F0F2F6; padding:1px 5px; border-radius:3px; }
+
+  /* table */
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--text3); font-weight:600; padding:8px 10px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  td { padding:9px 10px; border-bottom:1px solid #F0F2F6; }
+  td.chk { text-align:center; }
+  tr:hover td { background:#FAFBFD; }
+  .empty { text-align:center; color:var(--text3); padding:24px; font-size:13px; }
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+  .msg.err { background:#FEE2E2; color:var(--red); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>ตั้งค่าสิทธิ์การเข้าใช้งาน</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>ตั้งค่าสิทธิ์การเข้าใช้งาน (Admin เท่านั้น)</h1>
+  <div class="sub">กำหนดว่าพนักงานคนไหนเข้าใช้โมดูลไหนได้บ้าง — Executive Summary / Work Order / Daily Inspection</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <!-- MANUAL ADD -->
+  <div class="panel">
+    <h2>➕ เพิ่มพนักงานทีละคน</h2>
+    <div class="form-row">
+      <div>
+        <label>ชื่อพนักงาน</label>
+        <input type="text" id="fName" placeholder="ชื่อ-นามสกุล">
+      </div>
+      <div>
+        <label>รหัสพนักงาน</label>
+        <input type="text" id="fId" placeholder="รหัสพนักงาน">
+      </div>
+      <div class="chk-col"><label>Executive</label><input type="checkbox" id="fExec"></div>
+      <div class="chk-col"><label>Work Order</label><input type="checkbox" id="fWo"></div>
+      <div class="chk-col"><label>Inspection</label><input type="checkbox" id="fInsp"></div>
+      <button class="btn" onclick="addEmployee()">เพิ่ม</button>
+    </div>
+  </div>
+
+  <!-- EXCEL UPLOAD -->
+  <div class="panel">
+    <h2>📁 อัปโหลดรายชื่อด้วยไฟล์ Excel</h2>
+    <div class="upload-row">
+      <input type="file" id="excelFile" accept=".xlsx,.xls">
+      <button class="btn secondary" onclick="uploadExcel()">นำเข้ารายชื่อ</button>
+      <button class="btn secondary" onclick="downloadTemplate()">⬇ ดาวน์โหลด Template</button>
+    </div>
+    <div class="hint">
+      คอลัมน์ในไฟล์ (แถวแรกเป็นหัวตาราง): <code>ชื่อพนักงาน</code>, <code>รหัสพนักงาน</code>,
+      <code>Executive</code>, <code>WorkOrder</code>, <code>Inspection</code> — ใส่ <code>Y</code> หรือ <code>1</code>
+      ในคอลัมน์สิทธิ์ที่ต้องการอนุญาต (เว้นว่างหรือ N = ไม่อนุญาต) รายชื่อที่อัปโหลดจะเพิ่มเข้าไปในตารางด้านล่าง
+      (ถ้ารหัสพนักงานซ้ำของเดิมจะอัปเดตสิทธิ์แทน)
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="panel">
+    <h2>📋 รายชื่อพนักงานที่มีสิทธิ์เข้าระบบ (<span id="empCount">0</span> คน)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ชื่อพนักงาน</th>
+          <th>รหัสพนักงาน</th>
+          <th style="text-align:center">Executive</th>
+          <th style="text-align:center">Work Order</th>
+          <th style="text-align:center">Inspection</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="empTableBody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none">ยังไม่มีรายชื่อพนักงาน — เพิ่มด้วยฟอร์มด้านบน หรืออัปโหลด Excel</div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'ob9_employee_permissions';
+
+  function loadEmployees() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function saveEmployees(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+  function showMsg(text, ok) {
+    const box = document.getElementById('msgBox');
+    box.textContent = text;
+    box.className = 'msg ' + (ok ? 'ok' : 'err');
+    box.style.display = 'block';
+    setTimeout(() => { box.style.display = 'none'; }, 4000);
+  }
+
+  function renderTable() {
+    const list = loadEmployees();
+    const tbody = document.getElementById('empTableBody');
+    document.getElementById('empCount').textContent = list.length;
+    document.getElementById('emptyState').style.display = list.length ? 'none' : 'block';
+    tbody.innerHTML = list.map((e, i) => `
+      <tr>
+        <td>${escapeHtml(e.name)}</td>
+        <td>${escapeHtml(e.id)}</td>
+        <td class="chk"><input type="checkbox" ${e.executive ? 'checked' : ''} onchange="togglePerm(${i},'executive',this.checked)"></td>
+        <td class="chk"><input type="checkbox" ${e.workorder ? 'checked' : ''} onchange="togglePerm(${i},'workorder',this.checked)"></td>
+        <td class="chk"><input type="checkbox" ${e.inspection ? 'checked' : ''} onchange="togglePerm(${i},'inspection',this.checked)"></td>
+        <td><button class="btn danger" onclick="removeEmployee(${i})">ลบ</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function togglePerm(idx, key, val) {
+    const list = loadEmployees();
+    if (list[idx]) { list[idx][key] = val; saveEmployees(list); }
+  }
+
+  // (26 ก.ค. 69) เทียบรหัสพนักงานแบบไม่สนใจขีด "-" ให้ตรงกับ ob9_portal_new.html — กันไม่ให้เพิ่ม/นำเข้า
+  // คนเดิมซ้ำเป็น 2 รายการ เพียงเพราะพิมพ์รหัสมีขีด/ไม่มีขีดต่างกันคนละครั้ง
+  function normId(s) { return (s || '').replace(/-/g, ''); }
+
+  function removeEmployee(idx) {
+    const list = loadEmployees();
+    if (!confirm('ลบ "' + list[idx].name + '" ออกจากรายชื่อที่มีสิทธิ์ใช่ไหม?')) return;
+    list.splice(idx, 1);
+    saveEmployees(list);
+    renderTable();
+  }
+
+  function addEmployee() {
+    const name = document.getElementById('fName').value.trim();
+    const id = document.getElementById('fId').value.trim();
+    if (!name || !id) { showMsg('กรุณากรอกชื่อและรหัสพนักงานให้ครบ', false); return; }
+
+    const list = loadEmployees();
+    const exec = document.getElementById('fExec').checked;
+    const wo = document.getElementById('fWo').checked;
+    const insp = document.getElementById('fInsp').checked;
+
+    const existingIdx = list.findIndex(e => normId(e.id) === normId(id));
+    if (existingIdx >= 0) {
+      list[existingIdx] = { name, id, executive: exec, workorder: wo, inspection: insp };
+      showMsg('อัปเดตสิทธิ์ของ "' + name + '" แล้ว', true);
+    } else {
+      list.push({ name, id, executive: exec, workorder: wo, inspection: insp });
+      showMsg('เพิ่ม "' + name + '" แล้ว', true);
+    }
+    saveEmployees(list);
+    renderTable();
+
+    document.getElementById('fName').value = '';
+    document.getElementById('fId').value = '';
+    document.getElementById('fExec').checked = false;
+    document.getElementById('fWo').checked = false;
+    document.getElementById('fInsp').checked = false;
+  }
+
+  function truthy(v) {
+    if (v === undefined || v === null) return false;
+    const s = String(v).trim().toLowerCase();
+    return s === 'y' || s === 'yes' || s === '1' || s === 'true' || s === 'ใช่';
+  }
+
+  function uploadExcel() {
+    const fileInput = document.getElementById('excelFile');
+    const file = fileInput.files[0];
+    if (!file) { showMsg('กรุณาเลือกไฟล์ Excel ก่อน', false); return; }
+    if (typeof XLSX === 'undefined') { showMsg('โหลดไลบรารีอ่าน Excel ไม่สำเร็จ (ต้องมีอินเทอร์เน็ต) ลองใหม่อีกครั้ง', false); return; }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+        if (!rows.length) { showMsg('ไม่พบข้อมูลในไฟล์', false); return; }
+
+        const list = loadEmployees();
+        let added = 0, updated = 0, skipped = 0;
+
+        rows.forEach(row => {
+          // รองรับชื่อคอลัมน์ได้หลายแบบ
+          const name = String(row['ชื่อพนักงาน'] ?? row['Name'] ?? row['name'] ?? '').trim();
+          const id = String(row['รหัสพนักงาน'] ?? row['ID'] ?? row['id'] ?? row['EmployeeID'] ?? '').trim();
+          if (!name || !id) { skipped++; return; }
+
+          const exec = truthy(row['Executive'] ?? row['executive']);
+          const wo = truthy(row['WorkOrder'] ?? row['Work Order'] ?? row['workorder']);
+          const insp = truthy(row['Inspection'] ?? row['inspection']);
+
+          const idx = list.findIndex(e => normId(e.id) === normId(id));
+          if (idx >= 0) {
+            list[idx] = { name, id, executive: exec, workorder: wo, inspection: insp };
+            updated++;
+          } else {
+            list.push({ name, id, executive: exec, workorder: wo, inspection: insp });
+            added++;
+          }
+        });
+
+        saveEmployees(list);
+        renderTable();
+        showMsg(`นำเข้าสำเร็จ — เพิ่มใหม่ ${added} คน, อัปเดต ${updated} คน${skipped ? `, ข้าม ${skipped} แถว (ข้อมูลไม่ครบ)` : ''}`, true);
+        fileInput.value = '';
+      } catch (err) {
+        showMsg('อ่านไฟล์ไม่สำเร็จ: ' + err.message, false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function downloadTemplate() {
+    if (typeof XLSX === 'undefined') { showMsg('โหลดไลบรารี Excel ไม่สำเร็จ', false); return; }
+    const wsData = [
+      ['ชื่อพนักงาน', 'รหัสพนักงาน', 'Executive', 'WorkOrder', 'Inspection'],
+      ['ตัวอย่าง สมชาย ใจดี', '10234', 'Y', 'Y', 'N'],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Employees');
+    XLSX.writeFile(wb, 'OB9_Employee_Permission_Template.xlsx');
+  }
+
+  renderTable();
+</script>
+</body>
+</html>

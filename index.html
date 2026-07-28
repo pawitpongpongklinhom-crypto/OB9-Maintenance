@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — เข้าสู่ระบบ</title>
+<style>
+  :root {
+    --accent: #F4A200;
+    --navy:   #1A5FA8;
+    --bg:     #F0F4FA;
+    --text1:  #14213D;
+    --text3:  #9AA5B4;
+    --red:    #DC2626;
+    --green:  #16A34A;
+    --border: #E4E7EF;
+    --radius: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Noto Sans Thai', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .login-wrap {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* ── card ── */
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 32px 32px 26px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07), 0 8px 32px rgba(0,0,0,.06);
+  }
+
+  /* ── brand ── */
+  .brand {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    flex-shrink: 0;
+  }
+  .logo-box span {
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .3px;
+  }
+  .brand-text {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--text1);
+    font-weight: 600;
+    padding-top: 4px;
+  }
+
+  .logo-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text1);
+    margin-bottom: 4px;
+  }
+  .logo-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 24px;
+  }
+
+  /* ── form ── */
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text1);
+    margin: 16px 0 6px;
+  }
+  input[type=text], input[type=password] {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    background: #F8FAFC;
+    transition: border-color .15s, background .15s;
+  }
+  input:focus { border-color: var(--navy); background: #fff; }
+
+  .btn {
+    width: 100%;
+    margin-top: 24px;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: #14488a; }
+  .btn:active { transform: scale(.99); }
+
+  /* ── error ── */
+  .error-msg {
+    display: none;
+    text-align: center;
+    font-size: 12px;
+    color: var(--red);
+    font-weight: 600;
+    margin-top: 12px;
+    animation: shake .3s ease;
+  }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  /* ── success flash ── */
+  .success-flash {
+    display: none;
+    text-align: center;
+    padding: 14px;
+    background: #DCFCE7;
+    border-radius: 10px;
+    color: var(--green);
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 14px;
+  }
+
+  /* ── footer ── */
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+
+  /* ── remember-name checkbox ── */
+  .remember-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .remember-row input[type=checkbox] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--navy);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .remember-row label {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text1);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <div class="card">
+    <div class="brand">
+      <div class="logo-box"><span>OB9</span></div>
+      <div class="brand-text">
+        ITD Italian-Thai Development Public Company<br>
+        Limited Mae Moh Mine Phase 9
+      </div>
+    </div>
+
+    <div class="logo-title">Predictive Maintenance System</div>
+    <div class="logo-sub" id="logoSub">Mae Moh Mine · Overburden iX · thyssenkrupp</div>
+    <div class="target-note" id="targetNote" style="display:none;font-size:12px;font-weight:700;color:var(--navy);background:#EEF4FF;border-radius:8px;padding:8px 12px;margin-bottom:6px"></div>
+
+    <label for="empName">ชื่อพนักงาน</label>
+    <input type="text" id="empName" placeholder="กรอกชื่อ-นามสกุล" autocomplete="off" list="empNameHistory">
+    <datalist id="empNameHistory"><!-- เติมด้วย JS จากรายชื่อที่เคย login สำเร็จในเครื่องนี้ --></datalist>
+
+    <label for="empId">รหัสพนักงาน</label>
+    <input type="password" id="empId" placeholder="กรอกรหัสพนักงาน" autocomplete="off">
+
+    <div class="remember-row" onclick="document.getElementById('rememberId').click()">
+      <input type="checkbox" id="rememberId" onclick="event.stopPropagation()">
+      <label for="rememberId" onclick="event.stopPropagation()">จดจำรหัสพนักงานในเครื่องนี้ไว้ด้วย (เข้าระบบครั้งถัดไปไม่ต้องพิมพ์รหัสซ้ำ)</label>
+    </div>
+
+    <button class="btn" onclick="checkLogin()">เข้าสู่ระบบ</button>
+
+    <div class="error-msg" id="errorMsg">❌ ชื่อหรือรหัสพนักงานไม่ถูกต้อง — ลองอีกครั้ง</div>
+    <div class="success-flash" id="successFlash">✅ เข้าสู่ระบบสำเร็จ กำลังโหลด...</div>
+  </div>
+
+  <div class="footer-note">
+    🔒 ระบบนี้ใช้งานได้เฉพาะผู้ได้รับอนุญาตเท่านั้น<br>
+    ข้อมูลทั้งหมดเก็บในเครื่องของคุณ (localStorage)
+  </div>
+
+</div>
+
+<script>
+  /* ══════════════════════════════════════════════
+     ⚙️  ตั้งค่าชื่อ + รหัสพนักงาน
+     แก้ค่าด้านล่างนี้เพื่อเปลี่ยนชื่อ/รหัส/สิทธิ์ผู้ใช้
+  ══════════════════════════════════════════════ */
+  // ── Admin (สิทธิ์เต็ม + ตั้งค่าสิทธิ์ผู้อื่นได้) — รหัสเป็นตัวเลข+ตัวอักษรผสมกัน ──
+  // ✅ รหัสจริงที่ผู้ใช้ตั้งเอง (16/07/2569) — เก็บรักษาให้ปลอดภัย เปลี่ยนได้เองโดยแก้ค่า id ด้านล่าง
+  const ADMIN_USERS = [
+    { name: 'Pawitpong', role: 'วิศวกรซ่อมบำรุง (Admin)', id: 'Pgp07694' }, // ← แก้รหัส Admin ตรงนี้
+    { name: 'Claude',    role: 'ผู้ดูแลระบบ (Admin)',     id: '6WXUCDSQV1' }, // ← แก้รหัส Admin ตรงนี้
+  ];
+  const REDIRECT_AFTER_LOGIN = 'ob9_home.html'; // ← หน้าที่จะไปหลัง Login (กรณีไม่มี target ระบุมา)
+  const EMP_PERMISSION_KEY = 'ob9_employee_permissions'; // ← รายชื่อพนักงานทั่วไป ตั้งค่าได้ที่หน้า ob9_admin_settings.html
+
+  /* ── จดจำชื่อ + รหัสพนักงาน ไว้ในเครื่องนี้ (localStorage — อยู่ถาวรข้ามการปิดเบราว์เซอร์) ──
+     • "ชื่อพนักงาน" จดจำไว้ให้เองทุกครั้งที่ login สำเร็จ ไม่ต้องเลือก (กรอกให้อัตโนมัติครั้งถัดไปเสมอ)
+     • "รหัสพนักงาน" จดจำเฉพาะตอนติ๊ก checkbox "จดจำรหัสพนักงาน...ด้วย" เท่านั้น (ผู้ใช้เลือกเองว่าจะให้จำ
+       รหัสไว้ในเครื่องนี้ไหม — ถ้าไม่ติ๊กหรือเอาติ๊กออกทีหลัง รหัสที่เคยจำไว้จะถูกลบทันที) */
+  const REMEMBER_NAME_KEY = 'ob9_remembered_name';
+  const REMEMBER_ID_KEY = 'ob9_remembered_id';
+  function saveRememberedCreds(name, id) {
+    try {
+      localStorage.setItem(REMEMBER_NAME_KEY, name); // จำชื่อเสมอ ไม่ต้องเลือก
+      if (document.getElementById('rememberId').checked) {
+        localStorage.setItem(REMEMBER_ID_KEY, id);
+      } else {
+        localStorage.removeItem(REMEMBER_ID_KEY);
+      }
+    } catch(e) {}
+  }
+
+  /* ── ประวัติชื่อพนักงานทุกคนที่เคย login สำเร็จในเครื่องนี้ (สำหรับกดในช่อง "ชื่อพนักงาน" แล้วเลือกจาก
+     รายชื่อเดิมได้เลย — ใช้ <datalist> ของ HTML เอง เลยไม่ต้องเขียน dropdown เอง กดเมาส์ (คอมพิวเตอร์)
+     หรือแตะ (มือถือ/แท็บเล็ต) ที่ช่องก็ขึ้นให้เลือกเหมือนกัน เก็บ "ทุกชื่อ" ที่เคยบันทึกไว้ในเครื่องนี้ ไม่จำกัด
+     จำนวน ไม่ลบทิ้งเอง — แค่ไม่ซ้ำกัน (ชื่อที่ใช้ล่าสุดจะถูกเลื่อนขึ้นบนสุดของลิสต์) ── */
+  const NAME_HISTORY_KEY = 'ob9_name_history';
+  function addToNameHistory(name) {
+    try {
+      let list = JSON.parse(localStorage.getItem(NAME_HISTORY_KEY) || '[]');
+      list = list.filter(n => n !== name); // เอาชื่อเดิมออกก่อน (กันซ้ำ) แล้วค่อยใส่ไว้บนสุด
+      list.unshift(name);
+      // ไม่ตัดจำนวน — เก็บทุกชื่อที่เคยบันทึกไว้ในเครื่องนี้ทั้งหมด
+      localStorage.setItem(NAME_HISTORY_KEY, JSON.stringify(list));
+      populateNameDatalist(list);
+    } catch(e) {}
+  }
+  function populateNameDatalist(list) {
+    try {
+      const dl = document.getElementById('empNameHistory');
+      if (!list) list = JSON.parse(localStorage.getItem(NAME_HISTORY_KEY) || '[]');
+      dl.innerHTML = list.map(n => `<option value="${n.replace(/"/g,'&quot;')}"></option>`).join('');
+    } catch(e) {}
+  }
+  populateNameDatalist(); // เติมรายชื่อไว้ตั้งแต่โหลดหน้า จะได้กดเห็นได้ทันที
+  (function restoreRememberedCreds() {
+    try {
+      const savedName = localStorage.getItem(REMEMBER_NAME_KEY);
+      const savedId = localStorage.getItem(REMEMBER_ID_KEY);
+      if (savedName) document.getElementById('empName').value = savedName;
+      if (savedId) {
+        document.getElementById('empId').value = savedId;
+        document.getElementById('rememberId').checked = true;
+      }
+      // โฟกัสช่องที่ยังต้องกรอก — ถ้าจำรหัสไว้แล้วด้วย ก็โฟกัสปุ่ม login ให้กดยืนยันได้เลย
+      if (savedName && savedId) { document.querySelector('.btn').focus(); }
+      else if (savedName) { document.getElementById('empId').focus(); }
+      else { document.getElementById('empName').focus(); }
+    } catch(e) {}
+  })();
+
+  /* ── target: มาจากหน้า ob9_home.html เมื่อกด "Admin" หรือการ์ดใดการ์ดหนึ่ง ──
+     admin → กลับ ob9_home.html แต่คราวนี้ล็อกอินแล้ว จะเห็นทุกฟีเจอร์ + ลิงก์ "⚙️ ตั้งค่าสิทธิ์"
+     executive|workorder|inspection → เข้าโมดูลนั้นตรงๆ */
+  const TARGET = new URLSearchParams(location.search).get('target') || '';
+  const TARGET_URL = {
+    admin: 'ob9_home.html',
+    executive: 'ob9_executive.html',
+    workorder: 'ob9_wo_form.html',
+    inspection: 'ob9_inspect.html',
+  };
+  const TARGET_LABEL = {
+    admin: '🔐 เข้าสู่ระบบด้วยรหัส Admin (เข้าได้ทุกส่วน)',
+    executive: '📊 เข้าสู่ระบบเพื่อใช้งาน OB9 Executive Summary',
+    workorder: '🔧 เข้าสู่ระบบเพื่อแจ้งซ่อม / Work Order',
+    inspection: '✅ เข้าสู่ระบบเพื่อตรวจเช็คประจำวัน / Daily Inspection',
+  };
+  if (TARGET && TARGET_LABEL[TARGET]) {
+    const note = document.getElementById('targetNote');
+    note.textContent = TARGET_LABEL[TARGET];
+    note.style.display = 'block';
+  }
+
+  function loadEmployeePermissions() {
+    try { return JSON.parse(localStorage.getItem(EMP_PERMISSION_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function permKeyFor(target) {
+    // แปลง target เป็นคีย์ที่ใช้ใน permissions object ของพนักงาน
+    return target === 'workorder' ? 'workorder' : target; // executive / workorder / inspection ตรงกันอยู่แล้ว
+  }
+
+  function destinationAfterLogin() {
+    if (TARGET && TARGET_URL[TARGET]) return TARGET_URL[TARGET];
+    return REDIRECT_AFTER_LOGIN;
+  }
+
+  // (26 ก.ค. 69) เทียบรหัสพนักงานแบบไม่สนใจขีด "-" ตามที่ผู้ใช้ขอ — พิมพ์ "4WO21427" หรือ "4WO-21427"
+  // ก็ถือว่าตรงกัน แค่ตัวเลข/ตัวอักษรต้องถูก ไม่ต้องกังวลเรื่องใส่ขีดหรือไม่ใส่
+  function normId(s) { return (s || '').replace(/-/g, ''); }
+
+  function checkLogin() {
+    const name = document.getElementById('empName').value.trim();
+    const id = document.getElementById('empId').value.trim();
+    const errEl = document.getElementById('errorMsg');
+
+    // 1) เช็คก่อนว่าเป็น Admin (รหัสตัวเลข+ตัวอักษรผสม) หรือไม่ — Admin เข้าได้ทุก target เสมอ
+    const adminUser = ADMIN_USERS.find(u => u.name === name && normId(u.id) === normId(id));
+    if (adminUser) {
+      sessionStorage.setItem('ob9_session', JSON.stringify({
+        type: 'admin',
+        isSuperAdmin: true,
+        name: adminUser.name,
+        role: adminUser.role,
+        loginTime: Date.now()
+      }));
+      saveRememberedCreds(adminUser.name, adminUser.id);
+      addToNameHistory(adminUser.name);
+      errEl.style.display = 'none';
+      document.getElementById('successFlash').style.display = 'block';
+      setTimeout(() => { window.location.href = destinationAfterLogin(); }, 700);
+      return;
+    }
+
+    // 2) ถ้ากำลังจะเข้าโดยใช้ target = admin แต่รหัสไม่ตรงกับ ADMIN_USERS เลย → ไม่ต้องเช็คพนักงานทั่วไป (รหัส Admin ผิด)
+    if (TARGET === 'admin') {
+      errEl.textContent = '❌ รหัส Admin ไม่ถูกต้อง';
+      errEl.style.display = 'block';
+      errEl.style.animation = 'none';
+      setTimeout(() => { errEl.style.animation = 'shake .3s ease'; }, 10);
+      return;
+    }
+
+    // 3) ไม่ใช่ Admin — เช็คกับรายชื่อพนักงานทั่วไปที่ Admin อนุญาตไว้
+    const employees = loadEmployeePermissions();
+    const emp = employees.find(e => e.name === name && normId(e.id) === normId(id));
+    if (emp) {
+      const perms = { executive: !!emp.executive, workorder: !!emp.workorder, inspection: !!emp.inspection };
+
+      // ถ้ามาจากการ์ดเฉพาะทาง (target) แต่พนักงานคนนี้ยังไม่ได้รับสิทธิ์โมดูลนั้น → แจ้งเตือนแยก ไม่ใช่แค่ error ทั่วไป
+      if (TARGET && TARGET_URL[TARGET] && !perms[permKeyFor(TARGET)]) {
+        errEl.textContent = '🔒 ชื่อ/รหัสถูกต้อง แต่ยังไม่ได้รับสิทธิ์เข้าโมดูลนี้ — ติดต่อ Admin เพื่อขอสิทธิ์';
+        errEl.style.display = 'block';
+        errEl.style.animation = 'none';
+        setTimeout(() => { errEl.style.animation = 'shake .3s ease'; }, 10);
+        return;
+      }
+
+      sessionStorage.setItem('ob9_session', JSON.stringify({
+        type: 'field',
+        isSuperAdmin: false,
+        name: emp.name,
+        role: 'พนักงาน',
+        permissions: perms,
+        loginTime: Date.now()
+      }));
+      saveRememberedCreds(emp.name, emp.id);
+      addToNameHistory(emp.name);
+      errEl.style.display = 'none';
+      document.getElementById('successFlash').style.display = 'block';
+      setTimeout(() => { window.location.href = destinationAfterLogin(); }, 700);
+      return;
+    }
+
+    // ❌ ไม่พบชื่อ/รหัสนี้ในระบบ
+    errEl.textContent = '❌ ชื่อหรือรหัสพนักงานไม่ถูกต้อง — ลองอีกครั้ง';
+    errEl.style.display = 'block';
+    errEl.style.animation = 'none';
+    setTimeout(() => { errEl.style.animation = 'shake .3s ease'; }, 10);
+  }
+
+  /* กด Enter เพื่อ login ได้จากช่องรหัสพนักงาน */
+  document.getElementById('empId').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') checkLogin();
+  });
+  document.getElementById('empName').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('empId').focus();
+  });
+
+  /* ── check if already logged in — ถ้ามีสิทธิ์เข้า target นี้อยู่แล้ว ข้าม Login ไปเลย ── */
+  (function() {
+    const s = sessionStorage.getItem('ob9_session');
+    if (s) {
+      try {
+        const d = JSON.parse(s);
+        if (d && (Date.now() - d.loginTime) < 8 * 3600 * 1000) {
+          if (!TARGET) { window.location.href = REDIRECT_AFTER_LOGIN; return; }
+          if (d.isSuperAdmin) { window.location.href = destinationAfterLogin(); return; }
+          if (d.type === 'field' && d.permissions && d.permissions[permKeyFor(TARGET)]) {
+            window.location.href = destinationAfterLogin(); return;
+          }
+          // login ค้างอยู่แต่ไม่มีสิทธิ์เข้า target นี้ — ให้ล็อกอินใหม่ด้วยบัญชีอื่นได้ที่หน้านี้
+        }
+      } catch(e) {}
+    }
+  })();
+</script>
+</body>
+</html>

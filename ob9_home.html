@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — หน้าหลัก</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --bg:#F0F4FA; --surface:#fff;
+    --border:#E4E7EF; --text1:#14213D; --text2:#4A5568; --text3:#9AA5B4;
+    --green:#16A34A; --red:#DC2626; --amber:#D97706; --blue:#2563EB;
+    --purple:#7C3AED; --teal:#0D9488;
+    --shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+    --radius:12px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI','Noto Sans Thai',sans-serif;background:var(--bg);color:var(--text1);font-size:14px;min-height:100vh}
+
+  /* TOPNAV */
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:100}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-right{display:flex;align-items:center;gap:10px;font-size:12.5px}
+  .tn-user{display:flex;align-items:center;gap:7px}
+  .tn-avatar{background:var(--accent);color:#14213D;font-weight:800;font-size:11px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .tn-btn{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+  .tn-btn:hover{background:rgba(255,255,255,.1)}
+
+  /* PAGE */
+  .page{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+
+  /* WELCOME BAND */
+  .welcome{background:linear-gradient(135deg,var(--navy) 0%,#0F4C8A 100%);border-radius:var(--radius);padding:22px 24px;color:#fff;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .wt{font-size:11px;opacity:.65;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+  .wh{font-size:18px;font-weight:800;margin-bottom:3px}
+  .ws{font-size:12px;opacity:.72}
+  .w-kpis{display:flex;gap:16px;flex-shrink:0}
+  .wkpi{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:9px;padding:10px 16px;text-align:center;min-width:80px}
+  .wkn{font-size:20px;font-weight:900;line-height:1}
+  .wkl{font-size:10px;opacity:.65;margin-top:3px}
+
+  /* STATUS STRIP */
+  .strip{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:24px;overflow:hidden}
+  .sc{padding:14px 16px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center}
+  .sc:nth-child(4n){border-right:none}
+  .sc:nth-last-child(-n+4){border-bottom:none}
+  .sl{font-size:11px;color:var(--text3);margin-bottom:5px;display:flex;align-items:center;justify-content:center;gap:5px}
+  .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .sv{font-size:18px;font-weight:800}
+  .su{font-size:10px;color:var(--text3);margin-top:2px}
+  .cg{color:var(--green)} .cr{color:var(--red)} .ca{color:var(--amber)} .cb{color:var(--blue)}
+
+  /* SECTION LABEL */
+  .sec{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;margin-top:24px}
+  .sec:first-of-type{margin-top:0}
+
+  /* NAV CARDS */
+  .grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:4px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:4px}
+  .nc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:box-shadow .15s,border-color .15s,transform .1s;text-decoration:none;color:var(--text1)}
+  .nc:hover{box-shadow:var(--shadow);border-color:var(--navy);transform:translateY(-1px)}
+  .ni{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .nb{flex:1;min-width:0}
+  .nt{font-size:13px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ns{font-size:11px;color:var(--text3);line-height:1.35}
+  .na{color:var(--text3);font-size:12px;flex-shrink:0}
+
+  /* icon bg */
+  .io{background:#FFF3DC;color:var(--accent)}
+  .ib{background:#DBEAFE;color:var(--blue)}
+  .ig{background:#DCFCE7;color:var(--green)}
+  .ir{background:#FEE2E2;color:var(--red)}
+  .ip{background:#EDE9FE;color:var(--purple)}
+  .it{background:#CCFBF1;color:var(--teal)}
+  .ia{background:#FEF3C7;color:var(--amber)}
+  .in{background:#DBEAFE;color:var(--navy)}
+
+  /* MACHINE CARDS */
+  .mrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:9px;margin-bottom:8px}
+  .mc{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .15s;text-decoration:none;color:var(--text1)}
+  .mc:hover{box-shadow:var(--shadow)}
+  .mc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .mcr::before{background:var(--green)} .mcw::before{background:var(--amber)} .mcc::before{background:var(--red)} .mcm::before{background:var(--text3)}
+  .mbadge{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;margin-bottom:7px}
+  .brun{background:#DCFCE7;color:var(--green)} .bwrn{background:#FEF3C7;color:var(--amber)} .bcrt{background:#FEE2E2;color:var(--red)} .bmnt{background:#F3F4F6;color:var(--text3)}
+  .mn{font-size:14px;font-weight:800;margin-bottom:2px}
+  .ms{font-size:10.5px;color:var(--text3);margin-bottom:8px}
+  .mst{display:flex;gap:14px}
+  .mst3{gap:8px}
+  .mst3 .msv{font-size:15px}
+  .msv{font-size:17px;font-weight:800}
+  .msv.dueOn{color:var(--red)}
+  .msl{font-size:10px;color:var(--text3)}
+
+  /* LIVE */
+  .live{display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;color:var(--green);font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px}
+  .ldot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* RESPONSIVE */
+  @media(max-width:600px){
+    .w-kpis{display:none}
+    .wh{font-size:15px}
+    .strip{grid-template-columns:repeat(2,1fr)}
+    .sc:nth-child(4n){border-right:1px solid var(--border)}
+    .sc:nth-child(2n){border-right:none}
+    .sc:nth-last-child(-n+4){border-bottom:1px solid var(--border)}
+    .sc:nth-last-child(-n+2){border-bottom:none}
+    .tn-brand > span{display:none}
+    .maincards{grid-template-columns:1fr}
+  }
+
+  /* ITD BRAND HEADER + ROLE BADGE + MAIN 3 CARDS (เลือกระบบที่ต้องการเข้าใช้งาน) */
+  .itd-brand{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+  .itd-logo{width:38px;height:38px;border-radius:50%;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:11px;flex-shrink:0;background:#fff}
+  .itd-text{font-size:11.5px;line-height:1.35;font-weight:600;color:var(--text1)}
+  .role-badge{display:inline-block;background:var(--navy);color:#fff;font-weight:700;border-radius:8px;padding:12px 22px;font-size:15px;margin-bottom:16px}
+  .maincards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:8px}
+  .mcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 14px;text-align:center;cursor:pointer;text-decoration:none;color:var(--text1);box-shadow:var(--shadow);transition:.15s}
+  .mcard:hover{border-color:var(--navy);transform:translateY(-2px)}
+  .mcard .icon{font-size:26px;margin-bottom:8px}
+  .mcard .t{font-weight:700;font-size:13.5px}
+
+  /* ── INFO TOOLTIP — คำอธิบายภาษาไทยของตัวย่อ (SMU/WO/DUE/OEE ฯลฯ) ──
+     พอร์ตมาจาก ob9_executive.html (24 ก.ค. 69) ใช้ CSS var ของหน้านี้เอง (ธีมสว่าง)
+     ใช้ "แตะ/คลิก" แทน hover เพราะจอสัมผัส (มือถือ/แท็บเล็ต) ไม่มี mouse hover ให้ใช้งานได้ */
+  .info-btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;border-radius:50%;flex-shrink:0;vertical-align:middle;margin-left:2px;
+    background:rgba(37,99,235,.12);color:var(--blue);border:none;
+    font-size:10px;font-weight:700;font-style:normal;line-height:1;text-transform:none;letter-spacing:normal;
+    cursor:pointer;padding:0;font-family:inherit;
+  }
+  .info-btn:active{opacity:.7}
+  .info-tip-bubble{
+    position:fixed;z-index:99999;max-width:min(280px,86vw);
+    background:var(--text1);color:#fff;
+    font-size:12px;line-height:1.55;font-weight:400;text-transform:none;letter-spacing:normal;
+    padding:10px 12px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);
+    display:none;
+  }
+  .info-tip-bubble.show{display:block}
+  .info-tip-bubble .tip-close{
+    float:right;margin:-2px -2px 0 8px;background:rgba(255,255,255,.15);border:none;color:#fff;
+    width:18px;height:18px;border-radius:50%;font-size:12px;cursor:pointer;line-height:1;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>Predictive Maintenance · Mae Moh</span>
+  </div>
+  <div class="tn-right" id="tnRight" style="display:none">
+    <div class="live"><div class="ldot"></div> LIVE</div>
+    <div class="tn-user">
+      <div class="tn-avatar" id="userAvatar">วก</div>
+      <span id="userName" style="font-size:12px;opacity:.85">วิศวกรพงศ์</span>
+    </div>
+    <button class="tn-btn" onclick="logout()">🚪 ออกจากระบบ</button>
+  </div>
+</nav>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- ITD BRAND + ROLE + เลือกระบบที่ต้องการเข้าใช้งาน -->
+  <div class="itd-brand" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div class="itd-logo">ITD</div>
+      <div class="itd-text">ITD Italian-Thai Development Public Company<br>Limited Mae Moh Mine Phase 9</div>
+    </div>
+    <a id="adminSettingsLink" href="ob9_admin_settings.html" style="display:none;font-size:11.5px;color:var(--navy);font-weight:700;text-decoration:none;white-space:nowrap">⚙️ ตั้งค่าสิทธิ์การเข้าใช้งาน</a>
+  </div>
+  <div class="role-badge" id="roleBadge" onclick="goAdmin()" style="cursor:pointer" title="เข้าสู่ระบบด้วยรหัส Admin">Admin</div>
+
+  <div class="sec" style="margin-top:0">เลือกระบบที่ต้องการเข้าใช้งาน</div>
+  <div class="maincards">
+    <a class="mcard" id="cardExecutive" onclick="goModule('executive','ob9_executive.html')">
+      <div class="icon">📊</div>
+      <div class="t">OB9 Executive<br>Summary</div>
+    </a>
+    <a class="mcard" id="cardWo" onclick="goModule('workorder','ob9_wo_form.html')">
+      <div class="icon">🔧</div>
+      <div class="t">แจ้งซ่อม /<br>Work Order</div>
+    </a>
+    <a class="mcard" id="cardInspect" onclick="goModule('inspection','ob9_inspect.html')">
+      <div class="icon">✅</div>
+      <div class="t">ตรวจเช็คประจำวัน/<br>Daily Inspection</div>
+    </a>
+  </div>
+  <div id="loggedInNote" style="display:none;font-size:11.5px;color:var(--text3);margin-top:10px">
+    เข้าสู่ระบบแล้วในชื่อ <b id="loggedInName">—</b> — กดการ์ดด้านบนเพื่อเข้าใช้งานได้ทันที (ไม่ต้อง login ซ้ำ)
+    <a href="#" onclick="logout();return false" style="color:var(--navy);font-weight:700">ออกจากระบบ</a>
+  </div>
+
+  <!-- STATUS SUMMARY — (26 ก.ค. 69) ตามที่ผู้ใช้ขอ: โชว์ตัวเลขงานค้างทันทีที่หน้าแรก ไม่ต้องกดเข้าการ์ด
+       ก่อนถึงจะรู้ว่ามีงานค้างเท่าไหร่ — โชว์ให้ทั้ง Admin และพนักงานทั่วไป (กรองตามสิทธิ์ที่มี: เห็นตัวเลข
+       งานซ่อมค้างถ้ามีสิทธิ์ Work Order, เห็นตัวเลขเครื่องยังไม่ตรวจถ้ามีสิทธิ์ Inspection) -->
+  <div id="statusSummary" style="display:none;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px"></div>
+
+  <!-- LOGGED-IN HUB (แสดงเฉพาะตอน login แล้วเท่านั้น — ฟีเจอร์เดิมทั้งหมดยังอยู่ครบ) -->
+  <div id="loggedInHub" style="display:none">
+
+  <!-- WELCOME -->
+  <div class="welcome">
+    <div>
+      <div class="wt">ศูนย์บริหารงานซ่อมบำรุง OB9</div>
+      <div class="wh">สวัสดี, <span id="wName">วิศวกรพงศ์</span> 👋</div>
+      <div class="ws" id="wSub">อัปเดต: กำลังโหลด... &nbsp;·&nbsp; Spreader ARs + Tripper Car Ü2200</div>
+    </div>
+    <div class="w-kpis">
+      <div class="wkpi">
+        <div class="wkn" style="color:#FDE68A" id="wSMU">—</div>
+        <!-- (27 ก.ค. 69) เพิ่ม dropdown เลือกดู SMU แยกรายเครื่องได้ ตามที่ผู้ใช้ขอ (เดิมโชว์แค่ผลรวม
+             กดเลือกเครื่องจากตรงนี้แล้วตัวเลขด้านบนจะเปลี่ยนเป็นของเครื่องนั้นแทน) — รอบแรกที่ทำ (26 ก.ค.)
+             ผู้ใช้หา dropdown ไม่เจอเพราะ transparent select บนพื้นน้ำเงินเข้มดูเหมือน label ธรรมดา ไม่มี
+             อะไรบอกว่ากดได้ รอบนี้เลยเติมกรอบ+พื้นหลังจางๆ+ลูกศร ▾ ให้เห็นชัดว่าเป็นปุ่มกดเลือกได้ -->
+        <div style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 6px;position:relative">
+          <select id="wSmuSel" onchange="onSmuSelChange()" style="appearance:none;-webkit-appearance:none;background:transparent;color:#FDE68A;border:none;font-size:10.5px;font-weight:700;padding:0;margin:0;cursor:pointer;max-width:110px;outline:none">
+            <option value="" style="color:#14213D">SMU (hrs) — ทั้งหมด</option>
+          </select>
+          <span style="color:#FDE68A;font-size:9px;pointer-events:none">▾</span>
+        </div>
+        <button class="info-btn" type="button" onclick="showTip(this,'SMU (Service Meter Unit) แปลว่า มิเตอร์วัดชั่วโมงทำงานสะสมของเครื่องจักร (คล้ายเลขไมล์รถยนต์) ใช้กำหนดรอบซ่อมบำรุงตามชั่วโมงใช้งานจริง — กดที่กล่องมีลูกศร ▾ ด้านบนเพื่อเลือกดูทีละเครื่องได้')">ⓘ</button>
+      </div>
+      <!-- (26 ก.ค. 69) เปลี่ยนจาก "Availability" (ที่ไม่เคยมีข้อมูลจริง โชว์ "—" ตลอด) เป็นเวลาดึง SMU
+           จาก Production ITD ครั้งล่าสุด ตามที่ผู้ใช้ขอ -->
+      <div class="wkpi">
+        <div class="wkn" id="wSmuSync" style="color:#86EFAC;font-size:14px">—</div>
+        <div class="wkl">ดึง SMU จาก Production ITD ล่าสุด
+          <!-- (27 ก.ค. 69) เพิ่มปุ่มกดอัปเดตเองได้ นอกเหนือจาก auto-refresh ทุก 30 วิ ตามที่ผู้ใช้ขอ —
+               ดึงข้อมูลจาก Google Sheet มาใหม่ (ไม่ได้ไปดึงจากเว็บ production-itd.ith.co.th ตรงๆ เพราะติด
+               CORS/session cookie ต้องให้ Claude/Scheduled Task ทำให้เท่านั้น) ถ้า Sheet มีข้อมูลใหม่กว่าที่
+               มีในเครื่องอยู่แล้ว (เช่น Scheduled Task เพิ่งรันไป) จะได้ค่าล่าสุดทันทีโดยไม่ต้องรอรอบถัดไป -->
+          <button id="wSmuRefreshBtn" type="button" onclick="pullSmuFromSheetNow()" title="ดึงข้อมูล SMU ล่าสุดจาก Google Sheet มาแสดงทันที" style="background:rgba(255,255,255,.15);border:none;color:#86EFAC;border-radius:4px;width:15px;height:15px;font-size:9px;cursor:pointer;line-height:1;vertical-align:middle;margin-left:2px">🔄</button>
+          <button class="info-btn" type="button" onclick="showTip(this,'เวลาที่ระบบดึงค่า SMU มาจากเว็บ production-itd.ith.co.th ครั้งล่าสุด — กดปุ่ม 🔄 เพื่อดึงข้อมูลล่าสุดจาก Google Sheet มาแสดงทันที (ตัวข้อมูลจริงบนเว็บ production-itd ต้อง Claude หรือ Scheduled Task เป็นคนดึงขึ้น Sheet ก่อน ปุ่มนี้แค่ดึงจาก Sheet ลงมาให้เร็วขึ้น)')">ⓘ</button>
+        </div>
+      </div>
+      <!-- (26 ก.ค. 69) เปลี่ยนจาก "DUE Items" (มีโชว์ซ้ำอยู่แล้วในการ์ด "งานซ่อมค้าง" ด้านล่าง) เป็นเวลา
+           สำรองข้อมูลลง Downloads ครั้งล่าสุด ตามที่ผู้ใช้ขอ -->
+      <div class="wkpi">
+        <div class="wkn" id="wBackup" style="color:#FCA5A5;font-size:14px">—</div>
+        <div class="wkl">สำรองข้อมูลล่าสุด
+          <!-- (27 ก.ค. 69) เพิ่มปุ่มกดสำรองข้อมูลเองได้ทันทีจากหน้านี้เลย ตามที่ผู้ใช้ขอ ไม่ต้องเปิด
+               Dashboard ก่อน -->
+          <button id="wBackupBtn" type="button" onclick="backupNow()" title="สำรองข้อมูลทั้งหมดลง Downloads ทันที" style="background:rgba(255,255,255,.15);border:none;color:#FCA5A5;border-radius:4px;width:15px;height:15px;font-size:9px;cursor:pointer;line-height:1;vertical-align:middle;margin-left:2px">🔄</button>
+          <button class="info-btn" type="button" onclick="showTip(this,'เวลาที่ระบบสำรองข้อมูลทั้งหมดลงไฟล์ .json ในโฟลเดอร์ Downloads ครั้งล่าสุด (สำรองอัตโนมัติทุก 24 ชม. หรือกดปุ่ม 🔄 เพื่อสำรองทันทีจากตรงนี้เลยก็ได้)')">ⓘ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS STRIP -->
+  <div class="strip">
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=spreader-a')">
+      <div class="sl"><span class="sdot" id="sdot_spreader-a" style="background:var(--green)"></span>Spreader A</div>
+      <div class="sv cg" id="sv_spreader-a">RUNNING</div>
+      <div class="su" id="sSpA">—</div>
+    </div>
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=spreader-b')">
+      <div class="sl"><span class="sdot" id="sdot_spreader-b" style="background:var(--amber)"></span>Spreader B</div>
+      <div class="sv ca" id="sSpBStatus">RUNNING</div>
+      <div class="su" id="sSpB">—</div>
+    </div>
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=tripper-a')">
+      <div class="sl"><span class="sdot" id="sdot_tripper-a" style="background:var(--green)"></span>Tripper Car A</div>
+      <div class="sv cg" id="sv_tripper-a">RUNNING</div>
+      <div class="su" id="sTC">—</div>
+    </div>
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=tripper-b')">
+      <div class="sl"><span class="sdot" id="sdot_tripper-b" style="background:var(--green)"></span>Tripper Car B</div>
+      <div class="sv cg" id="sv_tripper-b">RUNNING</div>
+      <div class="su" id="sTCB">—</div>
+    </div>
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=a11')">
+      <div class="sl"><span class="sdot" id="sdot_a11" style="background:var(--green)"></span>Line Shift A1.1</div>
+      <div class="sv cg" id="sv_a11">RUNNING</div>
+      <div class="su" id="sLSA11">—</div>
+    </div>
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=a9')">
+      <div class="sl"><span class="sdot" id="sdot_a9" style="background:var(--green)"></span>Line Shift A9 (BWE)</div>
+      <div class="sv cg" id="sv_a9">RUNNING</div>
+      <div class="su" id="sLSA9">—</div>
+    </div>
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=b11')">
+      <div class="sl"><span class="sdot" id="sdot_b11" style="background:var(--green)"></span>Line Shift B1.1</div>
+      <div class="sv cg" id="sv_b11">RUNNING</div>
+      <div class="su" id="sLSB11">—</div>
+    </div>
+    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html')">
+      <div class="sl"><span class="sdot" style="background:var(--red)"></span>Work Orders</div>
+      <div class="sv cr" id="sWO">— Open</div>
+      <div class="su" id="sWOSub">—</div>
+    </div>
+  </div>
+
+  <!-- MACHINE CARDS -->
+  <div class="sec">สถานะเครื่องจักร</div>
+  <div class="mrow">
+    <a class="mc mcr" id="mc_spreader-a" onclick="goTo('ob9_dashboard.html?machine=spreader-a')">
+      <div class="mbadge brun" id="mbadge_spreader-a">● RUNNING</div>
+      <div class="mn">Spreader A</div>
+      <div class="ms">08-SP0002 · Line Shift A</div>
+      <div class="mst mst3">
+        <div><div class="msv cg" id="mc_smu_spreader-a">—</div><div class="msl">SMU (hrs)</div></div>
+        <div><div class="msv" id="mc_dt_spreader-a">—</div><div class="msl">DT วันนี้</div></div>
+        <div><div class="msv" id="mc_due_spreader-a">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+    <a class="mc mcw" id="mc_spreader-b" onclick="goTo('ob9_dashboard.html?machine=spreader-b')">
+      <div class="mbadge bwrn" id="mbadge_spreader-b">⚠ WARN</div>
+      <div class="mn">Spreader B</div>
+      <div class="ms">08-SP0003 · Line Shift A</div>
+      <div class="mst mst3">
+        <div><div class="msv cg" id="mc_smu_spreader-b">—</div><div class="msl">SMU (hrs)</div></div>
+        <div><div class="msv" id="mc_dt_spreader-b">—</div><div class="msl">DT วันนี้</div></div>
+        <div><div class="msv" id="mc_due_spreader-b">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+    <a class="mc mcr" id="mc_tripper-a" onclick="goTo('ob9_dashboard.html?machine=tripper-a')">
+      <div class="mbadge brun" id="mbadge_tripper-a">● RUNNING</div>
+      <div class="mn">Tripper Car A</div>
+      <div class="ms">08-TP00001 · Line Shift B</div>
+      <div class="mst mst3">
+        <div><div class="msv cg" id="mc_smu_tripper-a">—</div><div class="msl">SMU (hrs)</div></div>
+        <div><div class="msv" id="mc_dt_tripper-a">—</div><div class="msl">DT วันนี้</div></div>
+        <div><div class="msv" id="mc_due_tripper-a">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+    <a class="mc mcr" id="mc_tripper-b" onclick="goTo('ob9_dashboard.html?machine=tripper-b')">
+      <div class="mbadge brun" id="mbadge_tripper-b">● RUNNING</div>
+      <div class="mn">Tripper Car B</div>
+      <div class="ms">08-TP00002 · Line Shift B</div>
+      <div class="mst mst3">
+        <div><div class="msv cg" id="mc_smu_tripper-b">—</div><div class="msl">SMU (hrs)</div></div>
+        <div><div class="msv" id="mc_dt_tripper-b">—</div><div class="msl">DT วันนี้</div></div>
+        <div><div class="msv" id="mc_due_tripper-b">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+    <a class="mc mcr" id="mc_a11" onclick="goTo('ob9_dashboard.html?machine=a11')">
+      <div class="mbadge brun" id="mbadge_a11">● RUNNING</div>
+      <div class="mn">Line Shift A1.1</div>
+      <div class="ms">08-SF00001 · Line Shift A</div>
+      <div class="mst mst3">
+        <div><div class="msv cg" id="mc_smu_a11">—</div><div class="msl">SMU (hrs)</div></div>
+        <div><div class="msv" id="mc_dt_a11">—</div><div class="msl">DT วันนี้</div></div>
+        <div><div class="msv" id="mc_due_a11">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+    <a class="mc mcr" id="mc_a9" onclick="goTo('ob9_dashboard.html?machine=a9')">
+      <div class="mbadge brun" id="mbadge_a9">● RUNNING</div>
+      <div class="mn">Line Shift A9 (BWE)</div>
+      <div class="ms">08-SF00002 · Line Shift A</div>
+      <div class="mst mst3">
+        <div><div class="msv cg" id="mc_smu_a9">—</div><div class="msl">SMU (hrs)</div></div>
+        <div><div class="msv" id="mc_dt_a9">—</div><div class="msl">DT วันนี้</div></div>
+        <div><div class="msv" id="mc_due_a9">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+    <a class="mc mcr" id="mc_b11" onclick="goTo('ob9_dashboard.html?machine=b11')">
+      <div class="mbadge brun" id="mbadge_b11">● RUNNING</div>
+      <div class="mn">Line Shift B1.1</div>
+      <div class="ms">08-SF00003 · Line Shift B</div>
+      <div class="mst mst3">
+        <div><div class="msv cg" id="mc_smu_b11">—</div><div class="msl">SMU (hrs)</div></div>
+        <div><div class="msv" id="mc_dt_b11">—</div><div class="msl">DT วันนี้</div></div>
+        <div><div class="msv" id="mc_due_b11">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+  </div>
+
+  <!-- MAIN MENU -->
+  <div class="sec">ฟีเจอร์อื่นๆ</div>
+  <div class="grid3">
+    <a class="nc" onclick="goTo('ob9_dashboard.html?machine=spreader-a&panel=pm')">
+      <div class="ni io">📋</div>
+      <div class="nb">
+        <div class="nt">PM Checklist</div>
+        <div class="ns">Spreader & Tripper — ตรวจสอบ PM รายการ</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_dashboard.html?action=smu')">
+      <div class="ni ib">⏱</div>
+      <div class="nb">
+        <div class="nt">SMU / Downtime</div>
+        <div class="ns">อัปเดต Service Meter Units</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_dashboard.html?action=power')">
+      <div class="ni ia">⚡</div>
+      <div class="nb">
+        <div class="nt">บันทึกค่าไฟ</div>
+        <div class="ns">พลังงานรายวัน/เดือน/ปี</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_dashboard.html?machine=spreader-a&panel=spare')">
+      <div class="ni ip">🔩</div>
+      <div class="nb">
+        <div class="nt">Spare Parts (256 รายการ)</div>
+        <div class="ns">สต็อก — เบิก / รับ / ตรวจ</div>
+      </div><div class="na">›</div>
+    </a>
+  </div>
+
+  <div class="sec">ติดตามและรายงาน</div>
+  <div class="grid2">
+    <a class="nc" onclick="goTo('ob9_dashboard.html')">
+      <div class="ni in">🖥️</div>
+      <div class="nb">
+        <div class="nt">Dashboard หลัก (Dark Mode)</div>
+        <div class="ns">ข้อมูลครบถ้วน — WO, PM, SMU, Line Shift, Export</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_dashboard.html?action=predict')">
+      <div class="ni ib">🔮</div>
+      <div class="nb">
+        <div class="nt">คาดการณ์อะไหล่</div>
+        <div class="ns">Predictive alert จากประวัติ WO + SMU จริง</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_dashboard.html?action=export')">
+      <div class="ni it">📊</div>
+      <div class="nb">
+        <div class="nt">Export รายงาน</div>
+        <div class="ns">Monthly / Weekly / 3M · Excel, Word, PPT</div>
+      </div><div class="na">›</div>
+    </a>
+  </div>
+
+  <div class="sec">การวางแผนและงบประมาณ</div>
+  <div class="grid3">
+    <a class="nc" onclick="goTo('ob9_annual_plan.html')">
+      <div class="ni ig">📅</div>
+      <div class="nb">
+        <div class="nt">แผนงานประจำปี</div>
+        <div class="ns">วางแผน PM ใหญ่ / Overhaul ล่วงหน้าทั้งปี</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_budget.html')">
+      <div class="ni ia">💰</div>
+      <div class="nb">
+        <div class="nt">งบประมาณ</div>
+        <div class="ns">ตั้งงบรายเดือน เทียบกับค่าใช้จ่ายจริงจาก WO</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_purchase_order.html')">
+      <div class="ni ip">🛒</div>
+      <div class="nb">
+        <div class="nt">รายการสั่งซื้อ</div>
+        <div class="ns">ติดตาม MEMO/RO/RFS อะไหล่ + สั่งซื้ออื่นๆ</div>
+      </div><div class="na">›</div>
+    </a>
+  </div>
+
+  <div class="sec">ความปลอดภัยและทรัพยากร</div>
+  <div class="grid3">
+    <a class="nc" onclick="goTo('ob9_safety.html')">
+      <div class="ni ir">🦺</div>
+      <div class="nb">
+        <div class="nt">ความปลอดภัย</div>
+        <div class="ns">Near-miss/Incident, JSA, LOTO</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_shift_handover.html')">
+      <div class="ni ib">📖</div>
+      <div class="nb">
+        <div class="nt">Shift Handover</div>
+        <div class="ns">Log book ส่งต่องานระหว่างกะ</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_asset_register.html')">
+      <div class="ni in">🏷️</div>
+      <div class="nb">
+        <div class="nt">ทะเบียนทรัพย์สิน</div>
+        <div class="ns">ข้อมูลเครื่องจักรละเอียด + ประวัติ Overhaul</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_vendor.html')">
+      <div class="ni io">🤝</div>
+      <div class="nb">
+        <div class="nt">ผู้รับเหมา / Vendor</div>
+        <div class="ns">รายชื่อ ข้อมูลติดต่อ ประวัติงานที่จ้าง</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_training.html')">
+      <div class="ni ig">🎓</div>
+      <div class="nb">
+        <div class="nt">Training / ใบรับรองช่าง</div>
+        <div class="ns">ติดตามใบรับรอง แจ้งเตือนใกล้หมดอายุ</div>
+      </div><div class="na">›</div>
+    </a>
+    <a class="nc" onclick="goTo('ob9_documents.html')">
+      <div class="ni it">📁</div>
+      <div class="nb">
+        <div class="nt">Document Center</div>
+        <div class="ns">ค้นหา/เปิดเอกสารและแบบฟอร์มทั้งหมด</div>
+      </div><div class="na">›</div>
+    </a>
+  </div>
+
+  </div> <!-- /#loggedInHub -->
+
+</div>
+
+<script>
+  // ── INFO TOOLTIP (คำอธิบายตัวย่อภาษาไทย) — พอร์ตมาจาก ob9_executive.html (24 ก.ค. 69) ──────────
+  // ใช้ "แตะ" (click) แทน hover เพราะจอสัมผัส (มือถือ/แท็บเล็ต) ไม่มี mouse hover
+  // bubble ตัวเดียวใช้ซ้ำทุกจุด — ย้ายตำแหน่งไปตามปุ่มที่กดล่าสุด และคำนวณไม่ให้ล้นจอ
+  var _tipBubble = null;
+  var _tipOpenBtn = null;
+  function _ensureTipBubble(){
+    if(_tipBubble) return _tipBubble;
+    _tipBubble = document.createElement('div');
+    _tipBubble.className = 'info-tip-bubble';
+    document.body.appendChild(_tipBubble);
+    document.addEventListener('click', function(e){
+      if(_tipBubble.classList.contains('show') && !_tipBubble.contains(e.target) && e.target !== _tipOpenBtn){
+        hideTip();
+      }
+    });
+    window.addEventListener('resize', hideTip);
+    window.addEventListener('scroll', hideTip, true);
+    return _tipBubble;
+  }
+  function hideTip(){
+    if(_tipBubble) _tipBubble.classList.remove('show');
+    _tipOpenBtn = null;
+  }
+  function showTip(btn, text){
+    var bubble = _ensureTipBubble();
+    // แตะปุ่มเดิมซ้ำ → ปิด
+    if(_tipOpenBtn === btn && bubble.classList.contains('show')){ hideTip(); return; }
+    _tipOpenBtn = btn;
+    bubble.innerHTML = '<button class="tip-close" type="button" onclick="hideTip()">✕</button>' + text;
+    bubble.classList.add('show');
+    var r = btn.getBoundingClientRect();
+    var bw = Math.min(280, window.innerWidth*0.86);
+    var left = r.left + r.width/2 - bw/2;
+    left = Math.max(10, Math.min(left, window.innerWidth - bw - 10));
+    var top = r.bottom + 8;
+    bubble.style.width = bw+'px';
+    bubble.style.left = left+'px';
+    bubble.style.top = top+'px';
+    // ถ้าเกินขอบล่างจอ ให้โผล่ขึ้นด้านบนปุ่มแทน
+    requestAnimationFrame(function(){
+      var bh = bubble.offsetHeight;
+      if(top + bh > window.innerHeight - 10){
+        bubble.style.top = Math.max(10, r.top - bh - 8) + 'px';
+      }
+    });
+  }
+
+  /* ══════════════════════════════════════════════
+     ob9_home.html = หน้าแรกที่ทุกคนเจอ "ก่อน" Login
+     ไม่บังคับ login เพื่อดูหน้านี้ — กด "Admin" หรือการ์ด
+     3 อันเพื่อไปหน้า Login เฉพาะทาง ถ้า login ไว้แล้วและมี
+     สิทธิ์อยู่แล้ว จะข้าม Login แล้วเข้าโมดูลนั้นได้ทันที
+  ══════════════════════════════════════════════ */
+  function getSession() {
+    try {
+      const s = sessionStorage.getItem('ob9_session');
+      if (!s) return null;
+      const d = JSON.parse(s);
+      if (!d || (Date.now() - d.loginTime) > 8 * 3600 * 1000) {
+        sessionStorage.removeItem('ob9_session');
+        return null;
+      }
+      return d;
+    } catch(e) { return null; }
+  }
+
+  function goAdmin() {
+    const d = getSession();
+    if (d && d.isSuperAdmin) { window.location.href = 'ob9_dashboard.html'; return; }
+    window.location.href = 'ob9_portal_new.html?target=admin';
+  }
+
+  function goModule(target, url) {
+    const d = getSession();
+    if (d) {
+      const allowed = d.isSuperAdmin || (d.permissions && d.permissions[target === 'workorder' ? 'workorder' : target]);
+      if (allowed) { window.location.href = url; return; }
+    }
+    window.location.href = 'ob9_portal_new.html?target=' + target;
+  }
+
+  function logout() {
+    if (confirm('ออกจากระบบใช่ไหม?')) {
+      sessionStorage.removeItem('ob9_session');
+      window.location.reload();
+    }
+  }
+
+  function goTo(url) { window.location.href = url; }
+
+  /* ── แสดงผลตามสถานะ login (ไม่บังคับ login เพื่อดูหน้านี้) ── */
+  (function(){
+    const d = getSession();
+    if (!d) return; // ยังไม่ login — แสดงแค่หน้าเลือกระบบเฉยๆ พอ
+
+    // login แล้ว — โชว์ topnav ผู้ใช้ + note ใต้การ์ด
+    // hub เต็ม (Dashboard/PM Checklist/SMU/Spare Parts ฯลฯ) โชว์เฉพาะ Admin เท่านั้น
+    // เพราะทุกลิงก์ในนั้นพาไปที่ ob9_dashboard.html ซึ่งตอนนี้ล็อกไว้เฉพาะ Admin แล้ว
+    document.getElementById('tnRight').style.display = 'flex';
+    document.getElementById('loggedInHub').style.display = d.isSuperAdmin ? '' : 'none';
+    document.getElementById('loggedInNote').style.display = 'block';
+    document.getElementById('loggedInName').textContent = d.name;
+
+    const initials = d.name.substring(0,2);
+    document.getElementById('userAvatar').textContent = initials;
+    document.getElementById('userName').textContent = d.name;
+    document.getElementById('wName').textContent = d.name;
+    document.getElementById('roleBadge').textContent = d.role || 'Admin';
+
+    if (d.isSuperAdmin) {
+      document.getElementById('adminSettingsLink').style.display = 'inline-block';
+      renderStatusSummary({ workorder: true, inspection: true });
+    } else if (d.type === 'field') {
+      const perms = d.permissions || {};
+      applyCardPermission('cardExecutive', perms.executive);
+      applyCardPermission('cardWo', perms.workorder);
+      applyCardPermission('cardInspect', perms.inspection);
+      renderStatusSummary(perms);
+    }
+  })();
+
+  // (26 ก.ค. 69) ตัวเลขงานค้างสรุปหน้าแรก ตามที่ผู้ใช้ขอ — ให้เห็นทันทีไม่ต้องกดเข้าการ์ดก่อน
+  // โชว์เฉพาะตัวเลขที่ผู้ใช้คนนั้นมีสิทธิ์เข้าโมดูลนั้นจริงๆ (Admin เห็นครบทั้ง 2 เสมอ)
+  const INSPECT_UNITS = [
+    {machine:'Spreader', unit:'A'}, {machine:'Spreader', unit:'B'},
+    {machine:'Tripper', unit:'A'}, {machine:'Tripper', unit:'B'},
+    {machine:'Line Shift', unit:'A1.1'}, {machine:'Line Shift', unit:'A9(BWE)'}, {machine:'Line Shift', unit:'B1.1'}
+  ];
+  function renderStatusSummary(perms) {
+    const box = document.getElementById('statusSummary');
+    const cards = [];
+    if (perms && perms.workorder) {
+      try {
+        const wos = JSON.parse(localStorage.getItem('ob9_work_orders') || '[]');
+        const DONE = ['completed','done','cancelled','แล้วเสร็จ'];
+        const openCount = wos.filter(w => !DONE.includes(w.status || 'pending')).length;
+        const criticalCount = wos.filter(w => !DONE.includes(w.status || 'pending') && /critical/i.test(w.priority||'')).length;
+        cards.push(_summaryCard('🔧', openCount, 'งานซ่อมค้าง', criticalCount ? `🔴 ${criticalCount} วิกฤต` : 'ไม่มีงานวิกฤต', 'ob9_wo_form.html'));
+      } catch(e) {}
+    }
+    if (perms && perms.inspection) {
+      try {
+        const today = new Date().toISOString().slice(0,10);
+        const insp = JSON.parse(localStorage.getItem('ob9_inspections') || '[]');
+        const doneToday = new Set(insp.filter(r => r.date === today).map(r => r.machine + '|' + r.unit));
+        const remaining = INSPECT_UNITS.filter(u => !doneToday.has(u.machine + '|' + u.unit)).length;
+        cards.push(_summaryCard('✅', remaining, 'เครื่องยังไม่ตรวจวันนี้', remaining ? `จากทั้งหมด ${INSPECT_UNITS.length} เครื่อง` : 'ตรวจครบทุกเครื่องแล้ว 🎉', 'ob9_inspect.html'));
+      } catch(e) {}
+    }
+    if (!cards.length) return;
+    box.innerHTML = cards.join('');
+    box.style.display = 'grid';
+  }
+  function _summaryCard(icon, num, label, sub, url) {
+    const color = num > 0 ? 'var(--red)' : 'var(--green)';
+    return `<a href="${url}" style="display:block;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text1)">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${icon} ${label}</div>
+      <div style="font-size:22px;font-weight:800;color:${color}">${num}</div>
+      <div style="font-size:10.5px;color:var(--text3);margin-top:2px">${sub}</div>
+    </a>`;
+  }
+
+  function applyCardPermission(cardId, allowed) {
+    const el = document.getElementById(cardId);
+    if (!el || allowed) return;
+    el.style.opacity = '.45';
+    const badge = document.createElement('div');
+    badge.textContent = '🔒 ไม่มีสิทธิ์';
+    badge.style.cssText = 'font-size:10px;color:var(--text3);margin-top:4px';
+    el.appendChild(badge);
+  }
+
+  /* ── ข้อมูลจริงต่อเครื่อง สำหรับการ์ด "สถานะเครื่องจักร" ──
+     ใช้ localStorage key เดียวกับที่ ob9_dashboard.html เขียน/อ่านจริง เพื่อให้ค่าตรงกันเสมอ:
+     - SMU: ob9_smu_by_machine (เขียนจากหน้า Dashboard → 🔗 Link SMU)
+     - Downtime วันนี้: คำนวณจาก ob9_work_orders (downtimeDuration) กรองด้วย unitCode ของแต่ละเครื่อง
+       (สูตรเดียวกับ getMachineDowntimeReal() ใน ob9_dashboard.html)
+     - DUE: จำนวน WO เร่งด่วน/วิกฤตที่ยังเปิดอยู่ของเครื่องนั้น
+     ทุกการ์ดแสดงฟิลด์ชุดเดียวกัน (SMU (hrs) + DT วันนี้ + DUE) เป็นข้อมูลรายวัน — ถ้าต้องการดูรายเดือน/
+     รายปีเพิ่มเติม ให้กดเข้าไปที่การ์ดนั้น (deep-link เข้า Dashboard) */
+  const HOME_MACHINE_META = {
+    'spreader-a': { smuId: 'spreader_a', code: '08-SP0002',  name: 'Spreader A' },
+    'spreader-b': { smuId: 'spreader_b', code: '08-SP0003',  name: 'Spreader B' },
+    'tripper-a':  { smuId: 'tripper_a',  code: '08-TP00001', name: 'Tripper A' },
+    'tripper-b':  { smuId: 'tripper_b',  code: '08-TP00002', name: 'Tripper B' },
+    'a11':        { smuId: 'ls_a11',     code: '08-SF00001', name: 'Line Shift A1.1' },
+    'a9':         { smuId: 'ls_a9',      code: '08-SF00002', name: 'Line Shift A9(BWE)' },
+    'b11':        { smuId: 'ls_b11',     code: '08-SF0003',  name: 'Line Shift B1.1' }, // unitCode จริงที่ WO ใช้ (ตรงกับ UNIT_CODES ใน ob9_dashboard.html)
+  };
+
+  // (26 ก.ค. 69) เติม dropdown เลือกเครื่องให้กล่อง SMU ครั้งเดียวตอนโหลดหน้า (ไม่ทำซ้ำใน loadStats()
+  // ที่รันทุก 30 วิ เพราะจะรีเซ็ตตัวเลือกที่ผู้ใช้เพิ่งกดเลือกไว้กลับเป็นค่าว่างทุกครั้ง)
+  function populateSmuDropdown() {
+    const sel = document.getElementById('wSmuSel');
+    if (!sel) return;
+    Object.values(HOME_MACHINE_META).forEach(meta => {
+      const opt = document.createElement('option');
+      opt.value = meta.smuId;
+      opt.textContent = meta.name;
+      sel.appendChild(opt);
+    });
+  }
+  function onSmuSelChange() {
+    const sel = document.getElementById('wSmuSel');
+    const val = sel.value;
+    const num = val ? getSmuForMachine(val) : getSmuStatusFromProductionItd().total;
+    document.getElementById('wSMU').textContent = (num !== null && num) ? Number(num).toLocaleString() : '—';
+  }
+
+  /* ── สถานะ Breakdown/Relocate จริงของวันนี้ (ob9_machine_status_hours) ──
+     เดิมทุก badge บนหน้านี้ ("RUNNING"/"WARN") เป็นข้อความตายตัวใน HTML ไม่เคยเช็คข้อมูลจริงเลย
+     แม้เครื่องจะจอด Breakdown อยู่จริงก็ยังโชว์ RUNNING เหมือนเดิม ตอนนี้ใช้ localStorage key
+     เดียวกับที่ ob9_dashboard.html เขียน/อ่าน (ob9_machine_status_hours) — ถ้าวันนี้เครื่องมีชั่วโมง
+     Breakdown หรือ Relocate ≥12 ชม. (จอดเกินครึ่งวัน) จะเปลี่ยน badge เป็นสถานะนั้นแทนทันที ทั้ง
+     status strip ด้านบนและการ์ดเครื่องจักรด้านล่าง (ตรรกะเดียวกับ _opStatusOverride ใน dashboard) */
+  var STATUS_KEY_HOME = 'ob9_machine_status_hours';
+  function getStatusRecordHome(machineId, date) {
+    try {
+      var all = JSON.parse(localStorage.getItem(STATUS_KEY_HOME) || '[]');
+      var hit = all.find(function(r){ return r.machineId === machineId && r.date === date; });
+      return hit || { machineId: machineId, date: date, hours: {} };
+    } catch(e) { return { machineId: machineId, date: date, hours: {} }; }
+  }
+
+  var HOME_STATUS_IDS = {
+    'spreader-a': { sv:'sv_spreader-a', dot:'sdot_spreader-a', mc:'mc_spreader-a', mbadge:'mbadge_spreader-a' },
+    'spreader-b': { sv:'sSpBStatus',    dot:'sdot_spreader-b', mc:'mc_spreader-b', mbadge:'mbadge_spreader-b' },
+    'tripper-a':  { sv:'sv_tripper-a',  dot:'sdot_tripper-a',  mc:'mc_tripper-a',  mbadge:'mbadge_tripper-a' },
+    'tripper-b':  { sv:'sv_tripper-b',  dot:'sdot_tripper-b',  mc:'mc_tripper-b',  mbadge:'mbadge_tripper-b' },
+    'a11':        { sv:'sv_a11',        dot:'sdot_a11',        mc:'mc_a11',        mbadge:'mbadge_a11' },
+    'a9':         { sv:'sv_a9',         dot:'sdot_a9',         mc:'mc_a9',         mbadge:'mbadge_a9' },
+    'b11':        { sv:'sv_b11',        dot:'sdot_b11',        mc:'mc_b11',        mbadge:'mbadge_b11' },
+  };
+
+  function applyOpStatusOverrides() {
+    var todayStr = new Date().toISOString().slice(0,10);
+    Object.keys(HOME_MACHINE_META).forEach(function(key) {
+      var meta = HOME_MACHINE_META[key];
+      var ids = HOME_STATUS_IDS[key];
+      if (!ids) return;
+      var rec = getStatusRecordHome(meta.smuId, todayStr);
+      var h = rec.hours || {};
+      var state = null;
+      if ((h.breakdown||0) >= 12) {
+        state = { label:'🔧 หยุดทำงาน (เสีย/ซ่อม)', dotColor:'#e74c3c', svClass:'cr', mcClass:'mcc', badgeClass:'bcrt', badgeText:'🔴 BREAKDOWN' };
+      } else if ((h.relocate||0) >= 12) {
+        state = { label:'🚚 ย้ายแนวทำงาน', dotColor:'#f39c12', svClass:'ca', mcClass:'mcw', badgeClass:'bwrn', badgeText:'🚚 RELOCATE' };
+      }
+      if (!state) return; // ไม่มี Breakdown/Relocate วันนี้ ≥12 ชม. → ปล่อยค่าตั้งต้นในหน้า HTML ไว้เหมือนเดิม
+
+      var svEl = document.getElementById(ids.sv);
+      if (svEl) { svEl.textContent = state.label; svEl.className = 'sv ' + state.svClass; }
+      var dotEl = document.getElementById(ids.dot);
+      if (dotEl) dotEl.style.background = state.dotColor;
+      var mcEl = document.getElementById(ids.mc);
+      if (mcEl) mcEl.className = 'mc ' + state.mcClass;
+      var badgeEl = document.getElementById(ids.mbadge);
+      if (badgeEl) { badgeEl.textContent = state.badgeText; badgeEl.className = 'mbadge ' + state.badgeClass; }
+    });
+  }
+
+  function getSmuForMachine(smuId) {
+    try {
+      const map = JSON.parse(localStorage.getItem('ob9_smu_by_machine') || '{}');
+      const rec = map[smuId];
+      return (rec && typeof rec.value === 'number') ? rec.value : null;
+    } catch(e) { return null; }
+  }
+
+  // (26 ก.ค. 69) รวม SMU ทุกเครื่อง + หาเวลาที่ดึงจาก Production ITD ล่าสุด (เฉพาะ record ที่ source
+  // เป็น 'production-itd' จริงๆ ไม่นับค่าที่กรอกเองหรือ import Excel) ตามที่ผู้ใช้ขอในหน้าแรก
+  function getSmuStatusFromProductionItd() {
+    try {
+      const map = JSON.parse(localStorage.getItem('ob9_smu_by_machine') || '{}');
+      const ids = Object.values(HOME_MACHINE_META).map(m => m.smuId);
+      let total = 0, latestTs = null;
+      ids.forEach(id => {
+        const rec = map[id];
+        if (rec && typeof rec.value === 'number') {
+          total += rec.value;
+          if (rec.source === 'production-itd' && (!latestTs || rec.updatedAt > latestTs)) latestTs = rec.updatedAt;
+        }
+      });
+      return { total, latestTs };
+    } catch(e) { return { total: 0, latestTs: null }; }
+  }
+
+  // (27 ก.ค. 69) ปุ่มกดอัปเดต SMU เองได้ทันที ตามที่ผู้ใช้ขอ — ดึงจาก Google Sheet (type=equipmentSmuKwh)
+  // มาคำนวณ SMU ล่าสุดต่อเครื่องแล้วเขียนทับ ob9_smu_by_machine สูตรเดียวกับ applyEquipmentSmuToMachineTotals()
+  // ใน ob9_dashboard.html ทุกประการ (คัดลอกมาเพราะหน้านี้ไม่ได้โหลดโค้ดฝั่ง Dashboard) — หมายเหตุ: นี่คือการ
+  // ดึงจาก Sheet ลงมาเครื่อง ไม่ใช่การไปดึงจากเว็บ production-itd.ith.co.th ตรงๆ (ทำไม่ได้จาก JS ฝั่งนี้
+  // เพราะติด CORS + ต้องมี session cookie login ของเว็บนั้น — ต้องให้ Claude หรือ Scheduled Task ดึงขึ้น
+  // Sheet ก่อนเสมอ ปุ่มนี้แค่เร่งให้ข้อมูลที่มีอยู่ใน Sheet แล้วลงมาที่เครื่องเร็วขึ้น ไม่ต้องรอ auto-refresh)
+  function pullSmuFromSheetNow() {
+    const btn = document.getElementById('wSmuRefreshBtn');
+    let syncSettings;
+    try { syncSettings = JSON.parse(localStorage.getItem('ob9_sync_settings') || '{}'); } catch(e) { syncSettings = {}; }
+    if (!syncSettings.url) {
+      document.getElementById('wSmuSync').textContent = 'ยังไม่ได้ตั้งค่า sync';
+      return;
+    }
+    if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+    const url = syncSettings.url + '?token=' + encodeURIComponent(syncSettings.token || '') + '&type=equipmentSmuKwh';
+    fetch(url, { mode: 'cors' })
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.ok && Array.isArray(d.equipmentSmuKwh) && d.equipmentSmuKwh.length) {
+          const byMachine = {};
+          d.equipmentSmuKwh.forEach(r => {
+            if (r.smu == null) return;
+            if (!byMachine[r.machineId] || r.date > byMachine[r.machineId].date) {
+              byMachine[r.machineId] = { date: r.date, smu: r.smu };
+            } else if (r.date === byMachine[r.machineId].date) {
+              byMachine[r.machineId].smu = Math.max(byMachine[r.machineId].smu, r.smu);
+            }
+          });
+          const map = JSON.parse(localStorage.getItem('ob9_smu_by_machine') || '{}');
+          const now = new Date().toISOString();
+          Object.keys(byMachine).forEach(mId => {
+            map[mId] = { value: byMachine[mId].smu, updatedAt: now, source: 'production-itd' };
+          });
+          localStorage.setItem('ob9_smu_by_machine', JSON.stringify(map));
+          loadStats();
+        } else {
+          document.getElementById('wSmuSync').textContent = 'ยังไม่มีข้อมูลใน Sheet';
+        }
+      })
+      .catch(() => { document.getElementById('wSmuSync').textContent = 'ดึงไม่สำเร็จ — ลองใหม่'; })
+      .finally(() => { if (btn) { btn.textContent = '🔄'; btn.disabled = false; } });
+  }
+
+  // (27 ก.ค. 69) ปุ่มกดสำรองข้อมูลเองได้ทันทีจากหน้านี้เลย ตามที่ผู้ใช้ขอ — สูตรเดียวกับ ob9ExportBackup()
+  // ใน ob9_dashboard.html (รวมทุก key ที่ขึ้นต้นด้วย 'ob9_' เป็นไฟล์ .json แล้วดาวน์โหลด)
+  function backupNow() {
+    const btn = document.getElementById('wBackupBtn');
+    if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+    try {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.indexOf('ob9_') === 0 && k !== 'ob9_last_backup_at') data[k] = localStorage.getItem(k);
+      }
+      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:.]/g, '-');
+      a.href = url; a.download = 'ob9_backup_' + ts + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      localStorage.setItem('ob9_last_backup_at', new Date().toISOString());
+      loadStats();
+    } catch(e) {
+      document.getElementById('wBackup').textContent = 'สำรองไม่สำเร็จ';
+    } finally {
+      if (btn) { btn.textContent = '🔄'; btn.disabled = false; }
+    }
+  }
+
+  function getDowntimeTodayForMachine(code) {
+    try {
+      const wos = JSON.parse(localStorage.getItem('ob9_work_orders') || '[]');
+      const now = new Date();
+      let mins = 0;
+      wos.forEach(w => {
+        if ((w.unitCode || '') !== code) return;
+        const m = w.downtimeDuration || 0;
+        if (!m) return;
+        const dt = new Date(w.createdAt || w.date || now);
+        if (isNaN(dt.getTime())) return;
+        if (dt.toDateString() === now.toDateString()) mins += m;
+      });
+      return mins > 0 ? (mins / 60).toFixed(1) : null;
+    } catch(e) { return null; }
+  }
+
+  // DUE = จำนวน WO เร่งด่วน/วิกฤตของเครื่องนั้นที่ยังเปิดอยู่ (ยังไม่ completed/closed)
+  // สอดคล้องกับตรรกะเดียวกับที่ใช้คำนวณ "DUE Items" รวมทั้งระบบใน loadStats() ด้านล่าง
+  function getDueCountForMachine(code) {
+    try {
+      const wos = JSON.parse(localStorage.getItem('ob9_work_orders') || '[]');
+      return wos.filter(w =>
+        (w.unitCode || '') === code &&
+        w.status !== 'completed' && w.status !== 'closed' &&
+        (w.priority === 'critical' || w.status === 'critical')
+      ).length;
+    } catch(e) { return 0; }
+  }
+
+  function updateMachineCardMetrics() {
+    Object.keys(HOME_MACHINE_META).forEach(key => {
+      const meta = HOME_MACHINE_META[key];
+      const smu = getSmuForMachine(meta.smuId);
+      const dt  = getDowntimeTodayForMachine(meta.code);
+      const due = getDueCountForMachine(meta.code);
+      const smuEl = document.getElementById('mc_smu_' + key);
+      const dtEl  = document.getElementById('mc_dt_' + key);
+      const dueEl = document.getElementById('mc_due_' + key);
+      if (smuEl) smuEl.textContent = (smu !== null) ? Number(smu).toLocaleString() : '—';
+      if (dtEl)  dtEl.textContent  = (dt  !== null) ? dt + ' ชม.' : '—';
+      if (dueEl) {
+        dueEl.textContent = due;
+        dueEl.classList.toggle('dueOn', due > 0);
+      }
+    });
+  }
+
+  /* ── Load data from localStorage ── */
+  function loadStats() {
+    try {
+      const wos = JSON.parse(localStorage.getItem('ob9_work_orders') || '[]');
+      const openWOs = wos.filter(w => w.status !== 'completed' && w.status !== 'closed');
+      const critWOs = openWOs.filter(w => w.priority === 'critical' || w.status === 'critical');
+      document.getElementById('sWO').textContent = openWOs.length + ' Open';
+      document.getElementById('sWOSub').textContent = critWOs.length > 0 ? critWOs.length + ' Critical' : 'ไม่มีวิกฤต';
+
+      const fmtDT = ts => ts ? new Date(ts).toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'ยังไม่เคยดึง';
+
+      const smuStatus = getSmuStatusFromProductionItd();
+      onSmuSelChange(); // เคารพเครื่องที่ผู้ใช้เลือกไว้ใน dropdown อยู่ (ถ้ามี) แทนที่จะทับด้วยผลรวมทุกครั้งที่ refresh
+      document.getElementById('wSmuSync').textContent = fmtDT(smuStatus.latestTs);
+
+      const backupAt = localStorage.getItem('ob9_last_backup_at');
+      document.getElementById('wBackup').textContent = backupAt ? fmtDT(backupAt) : 'ยังไม่เคยสำรอง';
+
+      updateMachineCardMetrics();
+      applyOpStatusOverrides();
+    } catch(e) {}
+
+    // update time
+    const now = new Date();
+    document.getElementById('wSub').textContent =
+      'อัปเดต: ' + now.toLocaleTimeString('th-TH') +
+      ' · Spreader ARs + Tripper Car A/B + Line Shift';
+  }
+
+  populateSmuDropdown();
+  loadStats();
+  setInterval(loadStats, 30000);
+</script>
+</body>
+</html>

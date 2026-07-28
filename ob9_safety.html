@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — ความปลอดภัย</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1150px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:18px; line-height:1.6; }
+
+  .tabs { display:flex; gap:6px; margin-bottom:18px; border-bottom:2px solid var(--border); }
+  .tab-btn { background:none; border:none; padding:10px 16px; font-size:13px; font-weight:700; color:var(--text3); cursor:pointer; border-bottom:2.5px solid transparent; margin-bottom:-2px; }
+  .tab-btn.active { color:var(--navy); border-bottom-color:var(--navy); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:110px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .form-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row.wide { grid-template-columns: 1fr 1fr; }
+  .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .form-row input[type=text], .form-row input[type=date], .form-row select, .form-row textarea { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+  .form-row textarea { resize:vertical; min-height:44px; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.danger { background:#fff; color:var(--red); border:1.5px solid var(--red); padding:5px 10px; font-size:11.5px; }
+
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--text3); font-weight:600; padding:8px 10px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  td { padding:9px 10px; border-bottom:1px solid #F0F2F6; vertical-align:top; }
+  tr:hover td { background:#FAFBFD; }
+  .empty { text-align:center; color:var(--text3); padding:20px; font-size:12.5px; }
+
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; cursor:pointer; }
+  .b-low { background:#DCFCE7; color:var(--green); }
+  .b-medium { background:#FEF3C7; color:var(--amber); }
+  .b-high { background:#FEE2E2; color:var(--red); }
+  .b-open { background:#FEE2E2; color:var(--red); }
+  .b-closed { background:#DCFCE7; color:var(--green); }
+  .b-locked { background:#FEE2E2; color:var(--red); }
+  .b-released { background:#DCFCE7; color:var(--green); }
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>ความปลอดภัย</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>ความปลอดภัย (Admin เท่านั้น)</h1>
+  <div class="sub">บันทึก Near-miss/Incident, JSA (Job Safety Analysis) ก่อนเริ่มงาน และ LOTO (Lock-Out Tag-Out) — สำคัญมากสำหรับงานเครื่องจักรหนักในเหมือง</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBtn-incident" onclick="switchTab('incident')">🚨 Near-miss / Incident</button>
+    <button class="tab-btn" id="tabBtn-jsa" onclick="switchTab('jsa')">📋 JSA</button>
+    <button class="tab-btn" id="tabBtn-loto" onclick="switchTab('loto')">🔒 LOTO</button>
+  </div>
+
+  <!-- ═══ TAB: Near-miss / Incident ═══ -->
+  <div class="tab-panel active" id="tab-incident">
+    <div class="panel">
+      <h2>➕ บันทึก Near-miss / Incident / Hazard</h2>
+      <div class="form-row">
+        <div>
+          <label>ประเภท</label>
+          <select id="incType">
+            <option value="near-miss">Near-miss (เกือบเกิดอุบัติเหตุ)</option>
+            <option value="incident">Incident (เกิดอุบัติเหตุแล้ว)</option>
+            <option value="hazard">Hazard (พบจุดเสี่ยง)</option>
+          </select>
+        </div>
+        <div><label>วันที่</label><input type="date" id="incDate"></div>
+        <div><label>เครื่องจักร/พื้นที่</label><input type="text" id="incMachine" placeholder="เช่น Spreader A"></div>
+      </div>
+      <div class="form-row">
+        <div><label>ระดับความรุนแรง</label>
+          <select id="incSeverity">
+            <option value="low">ต่ำ</option>
+            <option value="medium">ปานกลาง</option>
+            <option value="high">สูง</option>
+          </select>
+        </div>
+        <div><label>ผู้รายงาน</label><input type="text" id="incReporter" placeholder="ชื่อผู้รายงาน"></div>
+        <div><label>สถานะ</label>
+          <select id="incStatus">
+            <option value="open">เปิดอยู่ (ยังไม่แก้)</option>
+            <option value="closed">ปิดแล้ว (แก้ไขแล้ว)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row wide">
+        <div><label>รายละเอียดเหตุการณ์</label><textarea id="incDesc" placeholder="อธิบายสิ่งที่เกิดขึ้น/พบเห็น"></textarea></div>
+        <div><label>การแก้ไข/ป้องกัน</label><textarea id="incAction" placeholder="สิ่งที่ทำเพื่อแก้ไขหรือป้องกันไม่ให้เกิดซ้ำ"></textarea></div>
+      </div>
+      <button class="btn" onclick="addIncident()">บันทึก</button>
+    </div>
+    <div class="panel">
+      <h2>📋 รายการที่บันทึกไว้</h2>
+      <table>
+        <thead><tr><th>วันที่</th><th>ประเภท</th><th>เครื่องจักร/พื้นที่</th><th>ความรุนแรง</th><th>รายละเอียด</th><th>ผู้รายงาน</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody id="incidentTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: JSA ═══ -->
+  <div class="tab-panel" id="tab-jsa">
+    <div class="panel">
+      <h2>➕ บันทึก JSA (Job Safety Analysis) ก่อนเริ่มงาน</h2>
+      <div class="form-row">
+        <div><label>วันที่</label><input type="date" id="jsaDate"></div>
+        <div><label>เครื่องจักร/พื้นที่</label><input type="text" id="jsaMachine" placeholder="เช่น Tripper Car Ü2200"></div>
+        <div><label>ผู้อนุมัติ</label><input type="text" id="jsaApprover" placeholder="หัวหน้างาน/วิศวกร"></div>
+      </div>
+      <div class="form-row wide">
+        <div><label>ลักษณะงาน</label><textarea id="jsaJob" placeholder="อธิบายงานที่จะทำ"></textarea></div>
+        <div><label>อันตรายที่ระบุได้</label><textarea id="jsaHazard" placeholder="ความเสี่ยง/อันตรายที่อาจเกิดขึ้น"></textarea></div>
+      </div>
+      <div class="form-row wide" style="grid-template-columns:1fr">
+        <div><label>มาตรการควบคุม/ป้องกัน</label><textarea id="jsaControl" placeholder="PPE, ขั้นตอนความปลอดภัย, การแยกพื้นที่ ฯลฯ"></textarea></div>
+      </div>
+      <button class="btn" onclick="addJsa()">บันทึก</button>
+    </div>
+    <div class="panel">
+      <h2>📋 รายการ JSA ที่บันทึกไว้</h2>
+      <table>
+        <thead><tr><th>วันที่</th><th>เครื่องจักร/พื้นที่</th><th>ลักษณะงาน</th><th>อันตราย</th><th>มาตรการควบคุม</th><th>ผู้อนุมัติ</th><th></th></tr></thead>
+        <tbody id="jsaTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: LOTO ═══ -->
+  <div class="tab-panel" id="tab-loto">
+    <div class="panel">
+      <h2>➕ บันทึก LOTO (Lock-Out Tag-Out)</h2>
+      <div class="form-row">
+        <div><label>วันที่ล็อก</label><input type="date" id="lotoDate"></div>
+        <div><label>เครื่องจักร</label><input type="text" id="lotoMachine" placeholder="เช่น Spreader B"></div>
+        <div><label>ผู้ล็อก</label><input type="text" id="lotoLockedBy" placeholder="ชื่อช่าง"></div>
+      </div>
+      <div class="form-row wide">
+        <div><label>เหตุผลที่ล็อก</label><textarea id="lotoReason" placeholder="เช่น ซ่อม Gearbox Travel Drive"></textarea></div>
+        <div>
+          <label>สถานะ</label>
+          <select id="lotoStatus">
+            <option value="locked">ล็อกอยู่ (Locked)</option>
+            <option value="released">ปลดล็อกแล้ว (Released)</option>
+          </select>
+          <label style="margin-top:8px">ผู้ปลดล็อก (ถ้าปลดแล้ว)</label>
+          <input type="text" id="lotoReleasedBy" placeholder="ชื่อผู้ปลดล็อก">
+        </div>
+      </div>
+      <button class="btn" onclick="addLoto()">บันทึก</button>
+    </div>
+    <div class="panel">
+      <h2>📋 รายการ LOTO ที่บันทึกไว้</h2>
+      <table>
+        <thead><tr><th>วันที่ล็อก</th><th>เครื่องจักร</th><th>เหตุผล</th><th>ผู้ล็อก</th><th>สถานะ</th><th>ผู้ปลดล็อก</th><th></th></tr></thead>
+        <tbody id="lotoTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const INC_KEY = 'ob9_safety_incidents';
+  const JSA_KEY = 'ob9_safety_jsa';
+  const LOTO_KEY = 'ob9_safety_loto';
+
+  const TYPE_LABEL = { 'near-miss':'Near-miss', 'incident':'Incident', 'hazard':'Hazard' };
+  const SEV_LABEL = { low:'ต่ำ', medium:'ปานกลาง', high:'สูง' };
+  const STATUS_LABEL = { open:'เปิดอยู่', closed:'ปิดแล้ว' };
+  const LOTO_STATUS_LABEL = { locked:'ล็อกอยู่', released:'ปลดล็อกแล้ว' };
+
+  function loadList(key) { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { return []; } }
+  function saveList(key, arr) { localStorage.setItem(key, JSON.stringify(arr)); }
+  function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function todayStr() { return new Date().toISOString().slice(0,10); }
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  function switchTab(name) {
+    ['incident','jsa','loto'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+      document.getElementById('tabBtn-' + t).classList.toggle('active', t === name);
+    });
+  }
+
+  // ── Near-miss / Incident ──
+  function addIncident() {
+    const desc = document.getElementById('incDesc').value.trim();
+    if (!desc) { showMsg('กรุณากรอกรายละเอียดเหตุการณ์', false); return; }
+    const list = loadList(INC_KEY);
+    list.unshift({
+      id: 'INC-' + Date.now(),
+      type: document.getElementById('incType').value,
+      date: document.getElementById('incDate').value || todayStr(),
+      machine: document.getElementById('incMachine').value.trim(),
+      severity: document.getElementById('incSeverity').value,
+      reporter: document.getElementById('incReporter').value.trim(),
+      status: document.getElementById('incStatus').value,
+      description: desc,
+      actionTaken: document.getElementById('incAction').value.trim(),
+      createdAt: new Date().toISOString()
+    });
+    saveList(INC_KEY, list);
+    ['incMachine','incReporter','incDesc','incAction'].forEach(id => document.getElementById(id).value = '');
+    showMsg('บันทึกเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+  function toggleIncidentStatus(id) {
+    const list = loadList(INC_KEY);
+    const it = list.find(x => x.id === id);
+    if (!it) return;
+    it.status = it.status === 'open' ? 'closed' : 'open';
+    saveList(INC_KEY, list);
+    renderAll();
+  }
+  function deleteIncident(id) {
+    if (!confirm('ลบรายการนี้ใช่ไหม?')) return;
+    saveList(INC_KEY, loadList(INC_KEY).filter(x => x.id !== id));
+    renderAll();
+  }
+
+  // ── JSA ──
+  function addJsa() {
+    const job = document.getElementById('jsaJob').value.trim();
+    if (!job) { showMsg('กรุณากรอกลักษณะงาน', false); return; }
+    const list = loadList(JSA_KEY);
+    list.unshift({
+      id: 'JSA-' + Date.now(),
+      date: document.getElementById('jsaDate').value || todayStr(),
+      machine: document.getElementById('jsaMachine').value.trim(),
+      jobDescription: job,
+      hazards: document.getElementById('jsaHazard').value.trim(),
+      controls: document.getElementById('jsaControl').value.trim(),
+      approver: document.getElementById('jsaApprover').value.trim(),
+      createdAt: new Date().toISOString()
+    });
+    saveList(JSA_KEY, list);
+    ['jsaMachine','jsaApprover','jsaJob','jsaHazard','jsaControl'].forEach(id => document.getElementById(id).value = '');
+    showMsg('บันทึก JSA เรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+  function deleteJsa(id) {
+    if (!confirm('ลบรายการนี้ใช่ไหม?')) return;
+    saveList(JSA_KEY, loadList(JSA_KEY).filter(x => x.id !== id));
+    renderAll();
+  }
+
+  // ── LOTO ──
+  function addLoto() {
+    const machine = document.getElementById('lotoMachine').value.trim();
+    if (!machine) { showMsg('กรุณากรอกเครื่องจักร', false); return; }
+    const list = loadList(LOTO_KEY);
+    list.unshift({
+      id: 'LOTO-' + Date.now(),
+      date: document.getElementById('lotoDate').value || todayStr(),
+      machine: machine,
+      reason: document.getElementById('lotoReason').value.trim(),
+      lockedBy: document.getElementById('lotoLockedBy').value.trim(),
+      status: document.getElementById('lotoStatus').value,
+      releasedBy: document.getElementById('lotoReleasedBy').value.trim(),
+      createdAt: new Date().toISOString()
+    });
+    saveList(LOTO_KEY, list);
+    ['lotoMachine','lotoLockedBy','lotoReason','lotoReleasedBy'].forEach(id => document.getElementById(id).value = '');
+    showMsg('บันทึก LOTO เรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+  function toggleLotoStatus(id) {
+    const list = loadList(LOTO_KEY);
+    const it = list.find(x => x.id === id);
+    if (!it) return;
+    it.status = it.status === 'locked' ? 'released' : 'locked';
+    saveList(LOTO_KEY, list);
+    renderAll();
+  }
+  function deleteLoto(id) {
+    if (!confirm('ลบรายการนี้ใช่ไหม?')) return;
+    saveList(LOTO_KEY, loadList(LOTO_KEY).filter(x => x.id !== id));
+    renderAll();
+  }
+
+  function renderAll() {
+    const incidents = loadList(INC_KEY);
+    const jsaList = loadList(JSA_KEY);
+    const lotoList = loadList(LOTO_KEY);
+
+    // summary
+    const openInc = incidents.filter(i => i.status === 'open').length;
+    const highSev = incidents.filter(i => i.severity === 'high').length;
+    const lockedNow = lotoList.filter(l => l.status === 'locked').length;
+    document.getElementById('summaryBox').innerHTML = `
+      <div class="sbox"><div class="sn" style="color:var(--red)">${openInc}</div><div class="sl">Near-miss/Incident ยังเปิดอยู่</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--amber)">${highSev}</div><div class="sl">ความรุนแรงสูงสะสม</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${jsaList.length}</div><div class="sl">JSA ที่บันทึกไว้</div></div>
+      <div class="sbox"><div class="sn" style="color:${lockedNow>0?'var(--red)':'var(--green)'}">${lockedNow}</div><div class="sl">LOTO ที่ล็อกอยู่ตอนนี้</div></div>
+    `;
+
+    // incident table
+    const incBody = document.getElementById('incidentTbody');
+    incBody.innerHTML = incidents.length === 0 ? `<tr><td colspan="8" class="empty">ยังไม่มีบันทึก</td></tr>` :
+      incidents.map(it => `<tr>
+        <td>${escHtml(it.date)}</td>
+        <td>${escHtml(TYPE_LABEL[it.type] || it.type)}</td>
+        <td>${escHtml(it.machine || '—')}</td>
+        <td><span class="badge b-${it.severity}">${SEV_LABEL[it.severity]}</span></td>
+        <td style="max-width:220px">${escHtml(it.description)}${it.actionTaken ? '<br><span style="color:var(--text3);font-size:11px">แก้ไข: '+escHtml(it.actionTaken)+'</span>' : ''}</td>
+        <td>${escHtml(it.reporter || '—')}</td>
+        <td><span class="badge b-${it.status}" style="cursor:pointer" onclick="toggleIncidentStatus('${it.id}')" title="กดเพื่อสลับสถานะ">${STATUS_LABEL[it.status]}</span></td>
+        <td><button class="btn danger" onclick="deleteIncident('${it.id}')">ลบ</button></td>
+      </tr>`).join('');
+
+    // jsa table
+    const jsaBody = document.getElementById('jsaTbody');
+    jsaBody.innerHTML = jsaList.length === 0 ? `<tr><td colspan="7" class="empty">ยังไม่มีบันทึก JSA</td></tr>` :
+      jsaList.map(it => `<tr>
+        <td>${escHtml(it.date)}</td>
+        <td>${escHtml(it.machine || '—')}</td>
+        <td style="max-width:200px">${escHtml(it.jobDescription)}</td>
+        <td style="max-width:180px">${escHtml(it.hazards || '—')}</td>
+        <td style="max-width:200px">${escHtml(it.controls || '—')}</td>
+        <td>${escHtml(it.approver || '—')}</td>
+        <td><button class="btn danger" onclick="deleteJsa('${it.id}')">ลบ</button></td>
+      </tr>`).join('');
+
+    // loto table
+    const lotoBody = document.getElementById('lotoTbody');
+    lotoBody.innerHTML = lotoList.length === 0 ? `<tr><td colspan="7" class="empty">ยังไม่มีบันทึก LOTO</td></tr>` :
+      lotoList.map(it => `<tr>
+        <td>${escHtml(it.date)}</td>
+        <td>${escHtml(it.machine)}</td>
+        <td style="max-width:200px">${escHtml(it.reason || '—')}</td>
+        <td>${escHtml(it.lockedBy || '—')}</td>
+        <td><span class="badge b-${it.status}" style="cursor:pointer" onclick="toggleLotoStatus('${it.id}')" title="กดเพื่อสลับสถานะ">${LOTO_STATUS_LABEL[it.status]}</span></td>
+        <td>${escHtml(it.releasedBy || '—')}</td>
+        <td><button class="btn danger" onclick="deleteLoto('${it.id}')">ลบ</button></td>
+      </tr>`).join('');
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

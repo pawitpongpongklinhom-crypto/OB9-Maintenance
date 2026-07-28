@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — Training / ใบรับรองช่าง</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; line-height:1.6; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:110px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .form-row { display:grid; grid-template-columns: 1fr 1fr auto; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .form-row input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.small { padding:5px 10px; font-size:11px; }
+  .btn.danger { background:#fff; color:var(--red); border:1.5px solid var(--red); padding:5px 10px; font-size:11.5px; }
+
+  .tech-card { border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px; }
+  .tech-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px; }
+  .tech-name { font-weight:700; font-size:14px; }
+  .tech-pos { font-size:11.5px; color:var(--text3); }
+
+  table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px; }
+  th { text-align:left; color:var(--text3); font-weight:600; padding:6px 8px; border-bottom:1.5px solid var(--border); font-size:10.5px; text-transform:uppercase; }
+  td { padding:6px 8px; border-bottom:1px solid #F0F2F6; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; }
+  .b-valid { background:#DCFCE7; color:var(--green); }
+  .b-soon { background:#FEF3C7; color:var(--amber); }
+  .b-expired { background:#FEE2E2; color:var(--red); }
+
+  .cert-add-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .cert-add-row input[type=text] { flex:1; min-width:130px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+  .cert-add-row input[type=date] { width:135px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+  .empty { text-align:center; color:var(--text3); padding:10px; font-size:11.5px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>Training / ใบรับรองช่าง</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>Training / ใบรับรองช่าง (Admin เท่านั้น)</h1>
+  <div class="sub">ติดตามว่าช่างแต่ละคนผ่านการอบรม/ใบรับรองอะไรมาบ้าง พร้อมแจ้งเตือนใบรับรองที่ใกล้หมดอายุหรือหมดอายุแล้ว</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <div class="panel">
+    <h2>➕ เพิ่มช่าง</h2>
+    <div class="form-row" style="grid-template-columns:1fr 1fr 140px auto">
+      <div><label>ชื่อ-นามสกุล</label><input type="text" id="fName" placeholder="ชื่อช่าง"></div>
+      <div><label>ตำแหน่ง</label><input type="text" id="fPosition" placeholder="เช่น ช่างซ่อมบำรุงอาวุโส"></div>
+      <div><label>ค่าแรง (บาท/ชม.)</label><input type="number" id="fRate" placeholder="เช่น 500" min="0" step="10"></div>
+      <button class="btn" onclick="addTech()">เพิ่ม</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:-4px">ค่าแรงนี้จะถูกดึงไปเติมอัตโนมัติในฟอร์ม "แจ้งซ่อม" ของ Dashboard เมื่อเลือกชื่อช่างคนนี้</div>
+  </div>
+
+  <div id="techList"></div>
+</div>
+
+<script>
+  const TECH_KEY = 'ob9_technicians';
+
+  function loadTechs() { try { return JSON.parse(localStorage.getItem(TECH_KEY) || '[]'); } catch(e) { return []; } }
+  function saveTechs(arr) { localStorage.setItem(TECH_KEY, JSON.stringify(arr)); }
+  function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  function certStatus(expiry) {
+    if (!expiry) return { cls: 'b-valid', label: 'ไม่มีวันหมดอายุ' };
+    const exp = new Date(expiry);
+    const now = new Date();
+    const days = Math.floor((exp - now) / (1000*60*60*24));
+    if (days < 0) return { cls: 'b-expired', label: 'หมดอายุแล้ว' };
+    if (days <= 60) return { cls: 'b-soon', label: 'ใกล้หมดอายุ (' + days + ' วัน)' };
+    return { cls: 'b-valid', label: 'ยังไม่หมดอายุ' };
+  }
+
+  function addTech() {
+    const name = document.getElementById('fName').value.trim();
+    if (!name) { showMsg('กรุณากรอกชื่อช่าง', false); return; }
+    const list = loadTechs();
+    list.push({
+      id: 'T-' + Date.now(),
+      name: name,
+      position: document.getElementById('fPosition').value.trim(),
+      laborRate: parseFloat(document.getElementById('fRate').value) || null,
+      certifications: [],
+      createdAt: new Date().toISOString()
+    });
+    saveTechs(list);
+    document.getElementById('fName').value = '';
+    document.getElementById('fPosition').value = '';
+    document.getElementById('fRate').value = '';
+    showMsg('เพิ่มช่างเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function editRate(id) {
+    const list = loadTechs();
+    const t = list.find(x => x.id === id);
+    if (!t) return;
+    const v = prompt('ค่าแรงมาตรฐาน (บาท/ชม.) ของ ' + t.name, t.laborRate || '');
+    if (v === null) return;
+    const n = parseFloat(v);
+    t.laborRate = isNaN(n) ? null : n;
+    saveTechs(list);
+    renderAll();
+  }
+
+  function deleteTech(id) {
+    if (!confirm('ลบช่างคนนี้ใช่ไหม?')) return;
+    saveTechs(loadTechs().filter(x => x.id !== id));
+    renderAll();
+  }
+
+  function addCert(id) {
+    const nameEl = document.getElementById('cert-name-' + id);
+    const issueEl = document.getElementById('cert-issue-' + id);
+    const expEl = document.getElementById('cert-exp-' + id);
+    const issuerEl = document.getElementById('cert-issuer-' + id);
+    const certName = nameEl.value.trim();
+    if (!certName) { showMsg('กรุณากรอกชื่อใบรับรอง/หลักสูตร', false); return; }
+    const list = loadTechs();
+    const t = list.find(x => x.id === id);
+    if (!t) return;
+    if (!t.certifications) t.certifications = [];
+    t.certifications.push({
+      name: certName,
+      issueDate: issueEl.value,
+      expiryDate: expEl.value,
+      issuer: issuerEl.value.trim()
+    });
+    saveTechs(list);
+    showMsg('เพิ่มใบรับรองเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function deleteCert(techId, idx) {
+    const list = loadTechs();
+    const t = list.find(x => x.id === techId);
+    if (!t || !t.certifications) return;
+    t.certifications.splice(idx, 1);
+    saveTechs(list);
+    renderAll();
+  }
+
+  function renderAll() {
+    const list = loadTechs();
+    let totalCerts = 0, expiredCount = 0, soonCount = 0;
+    list.forEach(t => {
+      (t.certifications || []).forEach(c => {
+        totalCerts++;
+        const st = certStatus(c.expiryDate);
+        if (st.cls === 'b-expired') expiredCount++;
+        else if (st.cls === 'b-soon') soonCount++;
+      });
+    });
+    document.getElementById('summaryBox').innerHTML = `
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${list.length}</div><div class="sl">ช่างทั้งหมด</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--text1)">${totalCerts}</div><div class="sl">ใบรับรองทั้งหมด</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--amber)">${soonCount}</div><div class="sl">ใกล้หมดอายุ (60 วัน)</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--red)">${expiredCount}</div><div class="sl">หมดอายุแล้ว</div></div>
+    `;
+
+    const el = document.getElementById('techList');
+    if (list.length === 0) { el.innerHTML = `<div class="panel"><div class="empty">ยังไม่มีรายชื่อช่าง</div></div>`; return; }
+    el.innerHTML = list.map(t => `
+      <div class="tech-card">
+        <div class="tech-head">
+          <div><span class="tech-name">${escHtml(t.name)}</span>${t.position ? ' <span class="tech-pos">· '+escHtml(t.position)+'</span>' : ''}
+            <span class="tech-pos" style="cursor:pointer" onclick="editRate('${t.id}')" title="คลิกเพื่อแก้ค่าแรง">· 💰 ${t.laborRate ? t.laborRate.toLocaleString('th-TH')+' บาท/ชม.' : 'ยังไม่ตั้งค่าแรง (คลิกเพื่อตั้ง)'}</span>
+          </div>
+          <button class="btn danger" onclick="deleteTech('${t.id}')">🗑 ลบช่าง</button>
+        </div>
+        <table>
+          <thead><tr><th>ใบรับรอง/หลักสูตร</th><th>วันที่ออก</th><th>วันหมดอายุ</th><th>ผู้ออกใบรับรอง</th><th>สถานะ</th><th></th></tr></thead>
+          <tbody>
+            ${(t.certifications && t.certifications.length > 0)
+              ? t.certifications.map((c, idx) => {
+                  const st = certStatus(c.expiryDate);
+                  return `<tr>
+                    <td>${escHtml(c.name)}</td>
+                    <td>${escHtml(c.issueDate || '—')}</td>
+                    <td>${escHtml(c.expiryDate || '—')}</td>
+                    <td>${escHtml(c.issuer || '—')}</td>
+                    <td><span class="badge ${st.cls}">${st.label}</span></td>
+                    <td><button class="btn danger" onclick="deleteCert('${t.id}',${idx})">ลบ</button></td>
+                  </tr>`;
+                }).join('')
+              : `<tr><td colspan="6" class="empty">ยังไม่มีใบรับรอง</td></tr>`}
+          </tbody>
+        </table>
+        <div class="cert-add-row">
+          <input type="text" id="cert-name-${t.id}" placeholder="ชื่อใบรับรอง/หลักสูตร เช่น Rigging & Lifting">
+          <input type="date" id="cert-issue-${t.id}" title="วันที่ออก">
+          <input type="date" id="cert-exp-${t.id}" title="วันหมดอายุ (ถ้ามี)">
+          <input type="text" id="cert-issuer-${t.id}" placeholder="ผู้ออกใบรับรอง">
+          <button class="btn small" onclick="addCert('${t.id}')">เพิ่ม</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

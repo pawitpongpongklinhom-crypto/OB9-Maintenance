@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — ผู้รับเหมา / Vendor</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; line-height:1.6; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:110px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .form-row { display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .form-row input[type=text], .form-row select { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.secondary { background:#fff; color:var(--navy); border:1.5px solid var(--navy); }
+  .btn.small { padding:5px 10px; font-size:11px; }
+  .btn.danger { background:#fff; color:var(--red); border:1.5px solid var(--red); padding:5px 10px; font-size:11.5px; }
+
+  .vendor-card { border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px; }
+  .vendor-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .vendor-name { font-weight:700; font-size:14px; }
+  .vendor-meta { font-size:12px; color:var(--text3); margin-bottom:10px; line-height:1.6; }
+  .stars { color:var(--accent); font-size:13px; }
+
+  .job-list { margin-top:10px; border-top:1px solid #F0F2F6; padding-top:10px; }
+  .job-item { display:flex; gap:10px; font-size:12px; padding:5px 0; border-bottom:1px dashed #F0F2F6; }
+  .job-item .jd { color:var(--text3); flex-shrink:0; width:90px; }
+  .job-item .jc { margin-left:auto; color:var(--navy); font-weight:600; flex-shrink:0; }
+  .job-add-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .job-add-row input[type=date] { width:130px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+  .job-add-row input[type=text] { flex:1; min-width:150px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+  .job-add-row input[type=number] { width:110px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+  .empty { text-align:center; color:var(--text3); padding:10px; font-size:11.5px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>ผู้รับเหมา / Vendor</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>ผู้รับเหมา / Vendor (Admin เท่านั้น)</h1>
+  <div class="sub">รายชื่อผู้รับเหมา/ผู้จำหน่ายที่เคยจ้างงาน พร้อมข้อมูลติดต่อและประวัติงานที่เคยจ้าง — ใช้อ้างอิงเวลาต้องเรียกช่างนอกหรือหาผู้จำหน่ายอะไหล่</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <div class="panel">
+    <h2>➕ เพิ่มผู้รับเหมา/ผู้จำหน่าย</h2>
+    <div class="form-row">
+      <div><label>ชื่อบริษัท/ผู้รับเหมา</label><input type="text" id="fName" placeholder="ชื่อบริษัท"></div>
+      <div><label>ประเภทงาน</label><input type="text" id="fType" placeholder="เช่น ซ่อม Gearbox, จำหน่ายอะไหล่"></div>
+      <div><label>ผู้ติดต่อ</label><input type="text" id="fContact" placeholder="ชื่อผู้ติดต่อ"></div>
+      <div><label>เบอร์โทร</label><input type="text" id="fPhone" placeholder="0xx-xxx-xxxx"></div>
+    </div>
+    <div class="form-row">
+      <div><label>อีเมล</label><input type="text" id="fEmail" placeholder="email@company.com"></div>
+      <div><label>คะแนนประเมิน</label>
+        <select id="fRating">
+          <option value="5">★★★★★ ดีเยี่ยม</option>
+          <option value="4">★★★★ ดี</option>
+          <option value="3" selected>★★★ ปานกลาง</option>
+          <option value="2">★★ พอใช้</option>
+          <option value="1">★ ไม่แนะนำ</option>
+        </select>
+      </div>
+      <div style="grid-column:span 2"><label>หมายเหตุ</label><input type="text" id="fNotes" placeholder="รายละเอียดเพิ่มเติม"></div>
+    </div>
+    <button class="btn" onclick="addVendor()">เพิ่ม</button>
+  </div>
+
+  <div id="vendorList"></div>
+</div>
+
+<script>
+  const VENDOR_KEY = 'ob9_vendors';
+
+  function loadVendors() { try { return JSON.parse(localStorage.getItem(VENDOR_KEY) || '[]'); } catch(e) { return []; } }
+  function saveVendors(arr) { localStorage.setItem(VENDOR_KEY, JSON.stringify(arr)); }
+  function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmt(n) { return Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 }); }
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+  function stars(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
+
+  function addVendor() {
+    const name = document.getElementById('fName').value.trim();
+    if (!name) { showMsg('กรุณากรอกชื่อบริษัท/ผู้รับเหมา', false); return; }
+    const list = loadVendors();
+    list.unshift({
+      id: 'V-' + Date.now(),
+      name: name,
+      serviceType: document.getElementById('fType').value.trim(),
+      contact: document.getElementById('fContact').value.trim(),
+      phone: document.getElementById('fPhone').value.trim(),
+      email: document.getElementById('fEmail').value.trim(),
+      rating: parseInt(document.getElementById('fRating').value, 10),
+      notes: document.getElementById('fNotes').value.trim(),
+      jobHistory: [],
+      createdAt: new Date().toISOString()
+    });
+    saveVendors(list);
+    ['fName','fType','fContact','fPhone','fEmail','fNotes'].forEach(id => document.getElementById(id).value = '');
+    showMsg('เพิ่มผู้รับเหมาเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function deleteVendor(id) {
+    if (!confirm('ลบรายชื่อผู้รับเหมานี้ใช่ไหม?')) return;
+    saveVendors(loadVendors().filter(x => x.id !== id));
+    renderAll();
+  }
+
+  function addJob(id) {
+    const dateEl = document.getElementById('job-date-' + id);
+    const descEl = document.getElementById('job-desc-' + id);
+    const costEl = document.getElementById('job-cost-' + id);
+    const desc = descEl.value.trim();
+    if (!desc) { showMsg('กรุณากรอกรายละเอียดงาน', false); return; }
+    const list = loadVendors();
+    const v = list.find(x => x.id === id);
+    if (!v) return;
+    if (!v.jobHistory) v.jobHistory = [];
+    v.jobHistory.unshift({
+      date: dateEl.value || new Date().toISOString().slice(0,10),
+      description: desc,
+      cost: parseFloat(costEl.value) || 0
+    });
+    saveVendors(list);
+    showMsg('เพิ่มประวัติงานเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function renderAll() {
+    const list = loadVendors();
+    const totalJobs = list.reduce((s,v) => s + (v.jobHistory ? v.jobHistory.length : 0), 0);
+    const totalCost = list.reduce((s,v) => s + (v.jobHistory ? v.jobHistory.reduce((s2,j)=>s2+(j.cost||0),0) : 0), 0);
+    document.getElementById('summaryBox').innerHTML = `
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${list.length}</div><div class="sl">ผู้รับเหมา/ผู้จำหน่ายทั้งหมด</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--amber)">${totalJobs}</div><div class="sl">งานที่เคยจ้างสะสม</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--green)">฿${fmt(totalCost)}</div><div class="sl">ค่าใช้จ่ายสะสมทั้งหมด</div></div>
+    `;
+
+    const el = document.getElementById('vendorList');
+    if (list.length === 0) { el.innerHTML = `<div class="panel"><div class="empty">ยังไม่มีรายชื่อผู้รับเหมา</div></div>`; return; }
+    el.innerHTML = list.map(v => `
+      <div class="vendor-card">
+        <div class="vendor-head">
+          <div class="vendor-name">${escHtml(v.name)}</div>
+          <span class="stars">${stars(v.rating || 3)}</span>
+        </div>
+        <div class="vendor-meta">
+          ${v.serviceType ? escHtml(v.serviceType) + ' · ' : ''}${v.contact ? 'ผู้ติดต่อ: ' + escHtml(v.contact) + ' · ' : ''}${v.phone ? '📞 ' + escHtml(v.phone) + ' · ' : ''}${v.email ? '✉️ ' + escHtml(v.email) : ''}
+          ${v.notes ? '<br>' + escHtml(v.notes) : ''}
+        </div>
+        <button class="btn danger" onclick="deleteVendor('${v.id}')">🗑 ลบ</button>
+        <div class="job-list">
+          <div style="font-size:11.5px;font-weight:700;color:var(--text3);margin-bottom:6px">📋 ประวัติงานที่เคยจ้าง</div>
+          ${(v.jobHistory && v.jobHistory.length > 0)
+            ? v.jobHistory.map(j => `<div class="job-item"><span class="jd">${escHtml(j.date)}</span><span>${escHtml(j.description)}</span><span class="jc">${j.cost ? '฿'+fmt(j.cost) : ''}</span></div>`).join('')
+            : '<div class="empty">ยังไม่มีประวัติงาน</div>'}
+          <div class="job-add-row">
+            <input type="date" id="job-date-${v.id}">
+            <input type="text" id="job-desc-${v.id}" placeholder="รายละเอียดงานที่จ้าง">
+            <input type="number" id="job-cost-${v.id}" placeholder="ค่าใช้จ่าย (บาท)">
+            <button class="btn small" onclick="addJob('${v.id}')">เพิ่ม</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

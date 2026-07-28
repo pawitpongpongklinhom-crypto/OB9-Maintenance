@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — งบประมาณซ่อมบำรุง</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; line-height:1.6; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  .yearbar { display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  .yearbar select, .yearbar input[type=number] { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:#fff; }
+
+  .capbar { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .capbar label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .capbar input[type=number], .capbar input[type=text] { padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:130px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--text3); font-weight:600; padding:8px 12px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  td { padding:9px 12px; border-bottom:1px solid #F0F2F6; vertical-align:middle; }
+  tr:hover td { background:#FAFBFD; }
+  input.budget-input { width:110px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; font-family:inherit; text-align:right; }
+
+  .bar-track { background:#F0F2F6; border-radius:5px; height:9px; width:100%; overflow:hidden; margin-top:4px; }
+  .bar-fill { height:100%; border-radius:5px; }
+  .over { color:var(--red); font-weight:700; }
+  .under { color:var(--green); font-weight:700; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+  .msg.warn { background:#FEF3C7; color:var(--amber); }
+  .msg.err { background:#FEF3C7; color:var(--amber); }
+  .hint { font-size:11px; color:var(--text3); margin-top:10px; line-height:1.6; }
+  .empty { text-align:center; color:var(--text3); padding:16px; font-size:12.5px; }
+  .rev-note { font-size:11.5px; color:var(--text3); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>งบประมาณซ่อมบำรุง</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>งบประมาณซ่อมบำรุงประจำปี (Admin เท่านั้น)</h1>
+  <div class="sub">ตั้งงบประมาณรวมทั้งปีเป็นกรอบคุม + งบรายเดือนย่อย แล้วเทียบกับค่าใช้จ่ายจริงที่คำนวณอัตโนมัติจาก Work Order ที่บันทึกไว้แล้ว (วัสดุ + ค่าแรง ต่อใบงาน) — ไม่ต้องกรอกค่าใช้จ่ายซ้ำ ระบบดึงจากข้อมูล WO ให้เอง ทุกครั้งที่แก้ไขงบจะถูกบันทึกลงประวัติด้านล่างอัตโนมัติ (รองรับกรณีมีการ review งบระหว่างปี)</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="yearbar">
+    <label style="font-size:12px;color:var(--text3);font-weight:600">ปี (พ.ศ.):</label>
+    <select id="yearSel" onchange="renderAll()"></select>
+    <label style="font-size:12px;color:var(--text3);font-weight:600;margin-left:10px">ตั้งงบเท่ากันทุกเดือน:</label>
+    <input type="number" id="quickFill" placeholder="เช่น 50000" style="width:130px">
+    <button class="btn" onclick="quickFillBudget()">ใส่ให้ทุกเดือน</button>
+  </div>
+
+  <div class="panel">
+    <div class="capbar">
+      <div>
+        <label>งบประมาณรวมทั้งปี (กรอบคุม — ตั้งแยกจากผลรวม 12 เดือน)</label>
+        <input type="number" id="annualCap" placeholder="เช่น 600000" style="width:180px">
+      </div>
+      <div style="flex:1;min-width:220px">
+        <label>หมายเหตุการแก้ไขรอบนี้ (ไม่บังคับ — เช่น เหตุผลที่ review งบ)</label>
+        <input type="text" id="revNote" placeholder="เช่น ปรับเพิ่มเพราะราคาอะไหล่ขึ้น" style="width:100%">
+      </div>
+    </div>
+    <div class="hint">
+      งบรวมทั้งปีคือ "กรอบคุม" ที่ตั้งไว้ต่างหาก ไม่ใช่แค่ผลรวมของ 12 เดือนอัตโนมัติ — ถ้าผลรวมงบรายเดือนที่กรอกไว้เกินกรอบนี้ ระบบจะเตือนให้ทราบ (ไม่ได้บังคับห้ามบันทึก เผื่อกรณีจำเป็นต้องเกินจริงๆ)
+    </div>
+  </div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <div class="panel">
+    <h2>📊 งบประมาณ vs ค่าใช้จ่ายจริง รายเดือน</h2>
+    <table>
+      <thead><tr>
+        <th>เดือน</th><th>งบประมาณ (บาท)</th><th>ใช้จริง (บาท)</th><th>ผลต่าง</th><th style="width:160px">สัดส่วนใช้จริง</th>
+      </tr></thead>
+      <tbody id="budgetTbody"></tbody>
+    </table>
+    <div class="hint">
+      ค่าใช้จ่ายจริงคำนวณจากผลรวม <code>วัสดุ + ค่าแรง</code> ของ Work Order ทุกใบที่มีวันที่สร้างอยู่ในเดือน/ปีนั้น (อ่านจากข้อมูลเดียวกับที่กรอกในหน้า Dashboard → แจ้งซ่อม/Work Order) — กดปุ่ม "บันทึกงบ" หลังแก้ตัวเลขงบประมาณแต่ละเดือนเพื่อบันทึกไว้
+    </div>
+    <div style="margin-top:14px"><button class="btn" onclick="saveBudget()">💾 บันทึกงบประมาณ</button></div>
+  </div>
+
+  <div class="panel">
+    <h2>🕘 ประวัติการแก้ไขงบประมาณ (ปีที่เลือก)</h2>
+    <div class="hint" style="margin-top:0;margin-bottom:12px">บันทึกอัตโนมัติทุกครั้งที่กด "บันทึกงบประมาณ" แล้วมีการเปลี่ยนแปลงค่าใดๆ — ใช้ติดตามว่างบถูก review/แก้ไขไปกี่ครั้ง ใครแก้ เมื่อไหร่ เพราะอะไร</div>
+    <table>
+      <thead><tr>
+        <th style="width:150px">วันที่/เวลา</th><th style="width:110px">แก้โดย</th><th>การเปลี่ยนแปลง</th><th>หมายเหตุ</th>
+      </tr></thead>
+      <tbody id="revisionTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const BUDGET_KEY = 'ob9_budget_targets';
+  const WO_KEY = 'ob9_work_orders';
+  const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+  function loadBudgetsRaw() {
+    try { return JSON.parse(localStorage.getItem(BUDGET_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function saveBudgetsRaw(obj) { localStorage.setItem(BUDGET_KEY, JSON.stringify(obj)); }
+  function loadWOs() {
+    try { return JSON.parse(localStorage.getItem(WO_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function getSessionName() {
+    try {
+      const s = JSON.parse(sessionStorage.getItem('ob9_session') || 'null');
+      return (s && s.name) ? s.name : '—';
+    } catch(e) { return '—'; }
+  }
+
+  // ── โครงสร้างข้อมูลใหม่: all[year] = { annualCap, months:{1..12}, revisions:[...] } ──
+  // รองรับข้อมูลเก่า (all[year] = {1:amt,...} ตรงๆ ไม่มี .months) โดย migrate อัตโนมัติตอนโหลด
+  function getYearData(year) {
+    const all = loadBudgetsRaw();
+    let yd = all[year];
+    if (!yd) return { annualCap: 0, months: {}, revisions: [] };
+    if (yd.months === undefined) {
+      // ข้อมูลเก่า — เป็น object เดือนตรงๆ ไม่มี annualCap/revisions
+      yd = { annualCap: 0, months: yd, revisions: [] };
+    }
+    if (!yd.revisions) yd.revisions = [];
+    if (!yd.months) yd.months = {};
+    if (yd.annualCap === undefined) yd.annualCap = 0;
+    return yd;
+  }
+
+  function currentBEYear() { return new Date().getFullYear() + 543; }
+
+  function populateYearSelect() {
+    const sel = document.getElementById('yearSel');
+    const cur = currentBEYear();
+    let html = '';
+    for (let y = cur - 1; y <= cur + 2; y++) {
+      html += `<option value="${y}" ${y===cur?'selected':''}>${y}</option>`;
+    }
+    sel.innerHTML = html;
+  }
+
+  // ── ค่าใช้จ่ายจริงต่อเดือน คำนวณจาก WO จริง (tdcMaterials + tdcLabor) กรองด้วยปี พ.ศ. + เดือนของ createdAt ──
+  function getActualSpendByMonth(beYear) {
+    const wos = loadWOs();
+    const spend = new Array(13).fill(0); // index 1-12
+    const adYear = beYear - 543;
+    wos.forEach(w => {
+      const dt = new Date(w.createdAt || w.date);
+      if (isNaN(dt.getTime())) return;
+      if (dt.getFullYear() !== adYear) return;
+      const cost = (w.tdcMaterials || 0) + (w.tdcLabor || 0) || (w.tdcTotal || 0);
+      spend[dt.getMonth() + 1] += cost;
+    });
+    return spend;
+  }
+
+  // ── มูลค่าเสียโอกาสจากการหยุดผลิต (Production Loss) รวมทั้งปี — แยกจากงบซ่อมบำรุงจริง เพราะเป็นค่าเสีย
+  // โอกาส (opportunity cost) ไม่ใช่เงินสดที่จ่ายออกจริง แต่สำคัญต่อการประเมินผลกระทบโครงการโดยรวม ──
+  function getProductionLossByYear(beYear) {
+    const wos = loadWOs();
+    const adYear = beYear - 543;
+    let total = 0;
+    wos.forEach(w => {
+      const dt = new Date(w.createdAt || w.date);
+      if (isNaN(dt.getTime()) || dt.getFullYear() !== adYear) return;
+      total += (w.productionLossCost || 0);
+    });
+    return total;
+  }
+
+  function fmt(n) {
+    return Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 });
+  }
+
+  function quickFillBudget() {
+    const val = parseFloat(document.getElementById('quickFill').value);
+    if (!val || val <= 0) { showMsg('กรุณากรอกจำนวนเงินให้ถูกต้อง', false); return; }
+    for (let m = 1; m <= 12; m++) {
+      const el = document.getElementById('bud-' + m);
+      if (el) el.value = val;
+    }
+    showMsg('ใส่งบประมาณให้ครบทั้ง 12 เดือนแล้ว — อย่าลืมกด "บันทึกงบประมาณ"', true);
+  }
+
+  function saveBudget() {
+    const year = document.getElementById('yearSel').value;
+    const old = getYearData(year);
+    const newMonths = {};
+    for (let m = 1; m <= 12; m++) {
+      const el = document.getElementById('bud-' + m);
+      newMonths[m] = parseFloat(el.value) || 0;
+    }
+    const newCap = parseFloat(document.getElementById('annualCap').value) || 0;
+    const note = document.getElementById('revNote').value.trim();
+
+    // ── หาความเปลี่ยนแปลงเทียบกับค่าเดิม เพื่อบันทึกลง revision log ──
+    const monthChanges = [];
+    for (let m = 1; m <= 12; m++) {
+      const ov = old.months[m] || 0;
+      const nv = newMonths[m] || 0;
+      if (ov !== nv) monthChanges.push({ m: m, old: ov, new: nv });
+    }
+    const capChanged = (old.annualCap || 0) !== newCap;
+
+    const all = loadBudgetsRaw();
+    const yd = { annualCap: newCap, months: newMonths, revisions: old.revisions || [] };
+
+    if (monthChanges.length > 0 || capChanged) {
+      yd.revisions.unshift({
+        ts: new Date().toISOString(),
+        by: getSessionName(),
+        annualCapOld: old.annualCap || 0,
+        annualCapNew: newCap,
+        capChanged: capChanged,
+        monthChanges: monthChanges,
+        note: note
+      });
+    }
+
+    all[year] = yd;
+    saveBudgetsRaw(all);
+    document.getElementById('revNote').value = '';
+
+    if (monthChanges.length === 0 && !capChanged) {
+      showMsg('ไม่มีการเปลี่ยนแปลงค่าใดๆ เทียบกับที่บันทึกไว้ล่าสุด', true);
+    } else {
+      showMsg('บันทึกงบประมาณปี ' + year + ' เรียบร้อยแล้ว ✅ (บันทึกลงประวัติการแก้ไขด้วย)', true);
+    }
+    renderAll();
+  }
+
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2800);
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatTs(iso) {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' }) +
+        ' ' + d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+    } catch(e) { return iso; }
+  }
+
+  function renderAll() {
+    const year = parseInt(document.getElementById('yearSel').value, 10);
+    const yd = getYearData(year);
+    const budgets = yd.months;
+    const actual = getActualSpendByMonth(year);
+
+    document.getElementById('annualCap').value = yd.annualCap || '';
+
+    let totalBudgetMonths = 0, totalActual = 0;
+    let rows = '';
+    for (let m = 1; m <= 12; m++) {
+      const b = budgets[m] || 0;
+      const a = actual[m] || 0;
+      totalBudgetMonths += b;
+      totalActual += a;
+      const pct = b > 0 ? Math.round((a / b) * 100) : (a > 0 ? 100 : 0);
+      const over = b > 0 && a > b;
+      const diff = b - a;
+      rows += `<tr>
+        <td>${MONTHS_TH[m-1]}</td>
+        <td><input type="number" class="budget-input" id="bud-${m}" value="${b || ''}" placeholder="0"></td>
+        <td>${fmt(a)}</td>
+        <td class="${over ? 'over' : 'under'}">${diff >= 0 ? '+' : ''}${fmt(diff)}</td>
+        <td>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.min(pct,100)}%;background:${over ? 'var(--red)' : 'var(--green)'}"></div></div>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:2px">${pct}%${over ? ' (เกินงบ)' : ''}</div>
+        </td>
+      </tr>`;
+    }
+    document.getElementById('budgetTbody').innerHTML = rows;
+
+    const annualCap = yd.annualCap || 0;
+    const remainVsMonths = totalBudgetMonths - totalActual;
+    const capExceeded = annualCap > 0 && totalBudgetMonths > annualCap;
+    const prodLoss = getProductionLossByYear(year);
+
+    let summaryHtml = `
+      <div class="sbox"><div class="sn" style="color:var(--navy)">฿${fmt(annualCap || totalBudgetMonths)}</div><div class="sl">${annualCap ? 'งบรวมทั้งปี (กรอบคุม)' : 'งบรวมทั้งปี (ยังไม่ตั้งกรอบ — รวมจาก 12 เดือน)'}</div></div>
+      <div class="sbox"><div class="sn" style="color:${capExceeded?'var(--red)':'var(--text1)'}">฿${fmt(totalBudgetMonths)}</div><div class="sl">ผลรวมงบ 12 เดือน${capExceeded?' ⚠️ เกินกรอบ':''}</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--amber)">฿${fmt(totalActual)}</div><div class="sl">ใช้จริงรวม (ค่าซ่อมบำรุง)</div></div>
+      <div class="sbox"><div class="sn" style="color:${remainVsMonths>=0?'var(--green)':'var(--red)'}">฿${fmt(remainVsMonths)}</div><div class="sl">${remainVsMonths>=0?'คงเหลือ (เทียบงบเดือน)':'เกินงบ (เทียบงบเดือน)'}</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--red)">฿${fmt(prodLoss)}</div><div class="sl">มูลค่าเสียโอกาสจากหยุดผลิต (ไม่รวมในงบ)</div></div>
+    `;
+    document.getElementById('summaryBox').innerHTML = summaryHtml;
+
+    if (capExceeded) {
+      showMsg('⚠️ ผลรวมงบรายเดือน (฿' + fmt(totalBudgetMonths) + ') เกินกรอบงบรวมทั้งปีที่ตั้งไว้ (฿' + fmt(annualCap) + ')', false);
+    }
+
+    // ── ตารางประวัติการแก้ไข ──
+    const revBody = document.getElementById('revisionTbody');
+    if (!yd.revisions || yd.revisions.length === 0) {
+      revBody.innerHTML = `<tr><td colspan="4" class="empty">ยังไม่มีประวัติการแก้ไขงบปี ${year}</td></tr>`;
+    } else {
+      let revRows = '';
+      yd.revisions.forEach(rev => {
+        const changeParts = [];
+        if (rev.capChanged) {
+          changeParts.push(`งบรวมทั้งปี: ฿${fmt(rev.annualCapOld)} → ฿${fmt(rev.annualCapNew)}`);
+        }
+        (rev.monthChanges || []).forEach(c => {
+          changeParts.push(`${MONTHS_TH[c.m-1]}: ฿${fmt(c.old)} → ฿${fmt(c.new)}`);
+        });
+        revRows += `<tr>
+          <td>${formatTs(rev.ts)}</td>
+          <td>${escHtml(rev.by)}</td>
+          <td>${changeParts.map(escHtml).join('<br>')}</td>
+          <td class="rev-note">${escHtml(rev.note || '—')}</td>
+        </tr>`;
+      });
+      revBody.innerHTML = revRows;
+    }
+  }
+
+  populateYearSelect();
+  renderAll();
+</script>
+</body>
+</html>

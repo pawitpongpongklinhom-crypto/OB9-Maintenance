@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — ทะเบียนทรัพย์สิน</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; line-height:1.6; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:110px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .asset-card { border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px; }
+  .asset-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px; }
+  .asset-title { font-weight:700; font-size:14px; }
+  .grid-fields { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:10px; }
+  .grid-fields div label { display:block; font-size:10.5px; color:var(--text3); margin-bottom:3px; }
+  .grid-fields input, .grid-fields select { width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; font-family:inherit; }
+  textarea.notes { width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; font-family:inherit; resize:vertical; min-height:40px; }
+
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; }
+  .b-active { background:#DCFCE7; color:var(--green); }
+  .b-maintenance { background:#FEF3C7; color:var(--amber); }
+  .b-retired { background:#F3F4F6; color:var(--text3); }
+
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.secondary { background:#fff; color:var(--navy); border:1.5px solid var(--navy); }
+  .btn.small { padding:5px 10px; font-size:11px; }
+
+  .overhaul-list { margin-top:10px; border-top:1px solid #F0F2F6; padding-top:10px; }
+  .overhaul-item { display:flex; gap:10px; font-size:12px; padding:5px 0; border-bottom:1px dashed #F0F2F6; }
+  .overhaul-item .od { color:var(--text3); flex-shrink:0; width:90px; }
+  .oh-add-row { display:flex; gap:8px; margin-top:8px; }
+  .oh-add-row input[type=date] { width:140px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+  .oh-add-row input[type=text] { flex:1; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+  .empty { text-align:center; color:var(--text3); padding:10px; font-size:11.5px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>ทะเบียนทรัพย์สิน</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>ทะเบียนทรัพย์สิน / Asset Register (Admin เท่านั้น)</h1>
+  <div class="sub">ข้อมูลเครื่องจักรแบบละเอียด (วันซื้อ, ประกัน, Serial Number, ประวัติ Overhaul ใหญ่) — เติมข้อมูลเครื่องจักรที่มีอยู่แล้วในระบบให้อัตโนมัติ แก้ไข/เพิ่มเติมได้เลย</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <div id="assetList"></div>
+
+  <div class="panel">
+    <h2>➕ เพิ่มทรัพย์สินรายการใหม่</h2>
+    <button class="btn secondary" onclick="addNewAsset()">เพิ่มรายการเปล่า (แก้ไขรายละเอียดด้านบนได้หลังเพิ่ม)</button>
+  </div>
+</div>
+
+<script>
+  const ASSET_KEY = 'ob9_asset_register';
+
+  const DEFAULT_ASSETS = [
+    { id:'spreader-a', machineName:'Spreader ARs 2400/52+50 × 19 — A', assetCode:'08-SP0002', manufacturer:'thyssenkrupp Industrial Solutions', model:'ARs 2400/52+50 × 19', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'OB9 Mae Moh Mine Phase 9', status:'active', notes:'', overhaulHistory:[] },
+    { id:'spreader-b', machineName:'Spreader ARs 2400/52+50 × 19 — B', assetCode:'08-SP0003', manufacturer:'thyssenkrupp Industrial Solutions', model:'ARs 2400/52+50 × 19', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'OB9 Mae Moh Mine Phase 9', status:'active', notes:'', overhaulHistory:[] },
+    { id:'tripper-a', machineName:'Tripper Car Ü2200 — A', assetCode:'08-TP00001', manufacturer:'thyssenkrupp Industrial Solutions', model:'Ü2200', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'OB9 Mae Moh Mine Phase 9', status:'active', notes:'', overhaulHistory:[] },
+    { id:'tripper-b', machineName:'Tripper Car Ü2200 — B', assetCode:'08-TP00002', manufacturer:'thyssenkrupp Industrial Solutions', model:'Ü2200', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'OB9 Mae Moh Mine Phase 9', status:'active', notes:'', overhaulHistory:[] },
+    { id:'a11', machineName:'Line Shift A1.1', assetCode:'08-SF00001', manufacturer:'', model:'', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'OB9 Mae Moh Mine Phase 9', status:'active', notes:'', overhaulHistory:[] },
+    { id:'a9', machineName:'Line Shift A9(BWE)', assetCode:'08-SF00002', manufacturer:'', model:'', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'OB9 Mae Moh Mine Phase 9', status:'active', notes:'', overhaulHistory:[] },
+    { id:'b11', machineName:'Line Shift B1.1', assetCode:'08-SF00003', manufacturer:'', model:'', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'OB9 Mae Moh Mine Phase 9', status:'active', notes:'', overhaulHistory:[] },
+  ];
+
+  function loadAssets() {
+    try {
+      let list = JSON.parse(localStorage.getItem(ASSET_KEY) || 'null');
+      if (!list) {
+        list = DEFAULT_ASSETS.map(a => Object.assign({}, a));
+        saveAssets(list);
+      }
+      return list;
+    } catch(e) { return DEFAULT_ASSETS.map(a => Object.assign({}, a)); }
+  }
+  function saveAssets(arr) { localStorage.setItem(ASSET_KEY, JSON.stringify(arr)); }
+  function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  function saveAssetRow(id) {
+    const list = loadAssets();
+    const a = list.find(x => x.id === id);
+    if (!a) return;
+    ['assetCode','manufacturer','model','serialNumber','purchaseDate','warrantyExpiry','location','status'].forEach(f => {
+      const el = document.getElementById(f + '-' + id);
+      if (el) a[f] = el.value;
+    });
+    const notesEl = document.getElementById('notes-' + id);
+    if (notesEl) a.notes = notesEl.value;
+    const nameEl = document.getElementById('name-' + id);
+    if (nameEl) a.machineName = nameEl.value;
+    saveAssets(list);
+    showMsg('บันทึกข้อมูลเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function deleteAsset(id) {
+    if (!confirm('ลบทรัพย์สินรายการนี้ใช่ไหม?')) return;
+    saveAssets(loadAssets().filter(x => x.id !== id));
+    renderAll();
+  }
+
+  function addNewAsset() {
+    const list = loadAssets();
+    const id = 'asset-' + Date.now();
+    list.push({ id, machineName:'ทรัพย์สินใหม่ (แก้ชื่อได้)', assetCode:'', manufacturer:'', model:'', serialNumber:'', purchaseDate:'', warrantyExpiry:'', location:'', status:'active', notes:'', overhaulHistory:[] });
+    saveAssets(list);
+    renderAll();
+  }
+
+  function addOverhaul(id) {
+    const dateEl = document.getElementById('oh-date-' + id);
+    const descEl = document.getElementById('oh-desc-' + id);
+    const desc = descEl.value.trim();
+    if (!desc) { showMsg('กรุณากรอกรายละเอียด Overhaul', false); return; }
+    const list = loadAssets();
+    const a = list.find(x => x.id === id);
+    if (!a) return;
+    if (!a.overhaulHistory) a.overhaulHistory = [];
+    a.overhaulHistory.unshift({ date: dateEl.value || new Date().toISOString().slice(0,10), description: desc });
+    saveAssets(list);
+    showMsg('เพิ่มประวัติ Overhaul เรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function warrantyBadge(expiry) {
+    if (!expiry) return '';
+    const exp = new Date(expiry);
+    const now = new Date();
+    const days = Math.floor((exp - now) / (1000*60*60*24));
+    if (days < 0) return '<span style="color:var(--red);font-size:10.5px;font-weight:700"> (หมดประกันแล้ว)</span>';
+    if (days <= 90) return '<span style="color:var(--amber);font-size:10.5px;font-weight:700"> (ใกล้หมดประกันใน '+days+' วัน)</span>';
+    return '';
+  }
+
+  function renderAll() {
+    const list = loadAssets();
+    const active = list.filter(a => a.status === 'active').length;
+    const maint = list.filter(a => a.status === 'maintenance').length;
+    const retired = list.filter(a => a.status === 'retired').length;
+    document.getElementById('summaryBox').innerHTML = `
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${list.length}</div><div class="sl">ทรัพย์สินทั้งหมด</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--green)">${active}</div><div class="sl">ใช้งานอยู่</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--amber)">${maint}</div><div class="sl">อยู่ระหว่างซ่อมบำรุง</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--text3)">${retired}</div><div class="sl">ปลดระวางแล้ว</div></div>
+    `;
+
+    document.getElementById('assetList').innerHTML = list.map(a => `
+      <div class="asset-card">
+        <div class="asset-head">
+          <input type="text" id="name-${a.id}" value="${escHtml(a.machineName)}" style="font-weight:700;font-size:14px;border:none;border-bottom:1.5px dashed var(--border);padding:2px 0;flex:1;min-width:200px">
+          <span class="badge b-${a.status}">${a.status === 'active' ? 'ใช้งานอยู่' : a.status === 'maintenance' ? 'ซ่อมบำรุงอยู่' : 'ปลดระวางแล้ว'}</span>
+        </div>
+        <div class="grid-fields">
+          <div><label>รหัสทรัพย์สิน</label><input type="text" id="assetCode-${a.id}" value="${escHtml(a.assetCode)}"></div>
+          <div><label>ผู้ผลิต</label><input type="text" id="manufacturer-${a.id}" value="${escHtml(a.manufacturer)}"></div>
+          <div><label>รุ่น/Model</label><input type="text" id="model-${a.id}" value="${escHtml(a.model)}"></div>
+          <div><label>Serial Number</label><input type="text" id="serialNumber-${a.id}" value="${escHtml(a.serialNumber)}"></div>
+          <div><label>วันที่ซื้อ</label><input type="date" id="purchaseDate-${a.id}" value="${escHtml(a.purchaseDate)}"></div>
+          <div><label>วันหมดประกัน</label><input type="date" id="warrantyExpiry-${a.id}" value="${escHtml(a.warrantyExpiry)}">${warrantyBadge(a.warrantyExpiry)}</div>
+          <div><label>ตำแหน่ง/พื้นที่</label><input type="text" id="location-${a.id}" value="${escHtml(a.location)}"></div>
+          <div><label>สถานะ</label>
+            <select id="status-${a.id}">
+              <option value="active" ${a.status==='active'?'selected':''}>ใช้งานอยู่</option>
+              <option value="maintenance" ${a.status==='maintenance'?'selected':''}>ซ่อมบำรุงอยู่</option>
+              <option value="retired" ${a.status==='retired'?'selected':''}>ปลดระวางแล้ว</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:10.5px;color:var(--text3);margin-bottom:3px">หมายเหตุ</label>
+          <textarea class="notes" id="notes-${a.id}">${escHtml(a.notes)}</textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="saveAssetRow('${a.id}')">💾 บันทึก</button>
+          <button class="btn secondary" onclick="deleteAsset('${a.id}')">🗑 ลบทรัพย์สินนี้</button>
+        </div>
+        <div class="overhaul-list">
+          <div style="font-size:11.5px;font-weight:700;color:var(--text3);margin-bottom:6px">🔧 ประวัติ Overhaul / ซ่อมใหญ่</div>
+          ${(a.overhaulHistory && a.overhaulHistory.length > 0)
+            ? a.overhaulHistory.map(o => `<div class="overhaul-item"><span class="od">${escHtml(o.date)}</span><span>${escHtml(o.description)}</span></div>`).join('')
+            : '<div class="empty">ยังไม่มีประวัติ Overhaul</div>'}
+          <div class="oh-add-row">
+            <input type="date" id="oh-date-${a.id}">
+            <input type="text" id="oh-desc-${a.id}" placeholder="รายละเอียด Overhaul เช่น เปลี่ยน Gearbox Travel Drive ทั้งชุด">
+            <button class="btn small" onclick="addOverhaul('${a.id}')">เพิ่ม</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

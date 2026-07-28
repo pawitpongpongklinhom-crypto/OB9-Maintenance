@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — Shift Handover</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1000px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; line-height:1.6; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:110px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .form-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .form-row input[type=text], .form-row input[type=date], .form-row select, .form-row textarea { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+  .form-row textarea { resize:vertical; min-height:50px; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.danger { background:#fff; color:var(--red); border:1.5px solid var(--red); padding:5px 10px; font-size:11.5px; }
+
+  .entry { border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .entry-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .entry-shift { font-weight:700; font-size:13px; }
+  .entry-date { font-size:11.5px; color:var(--text3); }
+  .entry-body { font-size:12.5px; line-height:1.6; }
+  .entry-label { color:var(--text3); font-weight:600; font-size:11px; margin-top:8px; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; }
+  .b-open { background:#FEF3C7; color:var(--amber); }
+  .b-clear { background:#DCFCE7; color:var(--green); }
+  .empty { text-align:center; color:var(--text3); padding:24px; font-size:12.5px; }
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>Shift Handover</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>Shift Handover / Log Book (Admin เท่านั้น)</h1>
+  <div class="sub">บันทึกส่งต่องานระหว่างกะ ให้ช่างกะถัดไปรู้ว่ากะก่อนหน้าเจออะไร ทำอะไรค้างไว้บ้าง</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <div class="panel">
+    <h2>➕ บันทึกส่งต่องาน</h2>
+    <div class="form-row">
+      <div><label>วันที่</label><input type="date" id="fDate"></div>
+      <div><label>กะ</label>
+        <select id="fShift">
+          <option value="กะเช้า">กะเช้า (Day)</option>
+          <option value="กะดึก">กะดึก (Night)</option>
+        </select>
+      </div>
+      <div><label>เครื่องจักร/พื้นที่</label><input type="text" id="fMachine" placeholder="เช่น Spreader A"></div>
+    </div>
+    <div class="form-row">
+      <div><label>ผู้ส่งมอบงาน</label><input type="text" id="fFrom" placeholder="ชื่อช่างกะที่ส่งมอบ"></div>
+      <div><label>ผู้รับมอบงาน</label><input type="text" id="fTo" placeholder="ชื่อช่างกะที่รับมอบ"></div>
+      <div><label>สถานะงานค้าง</label>
+        <select id="fStatus">
+          <option value="open">ยังมีงานค้างต้องตามต่อ</option>
+          <option value="clear">ไม่มีงานค้าง</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr">
+      <div><label>สรุปเหตุการณ์ระหว่างกะ</label><textarea id="fSummary" placeholder="สิ่งที่เกิดขึ้นระหว่างกะนี้ เช่น เครื่องหยุดกะทันหัน, พบเสียงผิดปกติ"></textarea></div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr">
+      <div><label>งานที่ยังค้างอยู่ / ต้องตามต่อ</label><textarea id="fIssues" placeholder="รายละเอียดงานที่ยังไม่เสร็จ ต้องให้กะถัดไปตามต่อ"></textarea></div>
+    </div>
+    <button class="btn" onclick="addEntry()">บันทึก</button>
+  </div>
+
+  <div class="panel">
+    <h2>📖 บันทึกที่ผ่านมา</h2>
+    <div id="entryList"></div>
+  </div>
+</div>
+
+<script>
+  const HANDOVER_KEY = 'ob9_shift_handover';
+
+  function loadEntries() { try { return JSON.parse(localStorage.getItem(HANDOVER_KEY) || '[]'); } catch(e) { return []; } }
+  function saveEntries(arr) { localStorage.setItem(HANDOVER_KEY, JSON.stringify(arr)); }
+  function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function todayStr() { return new Date().toISOString().slice(0,10); }
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  function addEntry() {
+    const summary = document.getElementById('fSummary').value.trim();
+    if (!summary) { showMsg('กรุณากรอกสรุปเหตุการณ์ระหว่างกะ', false); return; }
+    const list = loadEntries();
+    list.unshift({
+      id: 'SH-' + Date.now(),
+      date: document.getElementById('fDate').value || todayStr(),
+      shift: document.getElementById('fShift').value,
+      machine: document.getElementById('fMachine').value.trim(),
+      from: document.getElementById('fFrom').value.trim(),
+      to: document.getElementById('fTo').value.trim(),
+      status: document.getElementById('fStatus').value,
+      summary: summary,
+      issues: document.getElementById('fIssues').value.trim(),
+      createdAt: new Date().toISOString()
+    });
+    saveEntries(list);
+    ['fMachine','fFrom','fTo','fSummary','fIssues'].forEach(id => document.getElementById(id).value = '');
+    showMsg('บันทึกส่งต่องานเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function toggleStatus(id) {
+    const list = loadEntries();
+    const it = list.find(x => x.id === id);
+    if (!it) return;
+    it.status = it.status === 'open' ? 'clear' : 'open';
+    saveEntries(list);
+    renderAll();
+  }
+
+  function deleteEntry(id) {
+    if (!confirm('ลบบันทึกนี้ใช่ไหม?')) return;
+    saveEntries(loadEntries().filter(x => x.id !== id));
+    renderAll();
+  }
+
+  function renderAll() {
+    const list = loadEntries();
+    const openCount = list.filter(e => e.status === 'open').length;
+    document.getElementById('summaryBox').innerHTML = `
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${list.length}</div><div class="sl">บันทึกทั้งหมด</div></div>
+      <div class="sbox"><div class="sn" style="color:${openCount>0?'var(--amber)':'var(--green)'}">${openCount}</div><div class="sl">ยังมีงานค้าง</div></div>
+    `;
+
+    const el = document.getElementById('entryList');
+    if (list.length === 0) { el.innerHTML = `<div class="empty">ยังไม่มีบันทึก</div>`; return; }
+    el.innerHTML = list.map(e => `
+      <div class="entry">
+        <div class="entry-head">
+          <div><span class="entry-shift">${escHtml(e.shift)}</span> <span class="entry-date">· ${escHtml(e.date)}${e.machine ? ' · ' + escHtml(e.machine) : ''}</span></div>
+          <span class="badge b-${e.status}" style="cursor:pointer" onclick="toggleStatus('${e.id}')" title="กดเพื่อสลับสถานะ">${e.status === 'open' ? 'ยังมีงานค้าง' : 'ไม่มีงานค้าง'}</span>
+        </div>
+        <div class="entry-body">
+          <div style="color:var(--text3);font-size:11.5px">ส่งมอบโดย ${escHtml(e.from || '—')} → รับมอบโดย ${escHtml(e.to || '—')}</div>
+          <div class="entry-label">สรุปเหตุการณ์</div>
+          <div>${escHtml(e.summary)}</div>
+          ${e.issues ? `<div class="entry-label">งานที่ยังค้างอยู่</div><div>${escHtml(e.issues)}</div>` : ''}
+        </div>
+        <div style="text-align:right;margin-top:10px"><button class="btn danger" onclick="deleteEntry('${e.id}')">ลบ</button></div>
+      </div>
+    `).join('');
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

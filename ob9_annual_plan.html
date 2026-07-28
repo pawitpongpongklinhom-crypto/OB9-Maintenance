@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — แผนงานประจำปี</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:20px; }
+
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
+
+  .yearbar { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .yearbar select { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:#fff; }
+  .summary { display:flex; gap:12px; flex-wrap:wrap; }
+  .sbox { flex:1; min-width:110px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:20px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .form-row { display:grid; grid-template-columns: 1.6fr 1.3fr .9fr 1fr 1fr auto; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
+  .form-row input[type=text], .form-row select { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
+  .btn { background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#14488a; }
+  .btn.secondary { background:#fff; color:var(--navy); border:1.5px solid var(--navy); }
+  .btn.danger { background:#fff; color:var(--red); border:1.5px solid var(--red); padding:5px 10px; font-size:11.5px; }
+
+  .month-block { border:1px solid var(--border); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .month-head { background:#F7F9FC; padding:10px 14px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  .month-head .mcount { font-size:11px; color:var(--text3); font-weight:500; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--text3); font-weight:600; padding:8px 12px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  td { padding:9px 12px; border-bottom:1px solid #F0F2F6; }
+  tr:hover td { background:#FAFBFD; }
+  .empty { text-align:center; color:var(--text3); padding:16px; font-size:12.5px; }
+
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; }
+  .badge.planned { background:#EEF4FF; color:var(--navy); }
+  .badge.progress { background:#FEF3C7; color:var(--amber); }
+  .badge.done { background:#DCFCE7; color:var(--green); }
+  .badge.delayed { background:#FEE2E2; color:var(--red); }
+  .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .msg.ok { background:#DCFCE7; color:var(--green); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>แผนงานประจำปี</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>แผนงานบำรุงรักษาประจำปี (Admin เท่านั้น)</h1>
+  <div class="sub">วางแผน PM ใหญ่ / Overhaul / ตรวจสอบพิเศษ ล่วงหน้าทั้งปี แยกตามเดือนและเครื่องจักร — ไม่เกี่ยวกับ PM Checklist รายวันที่มีอยู่แล้ว</div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <div class="yearbar">
+    <label style="font-size:12px;color:var(--text3);font-weight:600">ปี (พ.ศ.):</label>
+    <select id="yearSel" onchange="renderAll()"></select>
+  </div>
+
+  <div class="summary" id="summaryBox" style="margin-bottom:18px"></div>
+
+  <!-- ADD FORM -->
+  <div class="panel">
+    <h2>➕ เพิ่มแผนงาน</h2>
+    <div class="form-row">
+      <div>
+        <label>ชื่องาน</label>
+        <input type="text" id="fTitle" placeholder="เช่น Overhaul Gearbox Travel Drive">
+      </div>
+      <div>
+        <label>เครื่องจักร</label>
+        <select id="fMachine">
+          <option value="Spreader A">Spreader A</option>
+          <option value="Spreader B">Spreader B</option>
+          <option value="Tripper Car Ü2200">Tripper Car Ü2200</option>
+          <option value="Line Shift A1.1">Line Shift A1.1</option>
+          <option value="Line Shift A9(BWE)">Line Shift A9(BWE)</option>
+          <option value="Line Shift B1.1">Line Shift B1.1</option>
+          <option value="ทั้งระบบ">ทั้งระบบ</option>
+        </select>
+      </div>
+      <div>
+        <label>เดือน</label>
+        <select id="fMonth"></select>
+      </div>
+      <div>
+        <label>ประเภทงาน</label>
+        <select id="fType">
+          <option value="PM ใหญ่">PM ใหญ่</option>
+          <option value="Overhaul">Overhaul</option>
+          <option value="ตรวจสอบพิเศษ">ตรวจสอบพิเศษ</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+      </div>
+      <div>
+        <label>สถานะ</label>
+        <select id="fStatus">
+          <option value="planned">วางแผนไว้</option>
+          <option value="progress">กำลังดำเนินการ</option>
+          <option value="done">เสร็จแล้ว</option>
+          <option value="delayed">เลื่อนออกไป</option>
+        </select>
+      </div>
+      <button class="btn" onclick="addPlan()">เพิ่ม</button>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr">
+      <div>
+        <label>หมายเหตุ (ไม่บังคับ)</label>
+        <input type="text" id="fNotes" placeholder="รายละเอียดเพิ่มเติม เช่น ผู้รับผิดชอบ, วัสดุที่ต้องเตรียม">
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST BY MONTH -->
+  <div id="monthList"></div>
+</div>
+
+<script>
+  const PLAN_KEY = 'ob9_annual_plan';
+  const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const STATUS_LABEL = { planned:'วางแผนไว้', progress:'กำลังดำเนินการ', done:'เสร็จแล้ว', delayed:'เลื่อนออกไป' };
+
+  function loadPlans() {
+    try { return JSON.parse(localStorage.getItem(PLAN_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function savePlans(arr) { localStorage.setItem(PLAN_KEY, JSON.stringify(arr)); }
+
+  function currentBEYear() {
+    return new Date().getFullYear() + 543;
+  }
+
+  function populateYearSelect() {
+    const sel = document.getElementById('yearSel');
+    const cur = currentBEYear();
+    let html = '';
+    for (let y = cur - 1; y <= cur + 2; y++) {
+      html += `<option value="${y}" ${y===cur?'selected':''}>${y}</option>`;
+    }
+    sel.innerHTML = html;
+  }
+  function populateMonthSelect() {
+    const sel = document.getElementById('fMonth');
+    sel.innerHTML = MONTHS_TH.map((m,i) => `<option value="${i+1}">${m}</option>`).join('');
+  }
+
+  function addPlan() {
+    const title = document.getElementById('fTitle').value.trim();
+    if (!title) { showMsg('กรุณากรอกชื่องาน', false); return; }
+    const plans = loadPlans();
+    plans.push({
+      id: 'PLAN-' + Date.now(),
+      title: title,
+      machine: document.getElementById('fMachine').value,
+      month: parseInt(document.getElementById('fMonth').value, 10),
+      year: parseInt(document.getElementById('yearSel').value, 10),
+      type: document.getElementById('fType').value,
+      status: document.getElementById('fStatus').value,
+      notes: document.getElementById('fNotes').value.trim(),
+      createdAt: new Date().toISOString()
+    });
+    savePlans(plans);
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fNotes').value = '';
+    showMsg('เพิ่มแผนงานเรียบร้อยแล้ว ✅', true);
+    renderAll();
+  }
+
+  function deletePlan(id) {
+    if (!confirm('ลบแผนงานนี้ใช่ไหม?')) return;
+    savePlans(loadPlans().filter(p => p.id !== id));
+    renderAll();
+  }
+
+  function cyclePlanStatus(id) {
+    const order = ['planned','progress','done','delayed'];
+    const plans = loadPlans();
+    const p = plans.find(x => x.id === id);
+    if (!p) return;
+    const idx = order.indexOf(p.status);
+    p.status = order[(idx + 1) % order.length];
+    savePlans(plans);
+    renderAll();
+  }
+
+  function showMsg(text, ok) {
+    const el = document.getElementById('msgBox');
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  function renderAll() {
+    const year = parseInt(document.getElementById('yearSel').value, 10);
+    const plans = loadPlans().filter(p => p.year === year);
+
+    // summary
+    const total = plans.length;
+    const done = plans.filter(p => p.status === 'done').length;
+    const progress = plans.filter(p => p.status === 'progress').length;
+    const delayed = plans.filter(p => p.status === 'delayed').length;
+    document.getElementById('summaryBox').innerHTML = `
+      <div class="sbox"><div class="sn" style="color:var(--navy)">${total}</div><div class="sl">แผนงานทั้งหมด (ปี ${year})</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--green)">${done}</div><div class="sl">เสร็จแล้ว</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--amber)">${progress}</div><div class="sl">กำลังดำเนินการ</div></div>
+      <div class="sbox"><div class="sn" style="color:var(--red)">${delayed}</div><div class="sl">เลื่อนออกไป</div></div>
+    `;
+
+    // group by month
+    let html = '';
+    for (let m = 1; m <= 12; m++) {
+      const items = plans.filter(p => p.month === m);
+      html += `<div class="month-block">
+        <div class="month-head">
+          <span>${MONTHS_TH[m-1]} ${year}</span>
+          <span class="mcount">${items.length} รายการ</span>
+        </div>`;
+      if (items.length === 0) {
+        html += `<div class="empty">ยังไม่มีแผนงานในเดือนนี้</div>`;
+      } else {
+        html += `<table><thead><tr>
+          <th>ชื่องาน</th><th>เครื่องจักร</th><th>ประเภท</th><th>สถานะ</th><th>หมายเหตุ</th><th></th>
+        </tr></thead><tbody>`;
+        items.forEach(p => {
+          html += `<tr>
+            <td>${escHtml(p.title)}</td>
+            <td>${escHtml(p.machine)}</td>
+            <td>${escHtml(p.type)}</td>
+            <td><span class="badge ${p.status}" style="cursor:pointer" onclick="cyclePlanStatus('${p.id}')" title="กดเพื่อเปลี่ยนสถานะ">${STATUS_LABEL[p.status]}</span></td>
+            <td style="color:var(--text3)">${escHtml(p.notes || '—')}</td>
+            <td><button class="btn danger" onclick="deletePlan('${p.id}')">ลบ</button></td>
+          </tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+      html += `</div>`;
+    }
+    document.getElementById('monthList').innerHTML = html;
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  populateYearSelect();
+  populateMonthSelect();
+  renderAll();
+</script>
+</body>
+</html>

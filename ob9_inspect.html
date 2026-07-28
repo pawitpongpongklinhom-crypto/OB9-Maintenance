@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: ต้อง login ผ่าน Portal ก่อนเสมอ ──
+// หน้านี้ (Daily Inspection) จำกัดเฉพาะ Admin หรือพนักงานที่ Admin ให้สิทธิ์ Inspection เท่านั้น
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=inspection'); return; }
+    if(s.isSuperAdmin) return; // Admin เข้าได้ทุกส่วนเสมอ
+    if(s.type==='field' && !(s.permissions && s.permissions.inspection)){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>OB9 — Daily Inspection</title>
+<style>
+:root{
+  --bg:#f0f2f5;--card:#fff;--border:#e5e7eb;--text:#111827;--text2:#6b7280;--text3:#9ca3af;
+  --green:#059669;--green-bg:#d1fae5;--green-dk:#065f46;
+  --amber:#d97706;--amber-bg:#fef3c7;--amber-dk:#92400e;
+  --red:#dc2626;--red-bg:#fee2e2;--red-dk:#991b1b;
+  --blue:#1e40af;--blue-mid:#3b82f6;--blue-bg:#dbeafe;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#111827;--card:#1f2937;--border:#374151;--text:#f9fafb;--text2:#9ca3af;--text3:#6b7280;}
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+select,input,textarea{font-family:inherit;font-size:14px;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:100%;outline:none;transition:border-color .2s}
+select:focus,input:focus,textarea:focus{border-color:var(--blue-mid)}
+textarea{resize:vertical;min-height:70px}
+
+/* ซ่อนตัวเลขในกล่องปฏิทิน (input[type=date]) ที่โชว์ตามรูปแบบเครื่อง/เบราว์เซอร์ (เช่น MM/DD/YYYY แบบสหรัฐฯ)
+   ซึ่งแก้ให้เป็นไทยตรงๆ ไม่ได้ — เหลือไว้แค่ไอคอนปฏิทินให้กดเลือกวันที่ ส่วนวันที่จริงให้ดูจากข้อความไทยใต้ช่องแทน */
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field { color: transparent; }
+input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
+
+/* HEADER */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.header-inner{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:10px;height:54px}
+.logo{width:32px;height:32px;background:#059669;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.header-title h1{font-size:15px;font-weight:600}
+.header-title p{font-size:11px;color:var(--text2)}
+.header-nav{margin-left:auto;display:flex;gap:5px}
+.nav-btn{font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer}
+.nav-btn.active{background:var(--green-bg);border-color:var(--green);color:var(--green-dk)}
+
+/* MAIN */
+.main{max-width:680px;margin:0 auto;padding:16px}
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-body{padding:16px}
+
+/* FORM GRID */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:480px){.form-row{grid-template-columns:1fr}}
+.form-group{margin-bottom:10px}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:5px;display:block;font-weight:500}
+
+/* CHECKLIST */
+.check-item{border-bottom:1px solid var(--border);padding:12px 16px}
+.check-item:last-child{border-bottom:none}
+.check-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.check-num{width:24px;height:24px;border-radius:50%;background:var(--bg);border:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.check-name{flex:1;font-size:13px;font-weight:500}
+.check-cat{font-size:10px;color:var(--text3);padding:1px 6px;background:var(--bg);border-radius:20px;flex-shrink:0}
+.btn-group{display:flex;gap:6px;flex-wrap:wrap}
+.status-btn{flex:1;min-width:80px;padding:8px 6px;border-radius:8px;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.status-btn:active{transform:scale(.97)}
+.status-btn.sel-ok{background:var(--green-bg);border-color:var(--green);color:var(--green-dk)}
+.status-btn.sel-warn{background:var(--amber-bg);border-color:var(--amber);color:var(--amber-dk)}
+.status-btn.sel-crit{background:var(--red-bg);border-color:var(--red);color:var(--red-dk)}
+.check-note{display:none;margin-top:8px}
+.check-note.visible{display:block}
+.check-note input,.check-note textarea{font-size:12px;padding:7px 10px;width:100%;font-family:inherit;border:1.5px solid var(--border);border-radius:8px;resize:vertical;min-height:54px;line-height:1.5}
+.check-note textarea:focus{border-color:var(--navy,#1A5FA8);outline:none}
+
+/* PROGRESS BAR */
+.progress-bar{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .4s}
+
+/* SUBMIT */
+.submit-btn{width:100%;padding:14px;border-radius:10px;border:none;background:#059669;color:#fff;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+.submit-btn:hover{background:#047857}
+.submit-btn:active{background:#065f46;transform:scale(.98)}
+.submit-btn:disabled{background:var(--border);color:var(--text3);cursor:not-allowed;transform:none}
+
+/* HISTORY */
+.hist-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}
+.hist-row:last-child{border-bottom:none}
+.hist-meta{color:var(--text2)}
+.hist-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.h-green{background:var(--green-bg);color:var(--green-dk)}
+.h-amber{background:var(--amber-bg);color:var(--amber-dk)}
+.h-red{background:var(--red-bg);color:var(--red-dk)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;transition:transform .3s;z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* SUMMARY CARD */
+.summary-counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.sum-badge{flex:1;min-width:70px;padding:8px;border-radius:8px;text-align:center;font-size:11px;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">✅</div>
+    <div class="header-title">
+      <h1>Daily Inspection</h1>
+      <p id="header-date">—</p>
+    </div>
+    <div class="header-nav">
+      <button class="nav-btn" onclick="openP('ob9_executive.html')">📊</button>
+      <button class="nav-btn active">✅</button>
+      <button class="nav-btn" onclick="openP('ob9_wo_form.html')">🔧</button>
+      <button class="nav-btn" onclick="openP('ob9_dashboard.html')">⚙️</button>
+      <button class="nav-btn" onclick="location.href='ob9_home.html'" title="กลับหน้าเลือกระบบ">🏠</button>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- FORM INFO -->
+  <div class="card">
+    <div class="card-header">📋 ข้อมูลการตรวจ</div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">เครื่องจักร *</label>
+          <select id="sel-machine" onchange="onMachineChange()">
+            <option value="">-- เลือกเครื่องจักร --</option>
+            <option value="Spreader">Spreader</option>
+            <option value="Tripper">Tripper</option>
+            <option value="Line Shift">Line Shift</option>
+            <option value="Conveyor Bridge">Conveyor Bridge</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หน่วยเครื่อง (Unit)</label>
+          <select id="sel-unit" disabled>
+            <option value="">-- เลือกเครื่องก่อน --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">กะ *</label>
+          <select id="sel-shift">
+            <option value="Day-06">กะเช้า 06:00–14:00</option>
+            <option value="Eve-14">กะบ่าย 14:00–22:00</option>
+            <option value="Night-22">กะดึก 22:00–06:00</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ชื่อผู้ตรวจ *</label>
+          <input type="text" id="inp-inspector" placeholder="ชื่อ-นามสกุล" value="">
+        </div>
+        <div class="form-group">
+          <label class="form-label">วันที่</label>
+          <input type="date" id="inp-date" oninput="updateDateThaiPreview('inp-date','inp-date-thai')">
+          <div id="inp-date-thai" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
+        </div>
+      </div>
+      <!-- Progress -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <span style="font-size:11px;color:var(--text3)">ความคืบหน้า: <span id="prog-txt">0/0</span></span>
+        <span style="font-size:11px;color:var(--text3)" id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="card" id="checklist-card">
+    <div class="card-header" id="checklist-header">
+      🔍 รายการตรวจ
+      <span style="margin-left:auto;font-size:11px;color:var(--text3)">เลือกเครื่องจักรก่อน</span>
+    </div>
+    <div id="checklist-body">
+      <div style="padding:40px;text-align:center;color:var(--text3)">
+        <div style="font-size:36px;margin-bottom:8px">🔍</div>
+        กรุณาเลือกเครื่องจักรก่อน
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="card">
+    <div class="card-header">📝 หมายเหตุเพิ่มเติม</div>
+    <div class="card-body">
+      <textarea id="inp-notes" placeholder="สิ่งที่พบ / ข้อเสนอแนะ / ข้อมูลเพิ่มเติม..."></textarea>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <button class="submit-btn" id="submit-btn" onclick="submitForm()">
+    <span>💾</span> บันทึกผลการตรวจ
+  </button>
+
+  <!-- HISTORY -->
+  <div class="card" style="margin-top:14px">
+    <div class="card-header">📅 ประวัติการตรวจ (7 วันล่าสุด)</div>
+    <div id="history-body" style="padding:0 16px">
+      <div style="padding:24px 0;text-align:center;color:var(--text3);font-size:12px">ยังไม่มีประวัติ</div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- INSPECTION DETAIL MODAL -->
+<div id="inspDetailModal" onclick="if(event.target===this) closeInspDetail();"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card);border-radius:var(--radius);width:520px;max-width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;position:sticky;top:0;background:var(--card);z-index:1">
+      <span style="font-size:14px;font-weight:700">📋 รายละเอียดการตรวจเช็ค</span>
+      <button onclick="closeInspDetail()" style="margin-left:auto;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="inspDetailBody" style="padding:16px 18px"></div>
+  </div>
+</div>
+
+<script>
+// ── CHECKLIST DATA ─────────────────────────────────────────────────────────
+const CHECKLISTS = {
+  Spreader: [
+    {id:'s1',cat:'Hydraulic',name:'ความดันระบบ Hydraulic (bar)'},
+    {id:'s2',cat:'Hydraulic',name:'ระดับน้ำมัน Hydraulic'},
+    {id:'s3',cat:'Hydraulic',name:'การรั่วซึมของน้ำมัน'},
+    {id:'s4',cat:'Lubrication',name:'ระดับ Grease / น้ำมันหล่อลื่น'},
+    {id:'s5',cat:'Lubrication',name:'ระบบ Auto-lube ทำงานปกติ'},
+    {id:'s6',cat:'Drive',name:'เสียงผิดปกติ Travel drive'},
+    {id:'s7',cat:'Drive',name:'อุณหภูมิ Travel drive motor'},
+    {id:'s8',cat:'Drive',name:'Slewing drive — ตรวจสภาพ'},
+    {id:'s9',cat:'Belt',name:'Belt scraper — สภาพใบขูด'},
+    {id:'s10',cat:'Belt',name:'Belt alignment — การตึงสายพาน'},
+    {id:'s11',cat:'Mechanical',name:'Support wheel — การสึกหรอ'},
+    {id:'s12',cat:'Mechanical',name:'Track wheel — สภาพ'},
+    {id:'s13',cat:'Mechanical',name:'Crawler track — ความตึง'},
+    {id:'s14',cat:'Electrical',name:'ระบบไฟฟ้า — สัญญาณแจ้งเตือน'},
+    {id:'s15',cat:'General',name:'ความสะอาดโดยรวมของเครื่อง'},
+    {id:'s16',cat:'General',name:'อื่นๆ / เหตุการณ์ไม่คาดคิด (ถ้ามี) — ระบุรายละเอียด'},
+  ],
+  Tripper: [
+    {id:'t1',cat:'Hydraulic',name:'ความดันระบบ Hydraulic'},
+    {id:'t2',cat:'Hydraulic',name:'ระดับน้ำมัน Hydraulic'},
+    {id:'t3',cat:'Hydraulic',name:'Hydraulic power unit — สภาพ'},
+    {id:'t4',cat:'Drive',name:'Conveyor drive — เสียงผิดปกติ'},
+    {id:'t5',cat:'Drive',name:'Drive motor — อุณหภูมิ'},
+    {id:'t6',cat:'Belt',name:'Belt scrapers — สภาพใบขูด'},
+    {id:'t7',cat:'Belt',name:'Belt alignment — การตึง'},
+    {id:'t8',cat:'Mechanical',name:'Pulleys — สภาพ Bearing'},
+    {id:'t9',cat:'Mechanical',name:'Take-up station — ความตึงสายพาน'},
+    {id:'t10',cat:'Mechanical',name:'Support car — การเคลื่อนที่'},
+    {id:'t11',cat:'Track',name:'Crawler track assembly — สภาพ'},
+    {id:'t12',cat:'Lubrication',name:'ระบบหล่อลื่น — ระดับ Grease'},
+    {id:'t13',cat:'Electrical',name:'สัญญาณไฟแจ้งเตือน / Alarm'},
+    {id:'t14',cat:'General',name:'ความสะอาดโดยรวม'},
+    {id:'t15',cat:'General',name:'อื่นๆ / เหตุการณ์ไม่คาดคิด (ถ้ามี) — ระบุรายละเอียด'},
+  ],
+  'Conveyor Bridge': [
+    {id:'c1',cat:'Belt',name:'Conveyor belt — สภาพทั่วไป'},
+    {id:'c2',cat:'Belt',name:'Belt alignment — การเบี่ยงเบน'},
+    {id:'c3',cat:'Drive',name:'Conveyor drive — เสียงผิดปกติ'},
+    {id:'c4',cat:'Mechanical',name:'Idler frames — สภาพ Roller'},
+    {id:'c5',cat:'Mechanical',name:'Pulleys — Bearing ปกติ'},
+    {id:'c6',cat:'Lubrication',name:'ระบบหล่อลื่น — ตรวจสอบ'},
+    {id:'c7',cat:'Structure',name:'โครงสร้าง Bridge — ตรวจสอบ'},
+    {id:'c8',cat:'Electrical',name:'ระบบไฟฟ้า / สัญญาณ'},
+    {id:'c9',cat:'General',name:'อื่นๆ / เหตุการณ์ไม่คาดคิด (ถ้ามี) — ระบุรายละเอียด'},
+  ],
+  'Line Shift': [
+    {id:'ls1',cat:'Structure',name:'Table Shift — ตรวจสภาพ'},
+    {id:'ls2',cat:'Structure',name:'Stinger — ตรวจสภาพ'},
+    {id:'ls3',cat:'Structure',name:'Basing side — ตรวจสภาพ'},
+    {id:'ls4',cat:'Structure',name:'Basing coss — ตรวจสภาพ'},
+    {id:'ls5',cat:'Mechanical',name:'Sleeper — ตรวจสภาพ'},
+    {id:'ls6',cat:'Mechanical',name:'Fish plate — ตรวจสภาพ/รอยแตก'},
+    {id:'ls7',cat:'Mechanical',name:'Bolt Fish plate — ความแน่นของน็อต'},
+    {id:'ls8',cat:'Mechanical',name:'Rail clamp — สภาพและความแน่น'},
+    {id:'ls9',cat:'Mechanical',name:'Bolt Rail clamp — ความแน่นของน็อต'},
+    {id:'ls10',cat:'Rail',name:'Rail — ตรวจสภาพราง/การสึกหรอ'},
+    {id:'ls11',cat:'General',name:'ความสะอาดโดยรวมของเครื่อง'},
+    {id:'ls12',cat:'General',name:'อื่นๆ / เหตุการณ์ไม่คาดคิด (ถ้ามี) — ระบุรายละเอียด'},
+  ],
+};
+
+// ── POSITION PICKER DATA (ported from ob9_wo_form.html — ระบบ/ชิ้นส่วน + รูปไดอะแกรม) ──
+const POS_MACHINE_MAP = {
+  'Spreader': 'Spreader ARs2400',
+  'Tripper':  'Tripper Car Ü2200',
+  'Line Shift': 'Line Shift',
+  'Conveyor Bridge': 'Spreader ARs2400',
+};
+// สำหรับ IMG_MAP ใช้ prefix แบบสั้น (Conveyor Bridge ใช้รูปร่วมกับ Spreader)
+function posImgPrefix(machine){ return machine==='Conveyor Bridge' ? 'Spreader' : machine; }
+
+// ── UNIT_LINK_MAP: แปลง (เครื่องจักรแบบสั้น + หน่วยเครื่อง "A"/"B"/"A9(BWE)") →
+// machine/unit/unitCode ให้ตรงกับที่ ob9_dashboard.html คาดหวัง (เช่น "Spreader.A", "Tripper car.A", "A9")
+// เดิม WO ที่สร้างจาก Daily Inspection บันทึก unit เป็น "A"/"B" ตรงๆ ไม่ตรงกับ Dashboard เลย
+const UNIT_LINK_MAP = {
+  'Spreader|A':         {machine:'Spreader ARs2400',   unit:'Spreader.A',    unitCode:'08-SP0002'},
+  'Spreader|B':         {machine:'Spreader ARs2400',   unit:'Spreader.B',    unitCode:'08-SP0003'},
+  'Tripper|A':          {machine:'Tripper Car Ü2200',  unit:'Tripper car.A', unitCode:'08-TP00001'},
+  'Tripper|B':          {machine:'Tripper Car Ü2200',  unit:'Tripper car.B', unitCode:'08-TP00002'},
+  'Line Shift|A1.1':    {machine:'Line Shift A1.1',    unit:'A1.1', unitCode:'08-SF00001'},
+  'Line Shift|A9(BWE)': {machine:'Line Shift A9(BWE)', unit:'A9',   unitCode:'08-SF00002'},
+  'Line Shift|B1.1':    {machine:'Line Shift B1.1',    unit:'B1.1', unitCode:'08-SF0003'},
+};
+function resolveUnitLink(friendlyMachine, rawUnit){
+  const hit = UNIT_LINK_MAP[friendlyMachine+'|'+rawUnit];
+  if(hit) return hit;
+  const fallbackMachine = friendlyMachine==='Conveyor Bridge' ? 'Spreader ARs2400' : friendlyMachine;
+  return {machine: fallbackMachine, unit: rawUnit||'', unitCode: rawUnit||''};
+}
+
+// ── Google Sheets sync (multi-user) — เหมือนกับ ob9_wo_form.html / ob9_executive.html ──
+const SYNC_KEY_INSPECT = 'ob9_sync_settings';
+const DEFAULT_SYNC_URL_INSPECT = 'https://script.google.com/macros/s/AKfycbyBuEG2maSWE0Y_lQK9I7ikTw7RLXkdsS4INX0kMgj5QMuvq_2EcJVEwxu0pbnqs9J8/exec';
+const DEFAULT_SYNC_TOKEN_INSPECT = 'ob9maemoh2569';
+// 26 ก.ค. 69: deployment เดิม (AKfycbwTh_ehdzHW...) ถูกแทนที่ด้วย deployment ใหม่ — auto-migrate
+// เครื่องที่เคยตั้งค่าไว้ก่อนหน้านี้ให้ครั้งเดียวตอนโหลดหน้า
+const OLD_SYNC_URL_INSPECT = 'https://script.google.com/macros/s/AKfycbwTh_ehdzHW_fgL8VDoEkNDCzYh7Behd7soxf0x4gRwKGvBlDJeBxkt_FEIOaNDfaV6/exec';
+function getInspectSyncSettings(){
+  try{
+    let s = JSON.parse(localStorage.getItem(SYNC_KEY_INSPECT)||'{}');
+    if(!s.url){ s = {url:DEFAULT_SYNC_URL_INSPECT, token:DEFAULT_SYNC_TOKEN_INSPECT}; localStorage.setItem(SYNC_KEY_INSPECT, JSON.stringify(s)); }
+    else if(s.url === OLD_SYNC_URL_INSPECT){ s.url = DEFAULT_SYNC_URL_INSPECT; localStorage.setItem(SYNC_KEY_INSPECT, JSON.stringify(s)); }
+    return s;
+  }catch(e){ return {url:DEFAULT_SYNC_URL_INSPECT, token:DEFAULT_SYNC_TOKEN_INSPECT}; }
+}
+function loadWOsForInspect(){
+  try{ return JSON.parse(localStorage.getItem('ob9_work_orders')||'[]'); }catch(e){ return []; }
+}
+// ดึง WO จาก Google Sheet มา merge เข้าเครื่อง ก่อนจะสร้าง WO ใหม่จากผลตรวจ — กัน WO ของเครื่องอื่น
+// ที่ sync เข้ามาไม่ทัน หายไปตอนเราเขียนทับ list (blind push ของ createWOsFromCritItems)
+function pullWOsFromSheetForInspect(cb){
+  const s = getInspectSyncSettings();
+  if(!s.url){ if(cb) cb(); return; }
+  const url = s.url + '?token=' + encodeURIComponent(s.token||'');
+  fetch(url, {mode:'cors'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.ok && d.workOrders){
+        const local = loadWOsForInspect();
+        const byId = {};
+        d.workOrders.forEach(w=>{ if(w && w.id) byId[w.id]=w; });
+        // merge ระดับฟิลด์: ของเครื่อง (local) ชนะ ป้องกันฟิลด์ที่ Sheet ไม่ได้เก็บ (part/section ฯลฯ) หาย
+        local.forEach(w=>{ if(w && w.id) byId[w.id] = Object.assign({}, byId[w.id]||{}, w); });
+        localStorage.setItem('ob9_work_orders', JSON.stringify(Object.keys(byId).map(k=>byId[k])));
+      }
+    })
+    .catch(()=>{ })
+    .finally(()=>{ if(cb) cb(); });
+}
+function pushWOsToSheetForInspect(){
+  const s = getInspectSyncSettings();
+  if(!s.url) return;
+  const pullUrl = s.url + '?token=' + encodeURIComponent(s.token||'');
+  fetch(pullUrl, {mode:'cors'})
+    .then(r=>r.json())
+    .catch(()=>({ok:false, workOrders:[]}))
+    .then(remote=>{
+      const remoteWOs = (remote && remote.ok && remote.workOrders) ? remote.workOrders : [];
+      const local = loadWOsForInspect();
+      const byId = {};
+      remoteWOs.forEach(w=>{ if(w && w.id) byId[w.id]=w; });
+      local.forEach(w=>{ if(w && w.id) byId[w.id]=w; }); // local (มี WO ใหม่จากการตรวจ) ชนะ
+      const merged = Object.keys(byId).map(k=>byId[k]);
+      return fetch(s.url, {
+        method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({token: s.token||'', workOrders: merged})
+      });
+    })
+    .then(r=>r.json())
+    .catch(()=>{ });
+}
+
+// ── Sync ประวัติ Daily Inspection เอง (ob9_inspections) ขึ้น Google Sheet แยกชีต "Inspections" ──
+function loadInspectionsLocal(){
+  try{ return JSON.parse(localStorage.getItem('ob9_inspections')||'[]'); }catch(e){ return []; }
+}
+function pullInspectionsFromSheet(cb){
+  const s = getInspectSyncSettings();
+  if(!s.url){ if(cb) cb(); return; }
+  const url = s.url + '?token=' + encodeURIComponent(s.token||'') + '&type=inspection';
+  fetch(url, {mode:'cors'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.ok && d.inspections){
+        const local = loadInspectionsLocal();
+        const byId = {};
+        d.inspections.forEach(r=>{ if(r && r.id) byId[r.id] = r; });
+        local.forEach(r=>{ if(r && r.id) byId[r.id] = Object.assign({}, byId[r.id]||{}, r); });
+        const merged = Object.keys(byId).map(k=>byId[k]).sort((a,b)=> (b.ts||'').localeCompare(a.ts||''));
+        localStorage.setItem('ob9_inspections', JSON.stringify(merged.slice(0,300)));
+      }
+    })
+    .catch(()=>{ })
+    .finally(()=>{ if(cb) cb(); });
+}
+function pushInspectionsToSheet(){
+  const s = getInspectSyncSettings();
+  if(!s.url) return;
+  const pullUrl = s.url + '?token=' + encodeURIComponent(s.token||'') + '&type=inspection';
+  fetch(pullUrl, {mode:'cors'})
+    .then(r=>r.json())
+    .catch(()=>({ok:false, inspections:[]}))
+    .then(remote=>{
+      const remoteList = (remote && remote.ok && remote.inspections) ? remote.inspections : [];
+      const local = loadInspectionsLocal();
+      const byId = {};
+      remoteList.forEach(r=>{ if(r && r.id) byId[r.id]=r; });
+      local.forEach(r=>{ if(r && r.id) byId[r.id]=r; }); // ของเครื่อง (ใหม่กว่า) ชนะ
+      const merged = Object.keys(byId).map(k=>byId[k]);
+      return fetch(s.url, {
+        method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({token: s.token||'', type:'inspection', items: merged})
+      });
+    })
+    .then(r=>r.json())
+    .catch(()=>{ });
+}
+
+const POS_IMG_MAP = {
+  "Spreader|Overview": "ob9_imgs/Spreader_Overview.jpg",
+  "Spreader|Crawler track assembly": "ob9_imgs/Spreader_Crawler_track_assembly.jpg",
+  "Spreader|Crawler track components": "ob9_imgs/Spreader_Crawler_track_components.jpg",
+  "Spreader|Travel drive": "ob9_imgs/Spreader_Travel_drive.jpg",
+  "Spreader|Drive tumbler": "ob9_imgs/Spreader_Drive_tumbler.jpg",
+  "Spreader|Take-up tumbler with take-up device": "ob9_imgs/Spreader_Take-up_tumbler_with_take-up_device.jpg",
+  "Spreader|4-wheel bogie": "ob9_imgs/Spreader_4-wheel_bogie.jpg",
+  "Spreader|2-wheel bogie": "ob9_imgs/Spreader_2-wheel_bogie.jpg",
+  "Spreader|Track wheel": "ob9_imgs/Spreader_Track_wheel.jpg",
+  "Spreader|Crawler track": "ob9_imgs/Spreader_Crawler_track.jpg",
+  "Spreader|Support wheel": "ob9_imgs/Spreader_Support_wheel.jpg",
+  "Spreader|Slewing mechanism": "ob9_imgs/Spreader_Slewing_mechanism.jpg",
+  "Spreader|Ball race bearing": "ob9_imgs/Spreader_Ball_race_bearing.jpg",
+  "Spreader|Slewing drive": "ob9_imgs/Spreader_Slewing_drive.jpg",
+  "Spreader|Conveyor bridge": "ob9_imgs/Spreader_Conveyor_bridge.jpg",
+  "Spreader|Bridge suspension": "ob9_imgs/Spreader_Bridge_suspension.jpg",
+  "Spreader|Receiving chute": "ob9_imgs/Spreader_Receiving_chute.jpg",
+  "Spreader|Discharge hood": "ob9_imgs/Spreader_Discharge_hood.jpg",
+  "Spreader|Conveyor drive": "ob9_imgs/Spreader_Conveyor_drive.jpg",
+  "Spreader|Pulleys": "ob9_imgs/Spreader_Pulleys.jpg",
+  "Spreader|Drive pulley": "ob9_imgs/Spreader_Drive_pulley.jpg",
+  "Spreader|Take-up pulley": "ob9_imgs/Spreader_Take-up_pulley.jpg",
+  "Spreader|Snub pulley": "ob9_imgs/Spreader_Snub_pulley.jpg",
+  "Spreader|Idler frames and garlands": "ob9_imgs/Spreader_Idler_frames_and_garlands.jpg",
+  "Spreader|Impact idler garlands": "ob9_imgs/Spreader_Impact_idler_garlands.jpg",
+  "Spreader|Carrying idler garlands": "ob9_imgs/Spreader_Carrying_idler_garlands.jpg",
+  "Spreader|Return idler garlands": "ob9_imgs/Spreader_Return_idler_garlands.jpg",
+  "Spreader|Steering idler station": "ob9_imgs/Spreader_Steering_idler_station.jpg",
+  "Spreader|Scrapers": "ob9_imgs/Spreader_Scrapers.jpg",
+  "Spreader|Pre and main scraper": "ob9_imgs/Spreader_Pre_and_main_scraper.jpg",
+  "Spreader|Steel scraper": "ob9_imgs/Spreader_Steel_scraper.jpg",
+  "Spreader|Plough scraper": "ob9_imgs/Spreader_Plough_scraper.jpg",
+  "Spreader|Take-up station": "ob9_imgs/Spreader_Take-up_station.jpg",
+  "Spreader|Discharge conveyor boom": "ob9_imgs/Spreader_Discharge_conveyor_boom.jpg",
+  "Spreader|Receiving chute (Discharge)": "ob9_imgs/Spreader_Receiving_chute__Discharge_.jpg",
+  "Spreader|Conveyor drive (Discharge)": "ob9_imgs/Spreader_Conveyor_drive__Discharge_.jpg",
+  "Spreader|Pulleys (Discharge)": "ob9_imgs/Spreader_Pulleys__Discharge_.jpg",
+  "Spreader|Idler frames and garlands (Discharge)": "ob9_imgs/Spreader_Idler_frames_and_garlands__Discharge_.jpg",
+  "Spreader|Scrapers (Discharge)": "ob9_imgs/Spreader_Scrapers__Discharge_.jpg",
+  "Spreader|Take-up station (Discharge)": "ob9_imgs/Spreader_Take-up_station__Discharge_.jpg",
+  "Spreader|Hydraulic system": "ob9_imgs/Spreader_Hydraulic_system.jpg",
+  "Spreader|Hydraulic unit": "ob9_imgs/Spreader_Hydraulic_unit.jpg",
+  "Spreader|Hydraulic cylinder": "ob9_imgs/Spreader_Hydraulic_cylinder.jpg",
+  "Spreader|Lubrication system S1": "ob9_imgs/Spreader_Lubrication_system_S1.jpg",
+  "Spreader|Lubrication system S2": "ob9_imgs/Spreader_Lubrication_system_S2.jpg",
+  "Spreader|Lubrication system S3": "ob9_imgs/Spreader_Lubrication_system_S3.jpg",
+  "Tripper|Belt scrapers": "ob9_imgs/Tripper_Belt_scrapers.jpg",
+  "Tripper|Tensioning system": "ob9_imgs/Tripper_Tensioning_system.jpg",
+  "Tripper|Discharge head": "ob9_imgs/Tripper_Discharge_head.jpg",
+  "Tripper|Support car": "ob9_imgs/Tripper_Support_car.jpg",
+  "Tripper|Bearing support car": "ob9_imgs/Tripper_Bearing_support_car.jpg",
+  "Tripper|Hydraulic system": "ob9_imgs/Tripper_Hydraulic_system.jpg",
+  "Tripper|Hydraulic power unit": "ob9_imgs/Tripper_Hydraulic_power_unit.jpg",
+  "Tripper|Overview – Major Systems": "ob9_imgs/Tripper_Overview___Major_Systems.jpg",
+  "Tripper|Rail travel mechanism": "ob9_imgs/Tripper_Rail_travel_mechanism.jpg",
+  "Tripper|2-wheel bogie with driven wheel set": "ob9_imgs/Tripper_2-wheel_bogie_with_driven_wheel_set.jpg",
+  "Tripper|Brakes": "ob9_imgs/Tripper_Brakes.jpg",
+  "Tripper|Belt guiding": "ob9_imgs/Tripper_Belt_guiding.jpg",
+  "Tripper|Tripper car pulleys": "ob9_imgs/Tripper_Tripper_car_pulleys.jpg",
+  "Tripper|Return pulley": "ob9_imgs/Tripper_Return_pulley.jpg",
+  "Tripper|Bend pulley": "ob9_imgs/Tripper_Bend_pulley.jpg",
+  "Tripper|Lubrication system overview": "ob9_imgs/Tripper_Lubrication_system_overview.jpg",
+  "Tripper|Take-up pulley": "ob9_imgs/Tripper_Take-up_pulley.jpg",
+  "Line Shift|General checks": "ob9_imgs/LineShift_General_checks.jpg"
+};
+
+const SPARE_LOOKUP = {"Tripper Car Ü2200":{"Overview – Major Systems":["[Pos.1] Rail travel mechanism","[Pos.2] Frame","[Pos.3] Belt guiding","[Pos.4] Discharge point","[Pos.5] Hydraulic tensioning system","[Pos.6] Chain hoist","[Pos.7] Receiving chute (part of the spreader)","[Pos.8] Supporting carriage","[Pos.9] Slewable cable duct","[Pos.10] Water tank","[Pos.11] E-house","[Pos.12] Hydraulic power unit","[Pos.13] Lubrication unit"],"Rail travel mechanism":["[Pos.A] 2-wheel bogie","[Pos.A] Non-driven wheel set","[Pos.B] 2-wheel bogie","[Pos.B] Driven wheel set","[Pos.B] 4-wheel bogie","[Pos.C] 2-wheel bogie","[Pos.C] Driven wheel set","[Pos.C] 4-wheel bogie","[Pos.C] Ball clamp","[Pos.C] 8-wheel bogie","[Pos.D] 2-wheel bogie","[Pos.D] Non-driven wheel set","[Pos.D] 4-wheel bogie"],"2-wheel bogie with driven wheel set":["[Pos.1] Travel wheel","[Pos.2] Shaft","[Pos.3] Anti-friction bearing","[Pos.4] Gear unit with brake motor","[Pos.5] Torque arm","[Pos.6] Cover","[Pos.7] Rail clamp","[Pos.8] Rail plough","[Pos.9] Wooden rail head cleaner"],"Brakes":["[Pos.1] Geared motor","[Pos.2] Rail clamp"],"Belt guiding":["[Pos.1] Self-aligning idler frame","[Pos.2] Carrying idler garland","[Pos.3] Transition idler frame","[Pos.4] Return pulley","[Pos.5] Return idler frame","[Pos.6] Bend pulley","[Pos.7] Take-up pulley","[Pos.8] Catching net","[Pos.9] Lateral belt idler","[Pos.10] Conveyor belt"],"Tripper car pulleys":["[Pos.1] Return pulley","[Pos.2] Take-up pulley","[Pos.3] Bend pulley"],"Return pulley":["[Pos.1] Pulley body","[Pos.2] Continuous axle","[Pos.3] Bearing","[Pos.4] Bearing housing","[Pos.5] Damping set","[Pos.6] Rubber coating","[Pos.7] Labyrinth seal","[Pos.8] Pulley base"],"Take-up pulley":["[Pos.1] Pulley body","[Pos.2] Continuous axle","[Pos.3] Bearing","[Pos.4] Bearing housing","[Pos.5] Rubber coating","[Pos.6] Labyrinth seal","[Pos.7] Pulley base"],"Bend pulley":["[Pos.1] Pulley body","[Pos.2] Continuous axle","[Pos.3] Bearing","[Pos.4] Bearing housing","[Pos.5] Rubber coating","[Pos.6] Labyrinth seal","[Pos.7] Pulley base"],"Belt scrapers":["[Pos.1] Pre-scraper","[Pos.2] Main scraper","[Pos.3] Dust scraper"],"Tensioning system":["[Pos.1] Take-up pulley","[Pos.2] Hydraulic cylinders","[Pos.3] Hydraulic power unit"],"Discharge head":["[Pos.1] Baffle plate","[Pos.2] Wear plate","[Pos.3] Locking lever","[Pos.4] Inspection flap"],"Support car":["[Pos.1] Coupling rod","[Pos.2] Supporting carriage"],"Bearing support car":["[Pos.1] Ball-bearing slewing ring","[Pos.2] Supporting bogie","[Pos.3] Axle","[Pos.4] Plain bearing","[Pos.5] Cover","[Pos.6] Bolted connection","[Pos.7] Flange connection"],"Hydraulic system":["[Pos.1] Hydraulic power unit","[Pos.2] Hydraulic cylinders"],"Hydraulic power unit":["[Pos.1] Oil tank","[Pos.2] Oil drain valve","[Pos.3] Oil level-temperature indication","[Pos.4] Filling and breather filter","[Pos.5] Return filter with optical and electrical indication","[Pos.6] Level and temperature sensor with analogue output","[Pos.7] Screw-in heater","[Pos.8] Variable axial piston pump","[Pos.9] Torsional elastic coupling","[Pos.10] Pump girder","[Pos.11] E-motor","[Pos.12] Terminal box","[Pos.13] Oil sump","[Pos.14] Valve block with control valve"],"Lubrication system overview":["[Pos.1] Wheel set 1","[Pos.2] Wheel set 2","[Pos.3] Wheel set 3","[Pos.4] Wheel set 4","[Pos.5] Wheel set 5","[Pos.6] Return pulley","[Pos.7] Bend pulley","[Pos.8] Take-up pulley","[Pos.9] Slow bearing cable saddle","[Pos.10] Bogie bearings support car","[Pos.11] Bogie wheel bearings support car","[Pos.12] Bogie wheel bearings support car"]},"Spreader ARs2400":{"Overview":["[Pos.1] Crawlers","[Pos.2] Slew mechanism","[Pos.3] Bridge conveyor","[Pos.4] Tripper car","[Pos.5] Center of the spreader","[Pos.6] Discharge conveyor boom","[Pos.7] Support carriage (part of tripper car)","[Pos.8] Horizontal axles","[Pos.9] Hydraulic cylinders","[Pos.10] Ballast boom","[Pos.11] Operators cabin","[Pos.12] Cable saddles","[Pos.13] E-house and hydraulic house with lubrication unit","[Pos.14] Rotary bearing","[Pos.15] Bridge boom suspension"],"Crawler track assembly":["[Pos.1] Crawler","[Pos.2] Crawler track chain","[Pos.3] Cross balancer","[Pos.4] Substructure","[Pos.5] Crawler frames","[Pos.6] Axles for crawler frame (main axles)","[Pos.7] Middle axle","[Pos.8] Side axle","[Pos.9] Ring girder","[Pos.10] Supports","[Pos.11] Jacking points"],"Crawler track components":["[Pos.1] Crawler frame","[Pos.2] Drive tumbler","[Pos.3] Drive unit","[Pos.4] Return tumbler with adjustment","[Pos.5] 4-wheel bogie","[Pos.6] 2-wheel bogie","[Pos.7] Track wheel","[Pos.8] Support wheel"],"Travel drive":["[Pos.1] Bevel gear with shaft flange","[Pos.2] Motor console","[Pos.3] Torque support","[Pos.4] Electric motor","[Pos.5] Cardan shaft","[Pos.6] Drum brake"],"Drive tumbler":["[Pos.1] Drive tumbler with shaft","[Pos.2] Crawler track chain","[Pos.3] Drive tumbler shaft","[Pos.4] Cams","[Pos.5] Drive tumbler body","[Pos.6] Screw-on flange connection"],"Take-up tumbler with take-up device":["[Pos.1] Guide wheel","[Pos.2] Locknut","[Pos.3] Spindle","[Pos.4] Hydraulic cylinders"],"4-wheel bogie":["[Pos.1] 4-wheel bogie","[Pos.2] Axle","[Pos.3] Bushings","[Pos.4] Friction washers","[Pos.5] Anti turning device"],"2-wheel bogie":["[Pos.1] Axle, 2-wheel bogie","[Pos.2] Axle, track wheel","[Pos.3] Track wheel","[Pos.4] Friction washers","[Pos.5] Bushings","[Pos.6] Anti turning device"],"Track wheel":["[Pos.1] Track wheel","[Pos.2] Axle, track wheel","[Pos.3] Bogie","[Pos.4] Bushes","[Pos.5] Friction washers","[Pos.6] Anti-turning device"],"Crawler track":["[Pos.1] Bottom plates","[Pos.2] Cross girder","[Pos.3] Crawler track chain link","[Pos.4] Bushes","[Pos.5] Chain pin","[Pos.6] Retainer plate","[Pos.7] Chain link side"],"Support wheel":["[Pos.1] Support wheel","[Pos.2] Wheel support","[Pos.3] Sliding bush","[Pos.4] Axle","[Pos.5] Anti-turning device"],"Slewing mechanism":["[Pos.1] Ball race bearing","[Pos.2] Slew drives","[Pos.3] Locking device"],"Ball race bearing":["[Pos.1] Superstructure","[Pos.2] Substructure","[Pos.3] Inner ring","[Pos.4] Outer ring"],"Slewing drive":["[Pos.1] Gear unit","[Pos.2] Output pinion","[Pos.3] Safety coupling","[Pos.4] Drum brakes","[Pos.5] Electric motor"],"Conveyor bridge":["[Pos.1] Support carriage","[Pos.2] Bridge suspension","[Pos.3] Receiving chute","[Pos.4] Conveyor belt","[Pos.5] Discharge hood"],"Bridge suspension":["[Pos.1] Cross girder","[Pos.2] Center axle","[Pos.3] Bridge structure"],"Receiving chute":["[Pos.1] Receiving chute","[Pos.2] Wear plates","[Pos.3] Rubber seals"],"Discharge hood":["[Pos.1] Rubber curtain","[Pos.2] Baffle plate","[Pos.3] Wear plates","[Pos.4] Inspection door"],"Conveyor drive":["[Pos.1] Drive unit","[Pos.2] Electric motor","[Pos.3] Fluid coupling with brake disc","[Pos.4] Brake","[Pos.5] Gear unit","[Pos.6] Backstop","[Pos.7] Base plate","[Pos.8] Flange connection","[Pos.9] Torque supports","[Pos.10] Breather plug","[Pos.11] Resistance thermometer","[Pos.12] Grease nipples","[Pos.13] Oil dipstick","[Pos.14] Filling port","[Pos.15] Oil drain"],"Pulleys":["[Pos.1] Drive pulley","[Pos.2] Drive units","[Pos.3] Take-up pulley","[Pos.4] Take-up station","[Pos.5] Snub pulleys"],"Drive pulley":["[Pos.1] Pulley body","[Pos.2] Pulley base","[Pos.3] Continuous axle","[Pos.4] Bearings","[Pos.5] Bearing housing","[Pos.6] Clamping set","[Pos.7] Rubber coating","[Pos.8] Labyrinth seal"],"Take-up pulley":["[Pos.1] Pulley body","[Pos.2] Continuous axle","[Pos.3] Bearings","[Pos.4] Bearing housing","[Pos.5] Clamping set","[Pos.6] Rubber coating","[Pos.7] Labyrinth seal","[Pos.8] Pulley base"],"Snub pulley":["[Pos.1] Pulley body","[Pos.2] Continuous axle","[Pos.3] Bearings","[Pos.4] Console","[Pos.5] Rubber coating","[Pos.6] Grease nipple","[Pos.7] Bolted-cover"],"Idler frames and garlands":["[Pos.1] Impact idler garlands","[Pos.2] Carrying idler garlands","[Pos.3] Return idler garlands","[Pos.4] Steering idler station"],"Impact idler garlands":["[Pos.1] Impact idler garlands","[Pos.2] Damper","[Pos.3] Chain construction (fixing of garlands)"],"Carrying idler garlands":["[Pos.1] Carrying idler garlands","[Pos.2] Quick release suspension"],"Return idler garlands":["[Pos.1] Return idler garlands","[Pos.2] Levers"],"Steering idler station":["[Pos.1] Steering idler station","[Pos.2] Hand wheel with spindle"],"Scrapers":["[Pos.1] Pre- and main scraper","[Pos.2] Steel scraper","[Pos.3] Plough scraper"],"Pre and main scraper":["[Pos.1] Pre scraper","[Pos.2] Main scraper","[Pos.3] Plastic scraper","[Pos.4] Tension spring","[Pos.5] Steel blade","[Pos.6] Spindle"],"Steel scraper":["[Pos.1] Steel scrapers","[Pos.2] Snub pulleys","[Pos.3] Snub pulley support"],"Plough scraper":["[Pos.1] Plough scraper","[Pos.2] V-shaped framework","[Pos.3] Scraper blades","[Pos.4] Adjusting spindle"],"Take-up station":["[Pos.1] Hydraulic cylinders","[Pos.2] Take-up/return pulley","[Pos.3] Sliding blocks"],"Discharge conveyor boom":["[Pos.1] Boom joints","[Pos.2] Hydraulic cylinder (lifting and lowering)","[Pos.3] Receiving chute","[Pos.4] Conveyor","[Pos.5] Hydraulic cylinder (boom suspension)"],"Receiving chute (Discharge)":["[Pos.1] Receiving chute","[Pos.2] Conveyor belt","[Pos.3] Wear plates","[Pos.4] Rubber seals"],"Conveyor drive (Discharge)":["[Pos.1] Drive unit","[Pos.2] Electric motor","[Pos.3] Coupling","[Pos.4] Disc brake","[Pos.5] Gear unit","[Pos.6] Backstop","[Pos.7] Base plate","[Pos.8] Flange connection","[Pos.9] Torque supports","[Pos.10] Breather plug","[Pos.11] Resistance thermometer","[Pos.12] Grease nipples","[Pos.13] Oil dipstick","[Pos.14] Filling port","[Pos.15] Oil drain"],"Pulleys (Discharge)":["[Pos.1] Drive pulley","[Pos.2] Drive units","[Pos.3] Take-up pulley","[Pos.4] Take-up station","[Pos.5] Snub pulley"],"Idler frames and garlands (Discharge)":["[Pos.1] Impact idler garlands","[Pos.2] Idler garlands","[Pos.3] Return idler garlands","[Pos.4] Steering idler station"],"Scrapers (Discharge)":["[Pos.1] Pre scraper","[Pos.2] Main scraper","[Pos.3] Steel scraper","[Pos.4] Plough scraper"],"Take-up station (Discharge)":["[Pos.1] Hydraulic cylinders","[Pos.2] Take-up/return pulley","[Pos.3] Sliding blocks"],"Hydraulic system":["[Pos.1] Hydraulic cylinders","[Pos.2] Hydraulic unit","[Pos.3] Operators cabin"],"Hydraulic unit":["[Pos.1] Oil level indicator","[Pos.2] Oil drain valve","[Pos.3] Locking flap","[Pos.4] Compensator","[Pos.5] Three-phase motor","[Pos.6] Pressure relief valve","[Pos.7] Shut-off valve with manometer","[Pos.8] Non-return valve","[Pos.9] Return flow filter","[Pos.10] Thermometer","[Pos.11] Axial piston pump with three-phase motor"],"Hydraulic cylinder":["[Pos.1] Cylinder body","[Pos.2] Piston","[Pos.3] Bolt","[Pos.4] Spherical bearing"],"Lubrication system S1":["[Pos.1] Drive tumbler","[Pos.2] Support wheels","[Pos.3] Return tumbler","[Pos.4] Four wheel bogie axles","[Pos.5] Two wheel bogie axles","[Pos.6] Axle for crawler frame","[Pos.7] Side axles","[Pos.8] Middle axle"],"Lubrication system S2":["[Pos.1] Drive pulley","[Pos.2] Ball race","[Pos.3] Snub pulley","[Pos.4] Return pulley","[Pos.5] Ball race superstructure","[Pos.6] Drive pulley (discharge conveyor)","[Pos.7] Snub pulley (discharge conveyor)","[Pos.8] Return pulley (discharge conveyor)"],"Lubrication system S3":["[Pos.1] Slew bearing pinion/gear"]},"Line Shift":{"General checks":["[Pos.1] Table Shift","[Pos.2] Stinger","[Pos.3] Basing side","[Pos.4] Basing coss","[Pos.5] Sleeper","[Pos.6] Fish plate","[Pos.7] Bolt Fish plate","[Pos.8] Rail clamp","[Pos.9] Bolt Rail clamp","[Pos.10] Rail"],"Drive system":["[Pos.1] Hydraulic cylinder (กระบอกไฮดรอลิกดันโต๊ะ)","[Pos.2] Hydraulic power unit / pump (ปั๊มไฮดรอลิก)","[Pos.3] Hydraulic hose & fitting (สายไฮดรอลิกและข้อต่อ)","[Pos.4] Hydraulic valve block (บล็อกวาล์วควบคุม)","[Pos.5] Guide roller / guide wheel (ล้อ/ลูกกลิ้งนำทาง)","[Pos.6] Limit switch (สวิตช์จำกัดระยะ)","[Pos.7] Position sensor / proximity switch (เซนเซอร์ตำแหน่ง)","[Pos.8] Control panel / PLC (ตู้ควบคุม)","[Pos.9] Drive motor (มอเตอร์ขับ ถ้ามี)","[Pos.10] Coupling / drive shaft (เพลาข้อต่อขับ)"],"Structural inspection":["[Pos.1] Main frame / base structure (โครงฐานหลัก)","[Pos.2] Welded joints (แนวเชื่อม)","[Pos.3] Cross bracing (ค้ำยันขวาง)","[Pos.4] Foundation & anchor bolts (ฐานราก/สลักยึด)","[Pos.5] Support columns / legs (เสารองรับ)","[Pos.6] Steel deck plate — Sleeper table (แผ่นเหล็กพื้นโต๊ะ Sleeper)","[Pos.7] Corrosion / paint condition (สนิม/สีกันสนิม)","[Pos.8] Alignment & level check (ความเรียบ/แนวระดับ)","[Pos.9] Bolted connections tightness (ความแน่นของจุดยึดสลักเกลียว)","[Pos.10] Rail foundation / sleeper bedding (ฐานรองราง/หมอนราง)"]}};
+
+// Extract [Pos.N] and clean part name from a SPARE_LOOKUP label
+function extractPosPart(label){
+  var m = (label||'').match(/^\[Pos\.([^\]]+)\]\s*(.*)$/);
+  return m ? {pos:m[1], part:m[2]} : {pos:'', part:label||''};
+}
+
+// ── POS_COORDS (พิกัดวงกลมตำแหน่งบนภาพ — ported จาก ob9_dashboard.html ให้ตรงกัน) ──
+const POS_COORDS = {
+  'General checks': {'1':[0.085,0.207],'2':[0.652,0.125],'3':[0.057,0.506],'4':[0.644,0.847],'5':[0.451,0.807],'6':[0.218,0.609],'7':[0.327,0.692],'8':[0.731,0.801],'9':[0.886,0.678],'10':[0.926,0.714]},
+  'Crawler track components': {'1':[0.255,0.059],'2':[0.04,0.185],'3':[0.041,0.696],'4':[0.948,0.148],'5':[0.777,0.618],'6':[0.667,0.621],'7':[0.606,0.616],'8':[0.627,0.063],'9':[0.44,0.063]},
+  'Crawler track assembly': {'1':[0.195,0.516],'2':[0.323,0.463],'3':[0.864,0.845],'4':[0.413,0.468],'5':[0.195,0.516],'6':[0.295, 0.94],'7':[0.77,0.365],'8':[0.576,0.584],'9':[0.538,0.371],'10':[0.935,0.159],'11':[0.922,0.36]},
+  'Travel drive': {'1':[0.325, 0.941],'2':[0.58, 0.96],'3':[0.356,0.057],'4':[0.898,0.957],'5':[0.58,0.96],'6':[0.91,0.42]},
+  'Drive tumbler': {'1':[0.067,0.101],'2':[0.247,0.037],'3':[0.6,0.433],'4':[0.268,0.369],'5':[0.18,0.81],'6':[0.054,0.367]},
+  'Slewing mechanism': {'1':[0.079,0.648],'2':[0.932,0.711],'3':[0.261,0.428]},
+  'Ball race bearing': {'1':[0.709,0.415],'2':[0.955,0.789],'3':[0.723,0.585],'4':[0.971,0.719]},
+  'Bridge suspension': {'1':[0.145,0.635],'2':[0.464,0.706],'3':[0.453,0.624]},
+  'Conveyor bridge': {'1':[0.055,0.93],'2':[0.664,0.182],'3':[0.175,0.368],'4':[0.281,0.34],'5':[0.914,0.451]},
+  'Slewing drive': {'1':[0.446,0.03],'2':[0.531,0.946],'3':[0.732,0.376],'4':[0.611,0.031],'5':[0.832,0.031]},
+  'Conveyor drive': {'1':[0.843,0.028],'2':[0.149,0.262],'3':[0.334,0.262],'4':[0.83,0.654],'5':[0.485,0.262],'6':[0.541,0.69],'7':[0.626,0.639],'8':[0.59,0.711],'9':[0.446,0.262],'10':[0.192,0.706],'11':[0.567,0.261],'12':[0.689,0.213],'13':[0.845,0.237],'14':[0.794,0.328],'15':[0.59,0.711]},
+  'Pulleys': {'1':[0.661,0.252],'2':[0.814,0.573],'3':[0.085,0.375],'4':[0.198,0.339],'5':[0.389,0.966]},
+  'Drive pulley': {'1':[0.438,0.416],'2':[0.783,0.619],'3':[0.54,0.46],'4':[0.557,0.363],'5':[0.563,0.091],'6':[0.185,0.84],'7':[0.185,0.84],'8':[0.53,0.278]},
+  'Take-up pulley': {'1':[0.849,0.679],'2':[0.474,0.367],'3':[0.704,0.056],'4':[0.086,0.511],'5':[0.086,0.511],'6':[0.602,0.369],'7':[0.66,0.187]},
+  'Snub pulley': {'1':[0.674,0.347],'2':[0.783,0.348],'3':[0.897,0.348],'4':[0.045,0.462],'5':[0.548,0.346],'6':[0.045,0.462],'7':[0.168,0.053]},
+  'Idler frames and garlands': {'1':[0.243,0.476],'2':[0.692,0.525],'3':[0.458,0.844],'4':[0.458,0.844]},
+  'Impact idler garlands': {'1':[0.755,0.378],'2':[0.38,0.275],'3':[0.16,0.417]},
+  'Carrying idler garlands': {'1':[0.751,0.509],'2':[0.174,0.435]},
+  'Return idler garlands': {'1':[0.929,0.63],'2':[0.138,0.678]},
+  'Scrapers': {'1':[0.876,0.744],'2':[0.485,0.946],'3':[0.21,0.823]},
+  'Pre and main scraper': {'1':[0.485,0.637],'2':[0.093,0.58],'3':[0.813,0.671],'4':[0.485,0.637],'5':[0.095,0.249],'6':[0.093,0.58]},
+  'Steering idler station': {'1':[0.178,0.862],'2':[0.85,0.412]},
+  'Receiving chute': {'1':[0.663,0.369],'2':[0.304,0.333],'3':[0.386,0.864]},
+  'Discharge hood': {'1':[0.137,0.774],'2':[0.022,0.473],'3':[0.058,0.645],'4':[0.475,0.79]},
+  '4-wheel bogie': {'1':[0.675,0.131],'2':[0.684,0.523],'3':[0.884,0.523],'4':[0.546,0.543],'5':[0.379,0.126]},
+  '2-wheel bogie': {'1':[0.828,0.415],'2':[0.025,0.439],'3':[0.164,0.444],'4':[0.828,0.415],'5':[0.677,0.96],'6':[0.165,0.067]},
+  'Track wheel': {'1':[0.267,0.415],'2':[0.489,0.454],'3':[0.056,0.476],'4':[0.15,0.466],'5':[0.07,0.935],'6':[0.934,0.778]},
+  'Support wheel': {'1':[0.18,0.09],'2':[0.574,0.753],'3':[0.115,0.274],'4':[0.063,0.365],'5':[0.35, 0.39]},
+  'Crawler track': {'1':[0.414,0.484],'2':[0.437,0.176],'3':[0.907,0.031],'4':[0.955,0.535],'5':[0.866,0.553],'6':[0.414,0.484],'7':[0.166,0.152]},
+  'Take-up tumbler with take-up device': {'1':[0.855, 0.877],'2':[0.674,0.464],'3':[0.568,0.438],'4':[0.568,0.438]},
+  'Discharge conveyor boom': {'1':[0.167, 0.877],'2':[0.547,0.057],'3':[0.294,0.865],'4':[0.605, 0.874],'5':[0.797,0.352]},
+  'Lubrication system S1': {'1':[0.051,0.069],'2':[0.452,0.036],'3':[0.909,0.094],'4':[0.733,0.236],'5':[0.63,0.034],'6':[0.452,0.036],'7':[0.63,0.034],'8':[0.883,0.599]},
+  'Lubrication system S2': {'1':[0.423,0.812],'2':[0.61,0.816],'3':[0.684,0.813],'4':[0.883,0.818],'5':[0.984,0.82],'6':[0.634,0.057],'7':[0.448,0.081],'8':[0.105,0.301],'9':[0.022,0.818]},
+  'Lubrication system S3': {'1':[0.066,0.285]},
+  'Rail travel mechanism': {'A':[0.245,0.312],'B':[0.06,0.151],'C':[0.553,0.372],'D':[0.797,0.388]},
+  '2-wheel bogie with driven wheel set': {'1':[0.919,0.456],'2':[0.612,0.407],'3':[0.834,0.479],'4':[0.037,0.249],'5':[0.148,0.561],'6':[0.866,0.051],'7':[0.467,0.248],'8':[0.44,0.938],'9':[0.566,0.607]},
+  'Brakes': {'1':[0.323,0.512],'2':[0.611,0.496]},
+  'Belt guiding': {'1':[0.065,0.174],'2':[0.477,0.678],'3':[0.115,0.726],'4':[0.814,0.126],'5':[0.125,0.682],'6':[0.911,0.067],'7':[0.578,0.269],'8':[0.515,0.678],'9':[0.413,0.63],'10':[0.674,0.46]},
+  'Belt scrapers': {'1':[0.921,0.651],'2':[0.607,0.831],'3':[0.332, 0.87]},
+  'Tensioning system': {'1':[0.454,0.477],'2':[0.301,0.478],'3':[0.221,0.107]},
+  'Discharge head': {'1':[0.713,0.803],'2':[0.713,0.803],'3':[0.878,0.291],'4':[0.878,0.291]},
+  'Support car': {'1':[0.051,0.868],'2':[0.372, 0.891]},
+  'Bearing support car': {'1':[0.62,0.455],'2':[0.056,0.667],'3':[0.319,0.429],'4':[0.714,0.666],'5':[0.811,0.668],'6':[0.62,0.455],'7':[0.95,0.328]},
+  'Hydraulic power unit': {'1':[0.182,0.852],'2':[0.325, 0.883],'3':[0.555,0.929],'4':[0.038,0.418],'5':[0.037,0.313],'8':[0.676, 0.954],'9':[0.92, 0.884],'10':[0.953,0.882],'11':[0.84,0.126],'12':[0.038,0.21],'14':[0.519,0.064]},
+  'Hydraulic system': {'1':[0.667,0.098],'2':[0.335,0.19],'3':[0.782,0.261]},
+  'Lubrication system overview': {'1':[0.077,0.502],'2':[0.219,0.504],'3':[0.356,0.506],'4':[0.708,0.506],'5':[0.798,0.561],'6':[0.87,0.506],'7':[0.738,0.329],'8':[0.576,0.21],'9':[0.773,0.092],'10':[0.63,0.75],'11':[0.671,0.835],'12':[0.63,0.75]},
+  'Tripper car pulleys': {'1':[0.666,0.041],'2':[0.165,0.687],'3':[0.526,0.617],'4':[0.526,0.617]},
+  'Return pulley': {'1':[0.162,0.424],'2':[0.455,0.06],'3':[0.066,0.156],'4':[0.099,0.294],'5':[0.167,0.155],'6':[0.108,0.155],'7':[0.162,0.538],'8':[0.366,0.582],'9':[0.212,0.059]},
+  'Bend pulley': {'1':[0.068,0.588],'2':[0.449,0.083],'3':[0.023,0.249],'4':[0.072,0.229],'5':[0.144,0.324],'6':[0.251,0.085],'7':[0.128,0.851],'9':[0.189,0.082]},
+  'Hydraulic cylinder': {'1':[0.615,0.715],'2':[0.099,0.736],'3':[0.588,0.193],'4':[0.541,0.118]},
+  'Hydraulic unit': {'1':[0.342,0.499],'2':[0.308, 0.931],'3':[0.573, 0.968],'4':[0.663,0.975],'5':[0.778,0.147],'6':[0.276,0.517],'7':[0.541,0.518],'8':[0.206, 0.917],'9':[0.431,0.947],'10':[0.467,0.508],'11':[0.407,0.028]},
+  'Take-up station': {'1':[0.221,0.824],'2':[0.582,0.785],'3':[0.582,0.785]},
+  'Steel scraper': {'1':[0.199,0.434],'2':[0.402, 0.885],'3':[0.033,0.43]},
+  'Plough scraper': {'1':[0.079,0.461],'2':[0.09, 0.907],'3':[0.412,0.64],'4':[0.412,0.64]},
+  'Take-up station (Discharge)': {'1':[0.617,0.856],'2':[0.22, 0.878],'3':[0.617,0.856]},
+  'Scrapers (Discharge)': {'1':[0.94, 0.895],'2':[0.76, 0.922],'3':[0.419,0.611],'4':[0.122,0.571]},
+  'Idler frames and garlands (Discharge)': {'1':[0.234,0.468],'2':[0.697,0.385],'3':[0.81,0.755],'4':[0.528,0.89]},
+  'Pulleys (Discharge)': {'1':[0.067,0.217],'2':[0.031,0.565],'3':[0.925,0.257],'4':[0.745,0.465],'5':[0.587,0.884]},
+  'Receiving chute (Discharge)': {'1':[0.268,0.34],'2':[0.766,0.646],'3':[0.738,0.396],'4':[0.589,0.833]},
+  'Conveyor drive (Discharge)': {'1':[0.053,0.27],'2':[0.143,0.328],'3':[0.316,0.359],'4':[0.407,0.304],'5':[0.631,0.34],'6':[0.552,0.682],'7':[0.266,0.707],'8':[0.695,0.666],'9':[0.462,0.315],'10':[0.102,0.764],'11':[0.575,0.312],'12':[0.739,0.598],'13':[0.504,0.288],'14':[0.717,0.322],'15':[0.552,0.682]}
+};
+
+// ── Blinking position circle overlay — per checklist item (แยก canvas ตาม id ได้หลายอันพร้อมกัน) ──
+const _posCanvasState = {}; // id -> {raf, t0}
+
+function _clearPosCanvasFor(id){
+  const st = _posCanvasState[id];
+  if (st && st.raf) { cancelAnimationFrame(st.raf); st.raf = null; }
+  const c = document.getElementById('pos-canvas-'+id);
+  if (c) { const ctx = c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
+}
+
+function _drawPosCircleFor(id, pctX, pctY){
+  _clearPosCanvasFor(id);
+  const canvas = document.getElementById('pos-canvas-'+id);
+  const img    = document.getElementById('pos-img-'+id);
+  if (!canvas || !img || !img.naturalWidth) return;
+  if (!img.offsetWidth || !img.offsetHeight) {
+    setTimeout(function(){ _drawPosCircleFor(id, pctX, pctY); }, 60);
+    return;
+  }
+  const pad = 0;
+  canvas.width  = img.offsetWidth;
+  canvas.height = img.offsetHeight;
+  const availW  = img.offsetWidth  - pad*2;
+  const availH  = img.offsetHeight - pad*2;
+  const scale   = Math.min(availW / img.naturalWidth, availH / img.naturalHeight);
+  const renderW = img.naturalWidth  * scale;
+  const renderH = img.naturalHeight * scale;
+  const offX    = pad + (availW - renderW) / 2;
+  const offY    = pad + (availH - renderH) / 2;
+  const cx = offX + pctX * renderW;
+  const cy = offY + pctY * renderH;
+  const R  = 6;
+  const ctx = canvas.getContext('2d');
+  if (!_posCanvasState[id]) _posCanvasState[id] = {raf:null, t0:null};
+  _posCanvasState[id].t0 = null;
+  function frame(ts){
+    if (!_posCanvasState[id].t0) _posCanvasState[id].t0 = ts;
+    const t = (ts - _posCanvasState[id].t0) / 1000;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const pulse = (Math.sin(t * 3.2) + 1) / 2;
+    const ringR = R + 1.5 * pulse;
+    const alpha = 0.7 + 0.3 * (1 - pulse);
+    ctx.beginPath(); ctx.arc(cx, cy, ringR, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(220,50,50,' + alpha.toFixed(2) + ')';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    _posCanvasState[id].raf = requestAnimationFrame(frame);
+  }
+  _posCanvasState[id].raf = requestAnimationFrame(frame);
+}
+
+// เรียกทุกครั้งที่ pos เปลี่ยน (system เปลี่ยน หรือ part/position ถูกเลือก) — วาดวงกลมถ้ามีพิกัด ไม่มีก็เคลียร์เฉยๆ
+function updatePosCircle(id, sys, pos){
+  _clearPosCanvasFor(id);
+  if (!sys || !pos) return;
+  const coordMap = POS_COORDS[sys];
+  if (!coordMap) return;
+  const posKey = String(pos).replace(/^pos\.?\s*/i, '').trim();
+  const coord = coordMap[posKey] || coordMap[pos];
+  if (!coord) return;
+  const img = document.getElementById('pos-img-'+id);
+  if (img && img.complete && img.naturalWidth) {
+    setTimeout(function(){ _drawPosCircleFor(id, coord[0], coord[1]); }, 60);
+  } else if (img) {
+    img.onload = function(){ setTimeout(function(){ _drawPosCircleFor(id, coord[0], coord[1]); }, 60); };
+  }
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let answers = {}; // id -> {status, note, sys, part, pos}
+
+function openP(url){ window.open(url,'_blank')||(location.href=url); }
+
+// ── TOAST (แก้บั๊ก: เดิม submitForm() เรียก showToast(...) แต่ไม่เคยมีฟังก์ชันนี้อยู่ในไฟล์เลย
+// ทำให้เกิด ReferenceError กลางฟังก์ชัน submitForm() ทุกครั้งที่กดบันทึก — เพราะ error ไม่ถูกจับด้วย
+// try/catch จึงหยุดการทำงานทันทีที่บรรทัดนั้น แม้ข้อมูลตรวจจะถูกบันทึกลง localStorage ไปแล้วก่อนหน้า
+// (hist.unshift + localStorage.setItem อยู่ก่อนบรรทัด showToast) แต่ทุกอย่างหลังจากนั้น "ไม่ทำงานเลย":
+// ไม่มี toast แจ้งผล, ไม่สร้างใบแจ้งซ่อมอัตโนมัติจากรายการ "ผิดปกติ"/"แจ้งซ่อม", ฟอร์มไม่รีเซ็ต,
+// ประวัติไม่รีเฟรช — ผู้ใช้จึงรู้สึกว่า "บันทึกไม่ผ่าน" ทั้งที่จริงบันทึกไปครึ่งทางแล้วเงียบๆ ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  if(!t) return;
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── วันที่ (ไทย) — input[type=date] ของเบราว์เซอร์แสดงรูปแบบตาม locale เครื่อง (เช่น MM/DD/YYYY
+// แบบสหรัฐฯ) ซึ่งแก้ผ่าน HTML/JS ไม่ได้โดยตรง เลยเพิ่มข้อความกำกับรูปแบบไทยไว้ใต้ช่องแทน กันสับสนวัน/เดือน ──
+function updateDateThaiPreview(inputId, previewId){
+  var el = document.getElementById(inputId);
+  var prev = document.getElementById(previewId);
+  if (!el || !prev) return;
+  if (!el.value) { prev.textContent = 'ยังไม่ได้เลือกวันที่ — กดไอคอน 📅 เพื่อเลือก'; return; }
+  var d = new Date(el.value + 'T00:00:00');
+  if (isNaN(d.getTime())) { prev.textContent = ''; return; }
+  prev.textContent = 'วันที่: ' + d.toLocaleDateString('th-TH', {day:'numeric', month:'long', year:'numeric'});
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  pullWOsFromSheetForInspect(); // ดึง WO ล่าสุดจาก Google Sheet มา merge ไว้ตั้งแต่เปิดหน้า
+  pullInspectionsFromSheet(renderHistory); // ดึงประวัติ inspection จากเครื่องอื่นมา merge แล้วรีเฟรชตาราง
+  const now = new Date();
+  document.getElementById('header-date').textContent = now.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('inp-date').value = now.toISOString().slice(0,10);
+  updateDateThaiPreview('inp-date','inp-date-thai');
+  // Set shift by hour
+  const h = now.getHours();
+  const shiftEl = document.getElementById('sel-shift');
+  if(h>=6&&h<14) shiftEl.value='Day-06';
+  else if(h>=14&&h<22) shiftEl.value='Eve-14';
+  else shiftEl.value='Night-22';
+  // Load inspector name — ใช้ชื่อจริงจาก session ที่ล็อกอินผ่าน Portal ก่อนเสมอ (แม่นยำกว่า เพราะมาจาก
+  // รายชื่อพนักงานที่ Admin จัดการไว้) ถ้าไม่มี session (เช่นกรณีทดสอบ) ค่อย fallback เป็นชื่อล่าสุดที่เคยกรอกในเครื่องนี้
+  (function(){
+    try{
+      var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+      if(s && s.name){
+        var inspEl = document.getElementById('inp-inspector');
+        inspEl.value = s.name;
+        inspEl.readOnly = true;
+        inspEl.style.background = '#f3f4f6';
+        inspEl.title = 'ดึงชื่ออัตโนมัติจากบัญชีที่ล็อกอิน (' + (s.id||'') + ')';
+        return;
+      }
+    }catch(e){}
+    const saved = localStorage.getItem('ob9_inspector_name');
+    if(saved) document.getElementById('inp-inspector').value=saved;
+  })();
+  renderHistory();
+  // ── กัน bug: บาง browser (เช่น Chrome/Edge) จะจำค่า <select> เดิมไว้ให้อัตโนมัติ
+  // ตอน Refresh หน้า (F5) หรือกด Back โดยไม่ยิง event 'change' — ทำให้เห็นว่า
+  // "เครื่องจักร" มีค่าอยู่แล้ว (เช่น Spreader) แต่ Unit/รายการตรวจยังว่างเปล่า
+  // เพราะ onMachineChange() ไม่เคยถูกเรียก ต้องเช็คแล้วเรียกเองถ้ามีค่าค้างอยู่
+  // ─── คืน Draft ที่บันทึกค้างไว้ (ถ้ามี) ───────────────────────────────
+  // ทำหลังสุดเพื่อ override ค่า default ทั้งหมด
+  setTimeout(()=>{ restoreDraft(); }, 100);
+});
+// เผื่อกรณีหน้าโดนดึงกลับมาจาก back/forward cache (bfcache) ก็ให้ sync ค่าอีกรอบ
+window.addEventListener('pageshow', (e)=>{
+  if(e.persisted){ setTimeout(()=>{ restoreDraft(); }, 100); }
+});
+
+// ── MACHINE CHANGE ────────────────────────────────────────────────────────
+// ── หน่วยเครื่องจริงในแต่ละประเภท (ตรงกับแถบซ้ายของ Dashboard) ──────────────
+const UNIT_MAP = {
+  'Spreader': ['A', 'B'],
+  'Tripper': ['A', 'B'],
+  'Line Shift': ['A1.1', 'A9(BWE)', 'B1.1'],
+};
+
+function onUnitMachineChange(){
+  const machine = document.getElementById('sel-machine').value;
+  const unitEl = document.getElementById('sel-unit');
+  const units = UNIT_MAP[machine];
+  if(!units){
+    unitEl.innerHTML = '<option value="">— ไม่ระบุ —</option>';
+    unitEl.disabled = true;
+    return;
+  }
+  unitEl.innerHTML = '<option value="">-- เลือกหน่วยเครื่อง --</option>' + units.map(u=>`<option value="${u}">${machine} ${u}</option>`).join('');
+  unitEl.disabled = false;
+}
+
+function onMachineChange(){
+  const machine = document.getElementById('sel-machine').value;
+  answers = {};
+  onUnitMachineChange();
+  if(!machine){
+    document.getElementById('checklist-body').innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:8px">🔍</div>กรุณาเลือกเครื่องจักรก่อน</div>`;
+    return;
+  }
+  const items = CHECKLISTS[machine]||[];
+  document.getElementById('checklist-header').innerHTML = `🔍 รายการตรวจ — ${machine} <span style="margin-left:auto;font-size:11px;color:var(--text3)">${items.length} รายการ</span>`;
+  document.getElementById('checklist-body').innerHTML = items.map((item,i)=>`
+    <div class="check-item" id="ci-${item.id}">
+      <div class="check-top">
+        <div class="check-num">${i+1}</div>
+        <span class="check-name">${item.name}</span>
+        <span class="check-cat">${item.cat}</span>
+      </div>
+      <div class="btn-group">
+        <button class="status-btn" id="btn-ok-${item.id}" onclick="setStatus('${item.id}','ok')">✅ ปกติ</button>
+        <button class="status-btn" id="btn-warn-${item.id}" onclick="setStatus('${item.id}','warn')">⚠️ ผิดปกติ</button>
+        <button class="status-btn" id="btn-crit-${item.id}" onclick="setStatus('${item.id}','crit')">🔴 แจ้งซ่อม</button>
+      </div>
+      <div class="check-note" id="note-${item.id}">
+        <textarea rows="2" placeholder="ระบุรายละเอียดให้มากที่สุดเท่าที่ทำได้ เช่น จุดที่พบ, ลักษณะ/ความรุนแรงของอาการ, สาเหตุที่คาดว่าเป็นไปได้, คำแนะนำการซ่อม — ยิ่งละเอียด ช่างจะซ่อมได้ตรงจุดโดยไม่ต้องโทรถามซ้ำ" id="note-inp-${item.id}" oninput="saveNote('${item.id}',this.value)"></textarea>
+        <div style="margin-top:8px">
+          <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">🔩 ระบุตำแหน่งชิ้นส่วน (ถ้าทราบ)</label>
+          <select id="pos-sys-${item.id}" onchange="onPosSystemChange('${item.id}')" style="font-size:12px;padding:7px 10px">
+            <option value="">-- เลือกระบบ --</option>
+          </select>
+        </div>
+        <div style="margin-top:6px;display:none" id="pos-partwrap-${item.id}">
+          <select id="pos-part-${item.id}" onchange="onPosPartChange('${item.id}')" style="font-size:12px;padding:7px 10px">
+            <option value="">-- เลือกชิ้นส่วน (ถ้ามี) --</option>
+          </select>
+        </div>
+        <div id="pos-imgwrap-${item.id}" style="display:none;margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#000;position:relative">
+          <img id="pos-img-${item.id}" style="width:100%;display:block;max-height:200px;object-fit:contain" onerror="this.parentElement.style.display='none'">
+          <canvas id="pos-canvas-${item.id}" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+          <div id="pos-imglabel-${item.id}" style="position:absolute;top:6px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500"></div>
+        </div>
+      </div>
+    </div>`).join('');
+  updateProgress();
+}
+
+// ── POSITION PICKER (ระบบ/ชิ้นส่วน ต่อรายการตรวจ) ──────────────────────────
+function onPosSystemChange(id){
+  const machine = document.getElementById('sel-machine').value;
+  const dashKey = POS_MACHINE_MAP[machine]||machine;
+  const sys = document.getElementById('pos-sys-'+id).value;
+  const partWrap = document.getElementById('pos-partwrap-'+id);
+  const partEl = document.getElementById('pos-part-'+id);
+  const imgWrap = document.getElementById('pos-imgwrap-'+id);
+  const imgEl = document.getElementById('pos-img-'+id);
+  const lblEl = document.getElementById('pos-imglabel-'+id);
+  if(!answers[id]) answers[id]={status:'',note:''};
+  answers[id].sys = sys; answers[id].part=''; answers[id].pos='';
+  _clearPosCanvasFor(id);
+  if(!sys){ partWrap.style.display='none'; imgWrap.style.display='none'; return; }
+  const parts = (SPARE_LOOKUP[dashKey]||{})[sys]||[];
+  if(parts.length){
+    partEl.innerHTML = '<option value="">-- เลือกชิ้นส่วน (ถ้ามี) --</option>' + parts.map(p=>`<option value="${p}">${p}</option>`).join('');
+    partWrap.style.display='block';
+  } else {
+    partWrap.style.display='none';
+  }
+  const imgPath = POS_IMG_MAP[posImgPrefix(machine)+'|'+sys];
+  if(imgPath){ imgEl.src=imgPath; lblEl.textContent=sys; imgWrap.style.display='block'; }
+  else { imgWrap.style.display='none'; }
+}
+
+function onPosPartChange(id){
+  const val = document.getElementById('pos-part-'+id).value;
+  if(!answers[id]) answers[id]={status:'',note:''};
+  const r = extractPosPart(val);
+  answers[id].part = r.part;
+  answers[id].pos = r.pos;
+  updatePosCircle(id, answers[id].sys, r.pos);
+}
+
+// Populate the system dropdown for one item (lazy — called the first time a picker becomes visible)
+function ensurePosSystemsPopulated(id){
+  const sysEl = document.getElementById('pos-sys-'+id);
+  if(!sysEl || sysEl.dataset.filled) return;
+  const machine = document.getElementById('sel-machine').value;
+  const dashKey = POS_MACHINE_MAP[machine]||machine;
+  const systems = SPARE_LOOKUP[dashKey]||{};
+  sysEl.innerHTML = '<option value="">-- เลือกระบบ --</option>' + Object.keys(systems).map(s=>`<option value="${s}">${s}</option>`).join('');
+  sysEl.dataset.filled = '1';
+}
+
+// ── STATUS BUTTONS ────────────────────────────────────────────────────────
+/* ── บันทึกสถานะ checklist ลง localStorage อัตโนมัติ ── */
+const DRAFT_KEY = 'ob9_inspect_draft';
+
+function saveDraft(){
+  const machine = document.getElementById('sel-machine').value;
+  const unit = document.getElementById('sel-unit').value;
+  const inspector = document.getElementById('inp-inspector').value.trim();
+  const shift = document.getElementById('sel-shift').value;
+  const date = document.getElementById('inp-date').value;
+  const draft = { machine, unit, inspector, shift, date, answers };
+  try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){}
+}
+
+function restoreDraft(){
+  try{
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    if(!d || !d.machine) return;
+    // คืนค่า dropdown/input
+    const selM = document.getElementById('sel-machine');
+    if(selM && d.machine) selM.value = d.machine;
+    const selU = document.getElementById('sel-unit');
+    if(selU && d.unit) selU.value = d.unit;
+    const inpI = document.getElementById('inp-inspector');
+    if(inpI && d.inspector) inpI.value = d.inspector;
+    const selS = document.getElementById('sel-shift');
+    if(selS && d.shift) selS.value = d.shift;
+    const inpD = document.getElementById('inp-date');
+    if(inpD && d.date) inpD.value = d.date;
+    // render checklist ก่อน แล้วค่อยใส่สถานะกลับ
+    if(d.machine){
+      onMachineChange();
+      if(d.answers){
+        answers = d.answers;
+        // วน apply สถานะกลับคืน
+        Object.keys(answers).forEach(id=>{
+          const s = answers[id].status;
+          if(s) setStatus(id, s, true); // true = silent (ไม่ save draft ซ้ำ)
+          const n = answers[id].note;
+          if(n){
+            const noteInp = document.getElementById('note-inp-'+id);
+            if(noteInp) noteInp.value = n;
+          }
+        });
+        updateProgress();
+      }
+    }
+  }catch(e){}
+}
+
+function clearDraft(){
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+}
+
+function setStatus(id, status, silent){
+  if(!answers[id]) answers[id]={status:'',note:''};
+  answers[id].status = status;
+  // Update button styles
+  ['ok','warn','crit'].forEach(s=>{
+    const btn=document.getElementById(`btn-${s}-${id}`);
+    if(btn){ btn.className='status-btn'+(status===s?` sel-${s}`:''); }
+  });
+  // Show note if warn or crit
+  const noteEl=document.getElementById(`note-${id}`);
+  if(noteEl) noteEl.className='check-note'+(status!=='ok'?' visible':'');
+  if(status!=='ok') ensurePosSystemsPopulated(id);
+  // Color the row
+  const ci=document.getElementById(`ci-${id}`);
+  if(ci) ci.style.background=status==='ok'?'var(--green-bg,#d1fae5)':status==='warn'?'var(--amber-bg,#fef3c7)':status==='crit'?'var(--red-bg,#fee2e2)':'';
+  updateProgress();
+  if(!silent) saveDraft(); // ← บันทึกอัตโนมัติทุกครั้งที่กดปุ่ม
+}
+
+function saveNote(id,val){
+  if(!answers[id]) answers[id]={status:'',note:''};
+  answers[id].note=val;
+  saveDraft(); // ← บันทึกอัตโนมัติทุกครั้งที่พิมพ์หมายเหตุ
+}
+
+function updateProgress(){
+  const machine=document.getElementById('sel-machine').value;
+  const total=(CHECKLISTS[machine]||[]).length;
+  const done=Object.keys(answers).filter(k=>answers[k].status).length;
+  document.getElementById('prog-txt').textContent=`${done}/${total}`;
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('progress-fill').style.width=pct+'%';
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────
+function submitForm(){
+  const machine=document.getElementById('sel-machine').value;
+  const unit=document.getElementById('sel-unit').value;
+  const inspector=document.getElementById('inp-inspector').value.trim();
+  const shift=document.getElementById('sel-shift').value;
+  const date=document.getElementById('inp-date').value;
+  if(!machine){ showToast('⚠️ กรุณาเลือกเครื่องจักร'); return; }
+  if(!inspector){ showToast('⚠️ กรุณากรอกชื่อผู้ตรวจ'); return; }
+  const items=CHECKLISTS[machine]||[];
+  const done=items.filter(i=>answers[i.id]&&answers[i.id].status).length;
+  if(done<items.length){ if(!confirm(`ยังตรวจไม่ครบ ${done}/${items.length} รายการ\nต้องการบันทึกต่อไหม?`)) return; }
+
+  // Save inspector name
+  localStorage.setItem('ob9_inspector_name',inspector);
+
+  // Build record
+  const critItemObjs=items.filter(i=>answers[i.id]&&answers[i.id].status==='crit');
+  const critItems=critItemObjs.map(i=>i.name);
+  const warnItemObjs=items.filter(i=>answers[i.id]&&answers[i.id].status==='warn');
+  const warnItems=warnItemObjs.map(i=>i.name);
+  const record={
+    id:'INS-'+Date.now(),
+    date,shift,machine,unit,inspector,
+    total:items.length,done,
+    ok_count:items.filter(i=>answers[i.id]&&answers[i.id].status==='ok').length,
+    warn_count:warnItems.length,
+    crit_count:critItems.length,
+    crit_items:critItems,
+    warn_items:warnItems,
+    notes:document.getElementById('inp-notes').value,
+    answers:{...answers},
+    ts:new Date().toISOString()
+  };
+
+  // Save to localStorage
+  const hist=JSON.parse(localStorage.getItem('ob9_inspections')||'[]');
+  hist.unshift(record);
+  localStorage.setItem('ob9_inspections',JSON.stringify(hist.slice(0,100)));
+
+  // Update exec data if any crit/warn
+  updateExecData(record);
+  pushInspectionsToSheet(); // sync ประวัติการตรวจขึ้น Google Sheet ทันที
+
+  showToast('✅ บันทึกเรียบร้อยแล้ว!');
+
+  // ── Auto-create WO records (linked into Dashboard ทันที) if crit หรือ warn items ──
+  // ⚠️ สำคัญ: ต้องทำงานนี้ "ก่อน" answers={} ด้านล่าง เพราะ createWOsFromCritItems อ่านรายละเอียด
+  //    ที่พิมพ์ต่อจุด (answers[item.id].note) จากตัวแปร answers ตัวเดียวกัน — เดิมโค้ดรีเซ็ต answers={}
+  //    ก่อนเรียกฟังก์ชันนี้ ทำให้รายละเอียดที่พิมพ์ไว้หายไปทุกครั้ง (WO ที่สร้างอัตโนมัติจะว่างเปล่าเสมอ
+  //    ไม่ว่าจะพิมพ์อะไรก็ตาม) — แก้โดยย้ายมาทำก่อนล้างค่า answers
+  if(critItemObjs.length>0 || warnItemObjs.length>0){
+    const createdCritIds = critItemObjs.length>0
+      ? createWOsFromCritItems(critItemObjs, machine, inspector, shift, date, unit, {priority:'critical', rpnSeverity:8, rpnScore:200, sourceLabel:'แจ้งซ่อม', inspectionNotes: record.notes})
+      : [];
+    const createdWarnIds = warnItemObjs.length>0
+      ? createWOsFromCritItems(warnItemObjs, machine, inspector, shift, date, unit, {priority:'medium', rpnSeverity:5, rpnScore:125, sourceLabel:'ผิดปกติ', inspectionNotes: record.notes})
+      : [];
+    const createdIds = createdCritIds.concat(createdWarnIds);
+    pushWOsToSheetForInspect(); // ส่งใบแจ้งซ่อมที่เพิ่งสร้างขึ้น Google Sheet ทันที
+    setTimeout(()=>{
+      let msg = `สร้างใบแจ้งซ่อมอัตโนมัติแล้ว ${createdIds.length} รายการ: ${createdIds.join(', ')}\n`;
+      if(createdCritIds.length) msg += `🔴 แจ้งซ่อม: ${critItems.join(', ')}\n`;
+      if(createdWarnIds.length) msg += `⚠️ ผิดปกติ: ${warnItems.join(', ')}\n`;
+      msg += `\nข้อมูลเข้า Dashboard ทันที — ต้องการเปิดฟอร์มแจ้งซ่อมเพื่อเพิ่มรายละเอียด (มอบหมายช่าง / งบประมาณ) ไหม?`;
+      if(confirm(msg)){
+        openP('ob9_wo_form.html');
+      }
+    },600);
+  }
+
+  clearDraft(); // ← ล้าง draft หลัง submit สำเร็จ
+  answers={};
+  onMachineChange();
+  document.getElementById('inp-notes').value='';
+  renderHistory();
+}
+
+// ── AUTO-CREATE WO (link ข้อมูลแจ้งซ่อม/ผิดปกติเข้ากับ Dashboard/WO Form โดยตรง) ──────
+function createWOsFromCritItems(critItemObjs, machine, inspector, shift, date, unit, opts){
+  opts = opts || {};
+  const priority = opts.priority || 'critical';
+  const rpnSeverity = opts.rpnSeverity || 8;
+  const rpnScore = opts.rpnScore || 200;
+  const sourceLabel = opts.sourceLabel || 'แจ้งซ่อม';
+  const WO_KEY='ob9_work_orders';
+  let list;
+  try{ list=JSON.parse(localStorage.getItem(WO_KEY)||'[]'); }catch(e){ list=[]; }
+  const createdIds=[];
+  const link=resolveUnitLink(machine, unit);
+  critItemObjs.forEach(item=>{
+    const woId='WO-'+String(list.length+1).padStart(4,'0');
+    const a=answers[item.id]||{};
+    const noteTxt=a.note||'';
+    const posSys=a.sys||item.cat;
+    const posPart=a.part||item.name;
+    const posPos=a.pos||'';
+    const record={
+      id:woId,
+      createdAt:new Date().toISOString(),
+      machine:link.machine,
+      unit:link.unit,
+      unitCode:link.unitCode,
+      section:posSys,
+      pos:posPos,
+      part:posPart,
+      maintenanceType:'corrective',
+      priority:priority,
+      isPlannedMaintenance:false,
+      failureMode:'',
+      failureCause:'',
+      failureEffect:'',
+      detectionMethod:'visual',
+      downtimeStart:null,
+      downtimeEnd:null,
+      downtimeDuration:null,
+      downtimeType:null,
+      shift:shift,
+      rpnSeverity:rpnSeverity,
+      rpnOccurrence:5,
+      rpnDetection:5,
+      rpnScore:rpnScore,
+      laborRate:500,
+      tdcMaterials:0,
+      tdcLabor:0,
+      productionImpact:null,
+      conditionReadings:null,
+      // เดิม: noteTxt || item.name — ถ้าพิมพ์รายละเอียดเอง ชื่อรายการมาตรฐาน (item.name) จะหายไปเลย
+      // แก้ให้โชว์ทั้งคู่เสมอ (ชื่ออาการมาตรฐาน + รายละเอียดที่พิมพ์เพิ่ม) จะได้ไม่มีข้อมูลหายตอนแสดงผล
+      description: noteTxt ? (item.name + ' — ' + noteTxt) : item.name,
+      technicianName:'',
+      laborHours:null,
+      partsUsed:[],
+      reporter:inspector,
+      failedSystem:posSys,
+      failedPart:posPart,
+      failedPos:posPos,
+      lessonLearned:'',
+      nextMaintenanceDue:null,
+      status:'pending',
+      closedAt:null,
+      imagesBefore:[],
+      imagesAfter:[],
+      dept:'',
+      notes:`จาก Daily Inspection (${shift}) — ${sourceLabel}${noteTxt?': '+noteTxt:''}`,
+      inspectionNotes: opts.inspectionNotes || '',
+      spare:'',
+      date:date,
+      _source:'ob9_inspect',
+    };
+    list.push(record);
+    createdIds.push(woId);
+  });
+  localStorage.setItem(WO_KEY, JSON.stringify(list));
+  return createdIds;
+}
+
+function updateExecData(record){
+  try{
+    const ed=JSON.parse(localStorage.getItem('ob9_exec_data')||'{}');
+    if(!ed.machines) ed.machines=[];
+    // แก้บั๊ก: เดิมเก็บ key ด้วย record.machine อย่างเดียว (เช่น "Spreader") ทำให้ Spreader A กับ Spreader B
+    // เขียนทับกันเองในช่องเดียว ไม่มีทางแยกดูราย Unit ได้เลยใน Executive Summary
+    // ตอนนี้เก็บแยกเป็นราย Unit จริง (เช่น "Spreader A", "Spreader B") พร้อม group ไว้ให้ Executive ใช้จัดกลุ่ม
+    const group = record.machine;
+    const unitName = record.unit ? (group+' '+record.unit) : group;
+    let m=ed.machines.find(x=>x.name===unitName);
+    const status=record.crit_count>0?'red':record.warn_count>0?'amber':'green';
+    const noteTxt=record.crit_count>0?`แจ้งซ่อม ${record.crit_count} รายการ`:record.warn_count>0?`ผิดปกติ ${record.warn_count} รายการ`:`ปกติ — ตรวจ ${new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}`;
+    if(m){ m.status=status; m.note=noteTxt; m.group=group; m.unit=record.unit||''; m.ts=record.ts; }
+    else { ed.machines.push({name:unitName, group:group, unit:record.unit||'', status:status, oee:0, note:noteTxt, ts:record.ts}); }
+    // ล้าง entry เก่าแบบไม่มี unit ที่ค้างมาจากก่อนแก้บั๊ก (ชื่อซ้ำกับ group แต่ไม่มี unit) เพื่อไม่ให้ขึ้นการ์ดซ้ำ
+    if (record.unit) {
+      ed.machines = ed.machines.filter(x => !(x.name === group && !x.unit));
+    }
+    ed._ts=new Date().toISOString();
+    localStorage.setItem('ob9_exec_data',JSON.stringify(ed));
+  }catch(e){}
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────
+function renderHistory(){
+  const hist=JSON.parse(localStorage.getItem('ob9_inspections')||'[]');
+  const el=document.getElementById('history-body');
+  if(!hist.length){
+    el.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--text3);font-size:12px">ยังไม่มีประวัติ</div>';
+    return;
+  }
+  const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-7);
+  const recent=hist.filter(r=>new Date(r.ts)>=cutoff).slice(0,20);
+  if(!recent.length){
+    el.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--text3);font-size:12px">ไม่มีประวัติใน 7 วันที่ผ่านมา</div>';
+    return;
+  }
+  el.innerHTML=recent.map(r=>{
+    const cls=r.crit_count>0?'h-red':r.warn_count>0?'h-amber':'h-green';
+    const lbl=r.crit_count>0?`🔴 ${r.crit_count} แจ้งซ่อม`:r.warn_count>0?`⚠️ ${r.warn_count} ผิดปกติ`:'✅ ปกติ';
+    const dt=new Date(r.ts).toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="hist-row" style="cursor:pointer" onclick="viewInspectionDetail('${r.id}')" title="ดูรายละเอียด">
+      <div>
+        <div style="font-size:12px;font-weight:500">${r.machine} — ${r.shift}</div>
+        <div class="hist-meta">${dt} · ${r.inspector} · ${r.done}/${r.total} รายการ</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="hist-badge ${cls}">${lbl}</span>
+        <span style="color:var(--text3);font-size:11px">›</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DETAIL VIEW: สรุปรายละเอียดการตรวจเช็คแบบย่อ (คลิกจากประวัติ) ──────────
+function viewInspectionDetail(id){
+  const hist = JSON.parse(localStorage.getItem('ob9_inspections')||'[]');
+  const r = hist.find(x=>x.id===id);
+  if(!r){ showToast('⚠️ ไม่พบข้อมูลนี้แล้ว'); return; }
+  const dt = new Date(r.ts).toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const shiftLabel = {'Day-06':'กะเช้า 06:00–14:00','Eve-14':'กะบ่าย 14:00–22:00','Night-22':'กะดึก 22:00–06:00'}[r.shift] || r.shift;
+
+  // สรุปสถิติ
+  const statsHtml = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--green)">${r.ok_count||0}</div>
+        <div style="font-size:10px;color:var(--text2)">ปกติ</div>
+      </div>
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--amber)">${r.warn_count||0}</div>
+        <div style="font-size:10px;color:var(--text2)">ผิดปกติ</div>
+      </div>
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--red)">${r.crit_count||0}</div>
+        <div style="font-size:10px;color:var(--text2)">แจ้งซ่อม</div>
+      </div>
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">${r.done||0}/${r.total||0}</div>
+        <div style="font-size:10px;color:var(--text2)">ตรวจครบ</div>
+      </div>
+    </div>`;
+
+  // รายการที่พบปัญหา (ผิดปกติ + แจ้งซ่อม) — ดึงชื่อหัวข้อจริงจาก CHECKLISTS โดยจับคู่กับ answers
+  const items = CHECKLISTS[r.machine] || [];
+  const answers = r.answers || {};
+  const flagged = items
+    .map(it => ({ item: it, a: answers[it.id] }))
+    .filter(x => x.a && (x.a.status==='warn' || x.a.status==='crit'))
+    .sort((x,y) => (x.a.status==='crit'?0:1) - (y.a.status==='crit'?0:1));
+
+  const flaggedHtml = flagged.length
+    ? flagged.map(x => {
+        const isCrit = x.a.status==='crit';
+        const badge = isCrit ? '🔴 แจ้งซ่อม' : '⚠️ ผิดปกติ';
+        const badgeColor = isCrit ? 'var(--red)' : 'var(--amber)';
+        const badgeBg = isCrit ? 'var(--red-bg)' : 'var(--amber-bg)';
+        return `<div style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:600;flex:1">${x.item.name}</span>
+            <span style="font-size:10px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:2px 8px;border-radius:10px;white-space:nowrap">${badge}</span>
+          </div>
+          ${x.a.note ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">${x.a.note}</div>` : ''}
+        </div>`;
+      }).join('')
+    : '<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px">✅ ไม่พบจุดผิดปกติ — ผ่านทุกรายการ</div>';
+
+  document.getElementById('inspDetailBody').innerHTML = `
+    <div style="font-size:12px;color:var(--text2);margin-bottom:2px">${dt} · ${shiftLabel}</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px">ผู้ตรวจ: <b>${r.inspector||'—'}</b></div>
+    ${statsHtml}
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin:10px 0 6px">รายการที่พบปัญหา</div>
+    ${flaggedHtml}
+    ${r.notes ? `<div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px">หมายเหตุเพิ่มเติม</div>
+      <div style="font-size:12px;color:var(--text)">${r.notes}</div>
+    </div>` : ''}
+  `;
+  document.getElementById('inspDetailModal').style.display = 'flex';
+}
+function closeInspDetail(){ document.getElementById('inspDetailModal').style.display = 'none'; }
+</script>
+</body>
+</html>

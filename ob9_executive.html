@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: ต้อง login ผ่าน Portal ก่อนเสมอ ──
+// หน้านี้ (Executive Summary) จำกัดเฉพาะ Admin หรือพนักงานที่ Admin ให้สิทธิ์ Executive เท่านั้น
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=executive'); return; }
+    if(s.isSuperAdmin) return; // Admin เข้าได้ทุกส่วนเสมอ
+    if(s.type==='field' && !(s.permissions && s.permissions.executive)){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>OB9 — Executive Summary</title>
+<style>
+:root{
+  --bg:#f0f2f5;--card:#fff;--border:#e5e7eb;--text:#111827;--text2:#6b7280;--text3:#9ca3af;
+  --green:#059669;--green-bg:#d1fae5;--green-lt:#ecfdf5;
+  --amber:#d97706;--amber-bg:#fef3c7;--amber-lt:#fffbeb;
+  --red:#dc2626;--red-bg:#fee2e2;--red-lt:#fef2f2;
+  --blue:#1e40af;--blue-mid:#3b82f6;--blue-bg:#dbeafe;--blue-lt:#eff6ff;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#111827;--card:#1f2937;--border:#374151;--text:#f9fafb;--text2:#9ca3af;--text3:#6b7280;
+  --blue-lt:#1e3a5f;--green-lt:#064e3b;--amber-lt:#78350f;--red-lt:#7f1d1d;--blue-bg:#1e3a5f;}
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+a{text-decoration:none;color:inherit}
+
+/* HEADER */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;height:56px}
+.logo{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:20px;height:20px;fill:#fff}
+.header-title{flex:1}
+.header-title h1{font-size:15px;font-weight:600;color:var(--text);line-height:1.2}
+.header-title p{font-size:11px;color:var(--text2)}
+.header-nav{display:flex;gap:6px}
+.nav-btn{font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;white-space:nowrap}
+.nav-btn:hover{background:var(--bg);color:var(--text)}
+.nav-btn.active{background:var(--blue-bg);border-color:var(--blue-mid);color:var(--blue)}
+
+/* MAIN */
+.main{max-width:1100px;margin:0 auto;padding:20px 16px;display:flex;flex-direction:column;gap:16px}
+
+/* LAST UPDATED */
+.last-bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.last-txt{font-size:12px;color:var(--text3)}
+.refresh-btn{font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:4px}
+.refresh-btn:active{opacity:.7}
+
+/* SECTION TITLE */
+.sec-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:640px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.kpi-label{font-size:11px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.kpi-label svg{width:13px;height:13px;opacity:.6}
+.kpi-value{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+
+/* GAUGE (SVG) */
+.gauge-wrap{display:flex;align-items:center;gap:12px}
+.gauge-svg{width:64px;height:64px;flex-shrink:0}
+.gauge-info{flex:1}
+
+/* MACHINE STATUS */
+.machine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:500px){.machine-grid{grid-template-columns:1fr}}
+.machine-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.status-dot{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.dot-green{background:var(--green-lt);box-shadow:0 0 0 4px var(--green-bg)}
+.dot-amber{background:var(--amber-lt);box-shadow:0 0 0 4px var(--amber-bg)}
+.dot-red{background:var(--red-lt);box-shadow:0 0 0 4px var(--red-bg)}
+.dot-inner{width:16px;height:16px;border-radius:50%}
+.dot-green .dot-inner{background:var(--green)}
+.dot-amber .dot-inner{background:var(--amber)}
+.dot-red .dot-inner{background:var(--red)}
+.machine-info h3{font-size:13px;font-weight:600}
+.machine-info p{font-size:11px;color:var(--text2);margin-top:2px}
+.machine-oee{margin-top:4px;font-size:20px;font-weight:700}
+
+/* SPLIT SECTION */
+.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.split-grid{grid-template-columns:1fr}}
+
+/* FAILURES CARD */
+.failures-card,.kpis-extra-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bar-row:last-child{margin-bottom:0}
+.bar-name{font-size:12px;color:var(--text);width:100px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.bar-fill.f0{background:#dc2626}
+.bar-fill.f1{background:#d97706}
+.bar-fill.f2{background:#3b82f6}
+.bar-fill.f3{background:#6366f1}
+.bar-fill.f4{background:#0891b2}
+.bar-count{font-size:11px;color:var(--text2);width:28px;text-align:right;flex-shrink:0}
+
+/* MINI KPI (in split) */
+.mini-kpi-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.mini-kpi-row:last-child{border-bottom:none;padding-bottom:0}
+.mini-kpi-label{font-size:12px;color:var(--text2)}
+.mini-kpi-val{font-size:16px;font-weight:700}
+.target-row{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.target-txt{font-size:10px;color:var(--text3)}
+.progress-track{width:80px;height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px}
+
+/* WO TABLE */
+.wo-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+.wo-card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.wo-card-header h2{font-size:13px;font-weight:600}
+.wo-table{width:100%;border-collapse:collapse;font-size:12px}
+.wo-table th{padding:8px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg)}
+.wo-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+.wo-table tr:last-child td{border-bottom:none}
+.wo-table tr:hover td{background:var(--bg)}
+.priority-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.p-critical{background:var(--red-bg);color:var(--red)}
+.p-high{background:var(--amber-bg);color:var(--amber)}
+.p-normal{background:var(--blue-bg);color:var(--blue)}
+.status-tag{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.s-pending{background:var(--amber-bg);color:var(--amber)}
+.s-inprog{background:var(--blue-bg);color:var(--blue)}
+.s-done{background:var(--green-bg);color:var(--green)}
+@media(max-width:640px){.wo-table .hide-mobile{display:none}}
+
+/* FOOTER */
+.footer{text-align:center;padding:20px 16px;font-size:11px;color:var(--text3)}
+.footer a{color:var(--blue-mid)}
+
+/* PULSE ANIMATION */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;animation:pulse 2s infinite}
+
+/* ── INFO TOOLTIP — คำอธิบายภาษาไทยของตัวย่อ (OEE/KPI/MTTR/MTBF/BCM ฯลฯ) ──
+   ใช้ "แตะ/คลิก" แทน hover เพราะจอสัมผัส (มือถือ/แท็บเล็ต) ไม่มี mouse hover ให้ใช้งานได้ */
+.info-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:50%;flex-shrink:0;vertical-align:middle;margin-left:2px;
+  background:var(--blue-bg);color:var(--blue-mid);
+  font-size:10px;font-weight:700;font-style:normal;line-height:1;text-transform:none;letter-spacing:normal;
+  border:none;cursor:pointer;padding:0;font-family:inherit;
+}
+.info-btn:active{opacity:.7}
+.info-tip-bubble{
+  position:fixed;z-index:9999;max-width:min(280px,86vw);
+  background:var(--text);color:var(--card);
+  font-size:12px;line-height:1.55;font-weight:400;text-transform:none;letter-spacing:normal;
+  padding:10px 12px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);
+  display:none;
+}
+.info-tip-bubble.show{display:block}
+.info-tip-bubble .tip-close{
+  float:right;margin:-2px -2px 0 8px;background:rgba(255,255,255,.15);border:none;color:var(--card);
+  width:18px;height:18px;border-radius:50%;font-size:12px;cursor:pointer;line-height:1;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo" style="background:#fff;border:3px solid #F4A200;color:#F4A200;font-weight:800;font-size:9px" title="ITD Italian-Thai Development Public Company Limited">ITD</div>
+    <div class="header-title">
+      <h1>OB9 Executive Summary</h1>
+      <p id="header-date">—</p>
+    </div>
+    <div class="header-nav">
+      <button class="nav-btn active" onclick="location.reload()">📊 Executive</button>
+      <button class="nav-btn" onclick="openLink('ob9_inspect.html')">✅ ตรวจเช็ค</button>
+      <button class="nav-btn" onclick="openLink('ob9_wo_form.html')">🔧 แจ้งซ่อม</button>
+      <button class="nav-btn" onclick="openLink('ob9_dashboard.html')">⚙️ Full</button>
+      <button class="nav-btn" onclick="location.href='ob9_home.html'" title="กลับหน้าเลือกระบบ">🏠 หน้าแรก</button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- LAST UPDATED BAR -->
+  <div class="last-bar">
+    <span class="last-txt"><span class="live-dot"></span>อัปเดตล่าสุด: <span id="last-updated">—</span> <span id="kpi-source-badge"></span></span>
+    <button class="refresh-btn" onclick="refreshData()">↻ รีเฟรช</button>
+  </div>
+
+  <!-- UNIT FILTER BANNER — โชว์เฉพาะตอนกำลังดู KPI แยกเครื่อง -->
+  <div id="unitFilterBanner" style="display:none;align-items:center;justify-content:space-between;gap:8px;background:var(--blue-bg);border:1px solid var(--blue-mid);border-radius:10px;padding:10px 14px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:700;color:var(--blue)">📍 กำลังดูข้อมูลเฉพาะ: <span id="unitFilterName"></span></span>
+      <button class="refresh-btn" style="background:var(--card)" onclick="viewUnitDetail(currentUnitFilter)">🔍 ผลตรวจเช็คล่าสุด</button>
+    </div>
+    <button class="refresh-btn" onclick="clearUnitFilter()">‹ กลับภาพรวมทุกเครื่อง</button>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div>
+    <div class="sec-title" id="kpi-sec-title">ตัวชี้วัดหลัก (KPIs)
+      <button class="info-btn" type="button" onclick="showTip(this,'KPI (Key Performance Indicator) แปลว่า ตัวชี้วัดผลการดำเนินงานหลัก — คือค่าตัวเลขที่ใช้วัดว่างานซ่อมบำรุงและเครื่องจักรทำงานได้ดีแค่ไหน')">ⓘ</button>
+    </div>
+    <div class="kpi-grid">
+
+      <!-- OEE -->
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          OEE
+          <button class="info-btn" type="button" onclick="showTip(this,'OEE (Overall Equipment Effectiveness) แปลว่า ประสิทธิภาพโดยรวมของเครื่องจักร คำนวณจาก ความพร้อมใช้งาน × ประสิทธิภาพการทำงาน × คุณภาพงาน ยิ่งใกล้ 100% ยิ่งดี')">ⓘ</button>
+        </div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="6"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#3b82f6" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="163" stroke-dashoffset="21"
+              transform="rotate(-90 32 32)" id="oee-arc"/>
+          </svg>
+          <div class="gauge-info">
+            <div class="kpi-value" id="oee-val" style="color:var(--blue-mid)">—</div>
+            <div class="kpi-sub" id="oee-badge"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AVAILABILITY -->
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Availability
+          <button class="info-btn" type="button" onclick="showTip(this,'Availability แปลว่า ความพร้อมใช้งาน — สัดส่วนเวลาที่เครื่องพร้อมทำงานจริง เทียบกับเวลาทำงานทั้งหมด (ไม่นับเวลาที่หยุดซ่อม/รอซ่อม) ยิ่งใกล้ 100% ยิ่งดี')">ⓘ</button>
+        </div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="6"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#059669" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="163" stroke-dashoffset="15"
+              transform="rotate(-90 32 32)" id="avail-arc"/>
+          </svg>
+          <div class="gauge-info">
+            <div class="kpi-value" id="avail-val" style="color:var(--green)">—</div>
+            <div class="kpi-sub" id="avail-badge"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WO PENDING -->
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          Work Orders คงค้าง
+        </div>
+        <div class="kpi-value" id="wo-val" style="color:var(--amber)">—</div>
+        <div class="kpi-sub" id="wo-sub" style="margin-top:6px"></div>
+      </div>
+
+      <!-- COST MTD -->
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          ค่าซ่อมเดือนนี้
+        </div>
+        <div class="kpi-value" id="cost-val" style="color:var(--red);font-size:22px">—</div>
+        <div class="kpi-sub" id="cost-sub" style="margin-top:6px"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MACHINE STATUS -->
+  <div>
+    <div class="sec-title">สถานะเครื่องจักร</div>
+    <div id="machine-grid-note" style="display:none;margin-bottom:8px">
+      <span class="kpi-badge badge-amber">⚠ ประมาณการจาก Work Order — ยังไม่มี Daily Inspection วันนี้</span>
+    </div>
+    <div class="machine-grid" id="machine-grid">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+
+  <!-- SPLIT: FAILURES + MINI KPIs -->
+  <div class="split-grid">
+
+    <!-- TOP FAILURES -->
+    <div class="failures-card">
+      <div class="sec-title">ระบบที่มีปัญหาสูงสุด (เดือนนี้)</div>
+      <div id="failures-list"><!-- rendered by JS --></div>
+    </div>
+
+    <!-- MINI KPIs -->
+    <div class="kpis-extra-card">
+      <div class="sec-title">ตัวชี้วัดเพิ่มเติม (สะสมทั้งหมด) <button class="info-btn" type="button" onclick="showTip(this,'ตัวเลขในกล่องนี้ไม่ใช่ข้อมูล \'วันนี้\' — เป็นค่าเฉลี่ยสะสมตลอดประวัติการซ่อมทั้งหมดของเครื่อง คำนวณจาก Work Order ทุกใบที่เคยบันทึกไว้ (ตามมาตรฐาน ISO 22400-2 ซึ่ง MTBF/MTTR นิยามเป็นค่าเฉลี่ยระยะยาวอยู่แล้ว) เครื่องอาจหยุดอยู่ตอนนี้หรือยังไม่มีข้อมูลตรวจวันนี้ แต่กล่องนี้ก็ยังโชว์ตัวเลขได้ปกติ เพราะดึงจากประวัติสะสม ไม่ใช่เรียลไทม์')">ⓘ</button></div>
+      <div class="mini-kpi-row">
+        <span class="mini-kpi-label">MTTR (ชม. เฉลี่ย) <button class="info-btn" type="button" onclick="showTip(this,'MTTR (Mean Time To Repair) แปลว่า เวลาเฉลี่ยที่ใช้ซ่อมแต่ละครั้ง นับตั้งแต่แจ้งซ่อมจนซ่อมเสร็จ ยิ่งน้อยยิ่งดี (ซ่อมเสร็จเร็ว)')">ⓘ</button></span>
+        <div>
+          <span class="mini-kpi-val" id="mttr-val">—</span>
+          <div class="target-row">
+            <span class="target-txt">เป้า: ≤ 6 ชม.</span>
+            <div class="progress-track"><div class="progress-fill" id="mttr-bar" style="background:var(--green)"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-kpi-row">
+        <span class="mini-kpi-label">MTBF (ชม.) <button class="info-btn" type="button" onclick="showTip(this,'MTBF (Mean Time Between Failures) แปลว่า เวลาเฉลี่ยที่เครื่องทำงานได้ก่อนจะเสียครั้งถัดไป ยิ่งมากยิ่งดี (เครื่องเสียห่างขึ้น น่าเชื่อถือมากขึ้น)')">ⓘ</button></span>
+        <div>
+          <span class="mini-kpi-val" id="mtbf-val">—</span>
+          <div class="target-row">
+            <span class="target-txt">เป้า: ≥ 150 ชม.</span>
+            <div class="progress-track"><div class="progress-fill" id="mtbf-bar" style="background:var(--blue-mid)"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-kpi-row">
+        <span class="mini-kpi-label">งานตรวจเช็ค (เดือนนี้)</span>
+        <div>
+          <span class="mini-kpi-val" id="inspect-val">—</span>
+          <div class="target-row">
+            <span class="target-txt">เป้า: 100%</span>
+            <div class="progress-track"><div class="progress-fill" id="inspect-bar" style="background:var(--green)"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-kpi-row">
+        <span class="mini-kpi-label">งบประมาณซ่อมที่ใช้</span>
+        <div>
+          <span class="mini-kpi-val" id="budget-val">—</span>
+          <div class="target-row">
+            <span class="target-txt">vs งบ ฿200,000</span>
+            <div class="progress-track"><div class="progress-fill" id="budget-bar" style="background:var(--amber)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RECENT WOs -->
+  <div class="wo-card">
+    <div class="wo-card-header">
+      <h2>Work Orders ล่าสุด</h2>
+      <span id="wo-count-badge" class="kpi-badge badge-amber">—</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="wo-table">
+        <thead>
+          <tr>
+            <th>WO# <button class="info-btn" type="button" onclick="showTip(this,'WO# (Work Order Number) แปลว่า เลขที่ใบสั่งงานซ่อม — เลขอ้างอิงเฉพาะของแต่ละงานแจ้งซ่อม ใช้ค้นหา/อ้างอิงงานนั้นได้')">ⓘ</button></th>
+            <th>เครื่องจักร</th>
+            <th class="hide-mobile">ระบบ</th>
+            <th>Priority</th>
+            <th>สถานะ</th>
+            <th class="hide-mobile">วันที่</th>
+            <th class="hide-mobile">ค่าใช้จ่าย</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="wo-tbody"><!-- rendered by JS --></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  OB9 Predictive Maintenance System &nbsp;|&nbsp; ThyssenKrupp · OB9 Mine &nbsp;|&nbsp;
+  <a href="ob9_dashboard.html">เปิด Full Dashboard</a>
+</footer>
+
+<!-- UNIT DETAIL MODAL — สรุปรายละเอียดล่าสุดของ Unit นั้นๆ (ดึงจาก ob9_inspections) -->
+<div id="unitDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeUnitDetail()">
+  <div style="background:var(--card);border-radius:var(--radius);max-width:480px;width:100%;max-height:85vh;overflow-y:auto;padding:20px;box-shadow:var(--shadow)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <div id="unitDetailTitle" style="font-size:15px;font-weight:700"></div>
+      <span onclick="closeUnitDetail()" style="cursor:pointer;color:var(--text3);font-size:20px;line-height:1;padding:2px 6px">×</span>
+    </div>
+    <div id="unitDetailBody"></div>
+  </div>
+</div>
+
+<!-- WO DETAIL MODAL — ดูรายละเอียดเต็มของ Work Order แต่ละแถวในตาราง -->
+<div id="woDetailModalExec" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeWODetailExec()">
+  <div style="background:var(--card);border-radius:var(--radius);max-width:480px;width:100%;max-height:85vh;overflow-y:auto;padding:20px;box-shadow:var(--shadow)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <div id="woDetailExecTitle" style="font-size:15px;font-weight:700"></div>
+      <span onclick="closeWODetailExec()" style="cursor:pointer;color:var(--text3);font-size:20px;line-height:1;padding:2px 6px">×</span>
+    </div>
+    <div id="woDetailExecBody"></div>
+  </div>
+</div>
+
+<script>
+// ── INFO TOOLTIP (คำอธิบายตัวย่อภาษาไทย) ──────────────────────────────────
+// ใช้ "แตะ" (click) แทน hover เพราะจอสัมผัส (มือถือ/แท็บเล็ต) ไม่มี mouse hover
+// bubble ตัวเดียวใช้ซ้ำทุกจุด — ย้ายตำแหน่งไปตามปุ่มที่กดล่าสุด และคำนวณไม่ให้ล้นจอ
+let _tipBubble = null;
+let _tipOpenBtn = null;
+function _ensureTipBubble(){
+  if(_tipBubble) return _tipBubble;
+  _tipBubble = document.createElement('div');
+  _tipBubble.className = 'info-tip-bubble';
+  document.body.appendChild(_tipBubble);
+  document.addEventListener('click', function(e){
+    if(_tipBubble.classList.contains('show') && !_tipBubble.contains(e.target) && e.target !== _tipOpenBtn){
+      hideTip();
+    }
+  });
+  window.addEventListener('resize', hideTip);
+  window.addEventListener('scroll', hideTip, true);
+  return _tipBubble;
+}
+function hideTip(){
+  if(_tipBubble) _tipBubble.classList.remove('show');
+  _tipOpenBtn = null;
+}
+function showTip(btn, text){
+  const bubble = _ensureTipBubble();
+  // แตะปุ่มเดิมซ้ำ → ปิด
+  if(_tipOpenBtn === btn && bubble.classList.contains('show')){ hideTip(); return; }
+  _tipOpenBtn = btn;
+  bubble.innerHTML = '<button class="tip-close" type="button" onclick="hideTip()">✕</button>' + text;
+  bubble.classList.add('show');
+  const r = btn.getBoundingClientRect();
+  const bw = Math.min(280, window.innerWidth*0.86);
+  let left = r.left + r.width/2 - bw/2;
+  left = Math.max(10, Math.min(left, window.innerWidth - bw - 10));
+  let top = r.bottom + 8;
+  bubble.style.width = bw+'px';
+  bubble.style.left = left+'px';
+  bubble.style.top = top+'px';
+  // ถ้าเกินขอบล่างจอ ให้โผล่ขึ้นด้านบนปุ่มแทน
+  requestAnimationFrame(()=>{
+    const bh = bubble.offsetHeight;
+    if(top + bh > window.innerHeight - 10){
+      bubble.style.top = Math.max(10, r.top - bh - 8) + 'px';
+    }
+  });
+}
+
+// ── DEMO DATA ──────────────────────────────────────────────────────────────
+const DEMO = {
+  oee: 87.4, oee_target: 85,
+  availability: 91.2, avail_target: 90,
+  mttr: 4.2, mtbf: 172.5,
+  wo_pending: 3, wo_critical: 1, wo_high: 1, wo_normal: 1,
+  cost_mtd: 142000, cost_budget: 200000,
+  inspect_pct: 94,
+  machines: [
+    {name:'Spreader', status:'green', oee:89.2, note:'ปกติ — ตรวจล่าสุด 06:00'},
+    {name:'Tripper', status:'amber', oee:83.1, note:'แจ้งซ่อม Belt scrapers'},
+    {name:'Conv. Bridge', status:'green', oee:91.5, note:'ปกติ — ตรวจล่าสุด เมื่อวาน'},
+  ],
+  top_failures:[
+    {system:'Hydraulic unit',machine:'Spreader',count:5},
+    {system:'Belt scrapers',machine:'Tripper',count:4},
+    {system:'Travel drive',machine:'Spreader',count:2},
+    {system:'Pulleys',machine:'Tripper',count:2},
+    {system:'Slewing drive',machine:'Spreader',count:1},
+  ],
+  wos:[
+    {id:'WO-042',machine:'Spreader',system:'Hydraulic unit',priority:'critical',status:'in_progress',date:'2026-07-05',cost:45000},
+    {id:'WO-041',machine:'Tripper',system:'Belt scrapers',priority:'high',status:'pending',date:'2026-07-04',cost:28000},
+    {id:'WO-040',machine:'Spreader',system:'Travel drive',priority:'normal',status:'pending',date:'2026-07-04',cost:15000},
+    {id:'WO-039',machine:'Tripper',system:'Pulleys',priority:'high',status:'completed',date:'2026-07-03',cost:35000},
+    {id:'WO-038',machine:'Spreader',system:'Slewing drive',priority:'normal',status:'completed',date:'2026-07-01',cost:19000},
+  ]
+};
+
+// ── UNIT_META — รหัส unitCode/SMU-id ของแต่ละ Unit (ตรงกับ PROD_MACHINES ใน ob9_dashboard.html) ──
+// ใช้กรอง WO และดึง SMU เฉพาะ Unit ตอนกดดูรายละเอียดแยกเครื่อง
+const UNIT_META = [
+  {id:'spreader_a', name:'Spreader A',        code:'08-SP0002'},
+  {id:'spreader_b', name:'Spreader B',        code:'08-SP0003'},
+  {id:'tripper_a',  name:'Tripper A',         code:'08-TP00001'},
+  {id:'tripper_b',  name:'Tripper B',         code:'08-TP00002'},
+  {id:'ls_a11',     name:'Line Shift A1.1',   code:'08-SF00001'},
+  {id:'ls_a9',      name:'Line Shift A9(BWE)',code:'08-SF00002'},
+  {id:'ls_b11',     name:'Line Shift B1.1',   code:'08-SF0003'},
+];
+function getUnitMeta(name){ return UNIT_META.find(u=>u.name===name) || null; }
+function getUnitSmu(id){
+  try{
+    const map = JSON.parse(localStorage.getItem('ob9_smu_by_machine')||'{}');
+    return (map[id] && typeof map[id].value==='number') ? map[id].value : 24851;
+  }catch(e){ return 24851; }
+}
+
+// ── UNIT FILTER STATE — null = ภาพรวมทุกเครื่อง, ไม่ null = กำลังดูเฉพาะ Unit นั้น ──
+let currentUnitFilter = null;
+
+// ── LOAD DATA ──────────────────────────────────────────────────────────────
+function loadData(){
+  // OEE/Availability/MTTR/MTBF/cost ยังไม่มีแหล่งข้อมูลจริง (ต้องมาจากระบบวัด production/downtime แยกต่างหาก) — ใช้ค่า DEMO ไปก่อน
+  const d = Object.assign({}, DEMO);
+  const unitMeta = currentUnitFilter ? getUnitMeta(currentUnitFilter) : null;
+  d._filterUnit = currentUnitFilter;
+
+  // ── ดึง WO จริงจาก 'ob9_work_orders' (key เดียวกับ Dashboard/WO Form/Daily Inspection) — กรองเฉพาะ Unit ถ้ามีการเลือก ──
+  try{
+    const wosRaw = localStorage.getItem('ob9_work_orders');
+    if(wosRaw){
+      let wos = JSON.parse(wosRaw);
+      if(Array.isArray(wos) && unitMeta) wos = wos.filter(w=>w.unitCode===unitMeta.code);
+      if(Array.isArray(wos) && (wos.length || unitMeta)){
+        const norm = s => (s||'').toString().toLowerCase();
+        d.wo_pending  = wos.filter(w=>norm(w.status)==='pending').length;
+        d.wo_critical = wos.filter(w=>norm(w.priority)==='critical').length;
+        d.wo_high     = wos.filter(w=>norm(w.priority)==='high').length;
+        d.wo_normal   = wos.filter(w=>['medium','normal'].includes(norm(w.priority))).length;
+
+        d.wos = wos.slice()
+          .sort((a,b)=> new Date(b.createdAt||b.date||0) - new Date(a.createdAt||a.date||0))
+          .slice(0,5)
+          .map(w=>({
+            id: w.id,
+            machine: w.machine,
+            system: w.section || w.failedSystem || '',
+            priority: norm(w.priority)==='critical' ? 'critical' : (w.priority||'normal'),
+            status: w.status,
+            date: w.date || (w.createdAt||'').slice(0,10),
+            cost: (w.tdcMaterials||0) + (w.tdcLabor||0)
+          }));
+
+        const freq={};
+        wos.forEach(w=>{
+          const key=(w.section||w.failedSystem||'ไม่ระบุ')+'|'+w.machine;
+          freq[key]=(freq[key]||0)+1;
+        });
+        d.top_failures = Object.keys(freq).map(k=>{
+          const [system,machine]=k.split('|');
+          return {system, machine, count:freq[k]};
+        }).sort((a,b)=>b.count-a.count).slice(0,5);
+
+        // ── OEE / Availability / MTBF / MTTR / ค่าซ่อม — คำนวณจริงจาก WO (สูตรเดียวกับ Dashboard, ISO 22400-2) ──
+        // หมายเหตุ: SMU ยังเป็นค่าฐานคงที่ (24,851 ชม.) เพราะยังไม่มีระบบอ่านมิเตอร์เครื่องจักรแบบ live
+        // ป้อนเข้ามา — ถ้าจะให้แม่นขึ้นต้องเชื่อมข้อมูล SMU จริงจาก Dashboard/PLC ภายหลัง
+        // ส่วน Availability/MTBF/MTTR/ค่าซ่อม คำนวณจาก downtime และ WO จริงทั้งหมดแล้ว ไม่ใช่ DEMO อีกต่อไป
+        const smuBase = unitMeta ? getUnitSmu(unitMeta.id) : 24851;
+        const udtWos = wos.filter(w => (w.downtimeType==='CM') || (!w.downtimeType && norm(w.maintenanceType)==='corrective' && (w.downtimeDuration||0)>0));
+        const pdtWos = wos.filter(w => w.downtimeType==='PM' || w.downtimeType==='PdM');
+        const udtMin = udtWos.reduce((s,w)=>s+(w.downtimeDuration||0),0);
+        const pdtMin = pdtWos.reduce((s,w)=>s+(w.downtimeDuration||0),0);
+        const udtHr  = udtMin>0 ? udtMin/60 : 0;
+        const totalDTHr = (udtMin+pdtMin)>0 ? ((udtMin+pdtMin)/60) : 0;
+        const correctiveCount = wos.filter(w=>norm(w.maintenanceType)==='corrective').length || 1;
+        const closedWithHours = wos.filter(w=>norm(w.status)==='completed' && w.laborHours);
+
+        const availReal = ((smuBase - udtHr) / smuBase) * 100;
+        const oeeReal    = availReal * 0.92 * 0.98; // performance 92% × quality 98% (ค่าอ้างอิงมาตรฐาน ยังไม่มีระบบวัด production rate จริง)
+        const mtbfReal   = (smuBase - udtHr) / correctiveCount;
+        const mttrReal   = closedWithHours.length
+          ? closedWithHours.reduce((s,w)=>s+(parseFloat(w.laborHours)||0),0)/closedWithHours.length
+          : (udtWos.length ? udtHr/udtWos.length : null);
+        const costReal   = wos.reduce((s,w)=>s+(w.tdcMaterials||0)+(w.tdcLabor||0),0);
+
+        // ── ค่าซ่อมเฉพาะเดือนนี้ (month-to-date) — ใช้คู่กับ BCM เดือนนี้ เพื่อคำนวณ บาท/BCM ──
+        const now = new Date();
+        const inThisMonth = ts => { if(!ts) return false; const dt=new Date(ts); return dt.getFullYear()===now.getFullYear() && dt.getMonth()===now.getMonth(); };
+        const costMtdReal = wos.filter(w=>inThisMonth(w.createdAt||w.date)).reduce((s,w)=>s+(w.tdcMaterials||0)+(w.tdcLabor||0),0);
+
+        d.oee          = parseFloat(oeeReal.toFixed(1));
+        d.availability = parseFloat(availReal.toFixed(1));
+        d.mtbf         = parseFloat(mtbfReal.toFixed(1));
+        d.mttr         = mttrReal!=null ? parseFloat(mttrReal.toFixed(1)) : DEMO.mttr;
+        d.dt_total     = parseFloat(totalDTHr.toFixed(1));
+        d.cost_mtd = Math.round(costReal); // ใช้ค่าจริงเสมอ (0 คือค่าจริงที่ถูกต้องถ้ายังไม่มีใครกรอกต้นทุน WO) — ห้าม fallback ไป DEMO
+        d._realKpi = true; // flag ให้ UI รู้ว่าเลขนี้คำนวณจากข้อมูลจริงแล้ว ไม่ใช่ DEMO
+
+        // ── บาท/BCM — นับเฉพาะค่าอะไหล่+ค่าแรงจาก WO (ตามที่ตกลง ยังไม่รวมค่าไฟ/overhead) ──
+        // หาร ด้วยผลผลิต BCM เดือนนี้จาก 'ob9_production' (เขียนโดย Dashboard > บันทึกผลผลิต) — กรองเฉพาะ Unit ถ้ามีการเลือก
+        try {
+          const prodRaw = localStorage.getItem('ob9_production');
+          let prod = prodRaw ? JSON.parse(prodRaw) : [];
+          if (Array.isArray(prod) && unitMeta) prod = prod.filter(r=>r.machineId===unitMeta.id);
+          const bcmMtd = (Array.isArray(prod)?prod:[])
+            .filter(r=>inThisMonth(r.date))
+            .reduce((s,r)=>s+(r.bcm||0),0);
+          if (bcmMtd > 0) {
+            d.cost_per_bcm = parseFloat((costMtdReal / bcmMtd).toFixed(2));
+            d.bcm_mtd = bcmMtd;
+            d._costPerBcmReal = true;
+          } else {
+            d.cost_per_bcm = null; // ยังไม่มีข้อมูลผลผลิตเดือนนี้ให้หารได้
+            d.bcm_mtd = 0;
+          }
+        } catch(e) { d.cost_per_bcm = null; d.bcm_mtd = 0; }
+      }
+    }
+  }catch(e){}
+
+  // ── ดึงสถานะเครื่องจักรจาก 'ob9_exec_data' (เขียนโดย Daily Inspection) ──
+  let hasExecMachines = false;
+  try{
+    const raw = localStorage.getItem('ob9_exec_data');
+    if(raw){
+      const ed = JSON.parse(raw);
+      if(ed.machines && ed.machines.length){ d.machines = ed.machines; hasExecMachines = true; }
+      if(ed._ts) d._ts = ed._ts;
+    }
+  }catch(e){}
+
+  // ── Fallback: ถ้ายังไม่มีข้อมูลจาก Daily Inspection เลย ให้คำนวณสถานะเครื่องจักรเบื้องต้น
+  //    จาก 'ob9_work_orders' โดยตรง (ไม่ต้องรอ Inspection ก่อนถึงจะเห็นข้อมูล) ──
+  if(!hasExecMachines){
+    try{
+      const wosRaw = localStorage.getItem('ob9_work_orders');
+      const wos = wosRaw ? JSON.parse(wosRaw) : [];
+      const machineNames = {'spreader-a':'Spreader A','spreader-b':'Spreader B','tripper-a':'Tripper A','tripper-b':'Tripper B','a11':'Line Shift A1.1','a9':'Line Shift A9 (BWE)','b11':'Line Shift B1.1'};
+      const norm = s => (s||'').toString().toLowerCase();
+      const open = (Array.isArray(wos)?wos:[]).filter(w => !['completed','closed','done'].includes(norm(w.status)));
+      const byMachine = {};
+      open.forEach(w=>{
+        const key = w.machine || 'ไม่ระบุ';
+        (byMachine[key] = byMachine[key] || []).push(w);
+      });
+      const keys = Object.keys(byMachine).length ? Object.keys(byMachine) : Object.keys(machineNames);
+      if(keys.length){
+        d.machines = keys.map(key=>{
+          const list = byMachine[key] || [];
+          const hasCritical = list.some(w=>norm(w.priority)==='critical');
+          const hasHigh = list.some(w=>norm(w.priority)==='high');
+          const status = hasCritical ? 'red' : (hasHigh ? 'amber' : 'green');
+          const note = list.length
+            ? `${list.length} WO ค้าง (${list.filter(w=>norm(w.priority)==='critical').length} วิกฤต)`
+            : 'ไม่มี WO ค้าง — ยังไม่มีข้อมูล Inspection วันนี้';
+          return { name: machineNames[key] || key, status, oee: null, note };
+        });
+        d._machinesFallback = true; // ใช้บอก UI ว่านี่คือค่าประมาณจาก WO ไม่ใช่จาก Inspection จริง
+      }
+    }catch(e){}
+  }
+
+  // ── เติม/แยกเครื่องที่ยังไม่ได้แยกราย Unit ให้ครบ (เช่น Tripper A/B, Line Shift A1.1/A9/B1.1) ──
+  // ob9_exec_data (จาก Daily Inspection) บางเครื่องถูกบันทึกแบบไม่ระบุ Unit เช่น "Tripper" รวมกัน
+  // หรือบางเครื่อง (Line Shift) ยังไม่เคยมีการตรวจเช็คเลยจึงไม่มีอยู่ในลิสต์เลย — เติมด้วยข้อมูลจาก
+  // Work Order จริงแทน (สูตรเดียวกับ fallback ด้านบน) เฉพาะตระกูลที่ยังไม่มีการ์ดแยกรายเครื่องจริงๆ
+  // (ถ้ามีแยกอยู่แล้ว เช่น Spreader A/B จาก Inspection จริง จะไม่ไปแตะ/ทับข้อมูลจริงเลย)
+  try {
+    d.machines = d.machines || [];
+    const wosRaw2 = localStorage.getItem('ob9_work_orders');
+    const wos2 = wosRaw2 ? JSON.parse(wosRaw2) : [];
+    const norm2 = s => (s||'').toString().toLowerCase();
+    const buildFallbackEntry = (u) => {
+      const list = (Array.isArray(wos2)?wos2:[]).filter(w => w.unitCode === u.code && !['completed','closed','done'].includes(norm2(w.status)));
+      const hasCritical = list.some(w=>norm2(w.priority)==='critical');
+      const hasHigh = list.some(w=>norm2(w.priority)==='high');
+      const status = hasCritical ? 'red' : (hasHigh ? 'amber' : 'green');
+      const note = list.length
+        ? `${list.length} WO ค้าง (${list.filter(w=>norm2(w.priority)==='critical').length} วิกฤต)`
+        : 'ไม่มี WO ค้าง — ยังไม่มีข้อมูล Inspection วันนี้';
+      return { name: u.name, status, oee: null, note };
+    };
+    // ตัดตัวอักษร/เลข Unit ท้ายชื่อออกเพื่อหา "ตระกูล" เช่น "Tripper A"→"Tripper", "Line Shift A1.1"→"Line Shift"
+    const familyOf = name => name.replace(/\s+(A|B)(\d+(\.\d+)?)?(\(BWE\))?$/,'').trim();
+    const metaByFamily = {};
+    UNIT_META.forEach(u => {
+      const fam = familyOf(u.name);
+      (metaByFamily[fam] = metaByFamily[fam] || []).push(u);
+    });
+    Object.keys(metaByFamily).forEach(fam => {
+      const metas = metaByFamily[fam];
+      const alreadyHasAnyUnit = metas.some(u => d.machines.some(m=>m.name===u.name));
+      if (alreadyHasAnyUnit) return; // มีอย่างน้อย 1 unit ของตระกูลนี้แยกอยู่แล้วจากข้อมูลจริง ไม่ต้องเติม
+      d.machines = d.machines.filter(m => m.name !== fam); // ลบการ์ดรวม (ไม่ระบุ unit) ของตระกูลนี้ทิ้ง ถ้ามี
+      metas.forEach(u => d.machines.push(buildFallbackEntry(u))); // เติมทุก unit ของตระกูลนี้จาก WO จริงแทน
+    });
+  } catch(e) {}
+
+  // ── ตัดการ์ด "Conveyor Bridge" ออกจากสถานะเครื่องจักรเสมอ ──
+  // ผู้ใช้ยืนยันว่าไม่ควรมีการ์ดนี้เลยในหน้า Executive Summary (ไม่ใช่เครื่องจักรจริงที่ต้องการติดตามแยก
+  // ต่างหากจาก 7 Unit หลัก) — ตัดทิ้งไม่ว่าจะมาจาก ob9_exec_data จริงหรือ DEMO/fallback ก็ตาม
+  try {
+    d.machines = (d.machines||[]).filter(m => !/^conv(eyor)?\.?\s*bridge$/i.test((m.name||'').trim()));
+  } catch(e) {}
+
+  // ── Override: เครื่อง Breakdown/Relocate ≥12 ชม. จริงวันนี้ ต้องชนะสถานะจาก WO/Inspection เสมอ ──
+  // ก่อนหน้านี้หน้านี้คำนวณสถานะจาก ob9_exec_data (ผลตรวจ) หรือ Work Order ที่เปิดค้างเท่านั้น ไม่เคย
+  // เช็คชั่วโมง Breakdown ของวันนี้เลย ทำให้เครื่องที่จอดจริง (เช่น Line Shift A9) แต่ยังไม่มีใครเปิด WO
+  // ให้ กลับโชว์เขียว "ไม่มี WO ค้าง" ทั้งที่หยุดอยู่จริง — ใช้ localStorage key เดียวกับที่ ob9_home.html
+  // ใช้ (ob9_machine_status_hours, ตรรกะเดียวกับ applyOpStatusOverrides) เพื่อให้สองหน้าไม่ขัดแย้งกันอีก
+  try {
+    var todayStrExec = new Date().toISOString().slice(0,10);
+    var statusHoursExec = JSON.parse(localStorage.getItem('ob9_machine_status_hours') || '[]');
+    var hoursForExec = function(machineId) {
+      var hit = statusHoursExec.find(function(r){ return r.machineId === machineId && r.date === todayStrExec; });
+      return (hit && hit.hours) || {};
+    };
+    var resolveMeta = function(name) {
+      return getUnitMeta(name)
+        || getUnitMeta((name||'').replace('A9(BWE)', 'A9 (BWE)'))
+        || getUnitMeta((name||'').replace('A9 (BWE)', 'A9(BWE)'));
+    };
+    (d.machines||[]).forEach(function(m){
+      var meta = resolveMeta(m.name);
+      if (!meta) return;
+      var h = hoursForExec(meta.id);
+      if ((h.breakdown||0) >= 12) {
+        m.status = 'red';
+        m.note = '🔧 หยุดทำงานจริงวันนี้ (เสีย/ซ่อม)' + (m.note ? ' — ' + m.note : '');
+        m._downtimeOverride = 'breakdown';
+      } else if ((h.relocate||0) >= 12) {
+        m.status = 'amber';
+        m.note = '🚚 ย้ายแนวทำงานวันนี้' + (m.note ? ' — ' + m.note : '');
+        m._downtimeOverride = 'relocate';
+      }
+    });
+  } catch(e) {}
+
+  return d;
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function fmtBaht(n){ return '฿'+(n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':n); }
+function fmtDate(iso){ try{ return new Date(iso).toLocaleDateString('th-TH',{day:'2-digit',month:'short'}); }catch(e){ return iso||'—'; }}
+function setArc(id, pct){
+  const el=document.getElementById(id); if(!el) return;
+  const circ=2*Math.PI*26; // r=26
+  el.style.strokeDashoffset = circ*(1-Math.min(pct,100)/100);
+  el.style.strokeDasharray = circ;
+}
+function openLink(url){ window.open(url,'_blank') || (location.href=url); }
+function toggleMachineGroup(gid){
+  const el = document.getElementById(gid);
+  if(!el) return;
+  el.style.display = (el.style.display !== 'none') ? 'none' : 'grid';
+}
+
+// ── UNIT DETAIL POPUP — กดที่ Unit แล้วดึงผลตรวจเช็คล่าสุดจาก ob9_inspections มาสรุปแบบเต็ม ──
+function viewUnitDetail(unitName){
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem('ob9_inspections')||'[]'); } catch(e){}
+  let r = null;
+  for (let i=0;i<hist.length;i++){
+    const h = hist[i];
+    const rName = (h.machine||'') + (h.unit ? ' '+h.unit : '');
+    if (rName === unitName) { r = h; break; }
+  }
+  document.getElementById('unitDetailTitle').textContent = unitName;
+  const body = document.getElementById('unitDetailBody');
+  if (!r) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:12px">ยังไม่มีข้อมูลการตรวจเช็คของ Unit นี้</div>';
+    document.getElementById('unitDetailModal').style.display = 'flex';
+    return;
+  }
+  const dt = new Date(r.ts).toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const shiftLabel = {'Day-06':'กะเช้า 06:00–14:00','Eve-14':'กะบ่าย 14:00–22:00','Night-22':'กะดึก 22:00–06:00'}[r.shift] || r.shift || '—';
+  const statsHtml = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0">
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--green)">${r.ok_count||0}</div>
+        <div style="font-size:10px;color:var(--text2)">ปกติ</div>
+      </div>
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--amber)">${r.warn_count||0}</div>
+        <div style="font-size:10px;color:var(--text2)">ผิดปกติ</div>
+      </div>
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--red)">${r.crit_count||0}</div>
+        <div style="font-size:10px;color:var(--text2)">แจ้งซ่อม</div>
+      </div>
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">${r.done||0}/${r.total||0}</div>
+        <div style="font-size:10px;color:var(--text2)">ตรวจครบ</div>
+      </div>
+    </div>`;
+  let listHtml = '';
+  (r.crit_items||[]).forEach(name=>{
+    listHtml += `<div style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;font-weight:600;flex:1">${name}</span>
+      <span style="font-size:10px;font-weight:700;color:var(--red);background:var(--red-bg);padding:2px 8px;border-radius:10px;white-space:nowrap">🔴 แจ้งซ่อม</span>
+    </div>`;
+  });
+  (r.warn_items||[]).forEach(name=>{
+    listHtml += `<div style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;font-weight:600;flex:1">${name}</span>
+      <span style="font-size:10px;font-weight:700;color:var(--amber);background:var(--amber-bg);padding:2px 8px;border-radius:10px;white-space:nowrap">⚠️ ผิดปกติ</span>
+    </div>`;
+  });
+  if (!listHtml) listHtml = '<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px">✅ ไม่พบจุดผิดปกติ — ผ่านทุกรายการ</div>';
+  body.innerHTML = `
+    <div style="font-size:12px;color:var(--text2);margin-bottom:2px">${dt} · ${shiftLabel}</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px">ผู้ตรวจ: <b>${r.inspector||'—'}</b></div>
+    ${statsHtml}
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin:10px 0 6px">รายการที่พบปัญหา</div>
+    ${listHtml}
+    ${r.notes ? `<div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px">หมายเหตุเพิ่มเติม</div>
+      <div style="font-size:12px;color:var(--text)">${r.notes}</div>
+    </div>` : ''}
+  `;
+  document.getElementById('unitDetailModal').style.display = 'flex';
+}
+function closeUnitDetail(){ document.getElementById('unitDetailModal').style.display = 'none'; }
+
+// ── WO DETAIL POPUP — กด 🔍 ท้ายแถวในตาราง Work Orders ล่าสุด เพื่อดูรายละเอียดเต็ม ──
+function viewWODetailExec(id){
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem('ob9_work_orders')||'[]'); } catch(e){}
+  const w = list.find(x=>x.id===id);
+  document.getElementById('woDetailExecTitle').textContent = id;
+  const body = document.getElementById('woDetailExecBody');
+  if (!w) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:12px">ไม่พบข้อมูล WO นี้แล้ว</div>';
+    document.getElementById('woDetailModalExec').style.display = 'flex';
+    return;
+  }
+  const priorityTh = {critical:'🔴 Critical',high:'🟡 High',normal:'🔵 Normal',medium:'🔵 Medium'};
+  const statusTh = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จสิ้น'};
+  const cost = (w.tdcMaterials||0) + (w.tdcLabor||0);
+  const created = w.createdAt ? new Date(w.createdAt).toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : (w.date||'—');
+  let html = `
+    <div style="margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700">${w.machine||'—'}${w.unit ? ' — '+w.unit : ''}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">${created}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="kpi-badge ${w.priority==='critical'?'badge-red':w.priority==='high'?'badge-amber':'badge-blue'}">${priorityTh[w.priority]||w.priority||'—'}</span>
+      <span class="kpi-badge ${w.status==='completed'?'badge-green':w.status==='in_progress'?'badge-blue':'badge-amber'}">${statusTh[w.status]||w.status||'—'}</span>
+    </div>
+    <div style="padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px">ระบบ / ตำแหน่ง</div>
+      <div style="font-size:12px;color:var(--text)">${w.section || w.failedSystem || '—'}${w.part ? ' · '+w.part : ''}${w.pos ? ' ('+w.pos+')' : ''}</div>
+    </div>
+    <div style="padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px">รายละเอียด / อาการที่พบ</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">${w.description || '—'}</div>
+    </div>`;
+  if (w.inspectionNotes) {
+    html += `<div style="padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px">หมายเหตุเพิ่มเติม (จากการตรวจเช็ค)</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">${w.inspectionNotes}</div>
+    </div>`;
+  }
+  html += `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px">
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:16px;font-weight:800;color:var(--text)">${cost?fmtBaht(cost):'—'}</div>
+        <div style="font-size:10px;color:var(--text2)">ค่าใช้จ่ายรวม</div>
+      </div>
+      <div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px">
+        <div style="font-size:16px;font-weight:800;color:var(--text)">${w.laborHours!=null ? w.laborHours+' ชม.' : '—'}</div>
+        <div style="font-size:10px;color:var(--text2)">ชั่วโมงแรงงาน</div>
+      </div>
+    </div>
+    ${w.technicianName || w.reporter ? `<div style="font-size:12px;color:var(--text2);margin-top:6px">
+      ${w.reporter ? `ผู้แจ้ง: <b style="color:var(--text)">${w.reporter}</b>` : ''}${w.technicianName ? ` · ช่างผู้รับผิดชอบ: <b style="color:var(--text)">${w.technicianName}</b>` : ''}
+    </div>` : ''}
+  `;
+  body.innerHTML = html;
+  document.getElementById('woDetailModalExec').style.display = 'flex';
+}
+function closeWODetailExec(){ document.getElementById('woDetailModalExec').style.display = 'none'; }
+
+// ── UNIT FILTER — กด Unit เพื่อดู KPI/กราฟ/MTTR เฉพาะเครื่องนั้น แทนที่ภาพรวมทั้งหน้า ──
+function filterToUnit(name){
+  currentUnitFilter = name;
+  render(loadData());
+  const banner = document.getElementById('unitFilterBanner');
+  if (banner) banner.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function clearUnitFilter(){
+  currentUnitFilter = null;
+  render(loadData());
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function render(d){
+  // Unit filter banner
+  const filterBanner = document.getElementById('unitFilterBanner');
+  if (filterBanner) {
+    if (d._filterUnit) {
+      filterBanner.style.display = 'flex';
+      document.getElementById('unitFilterName').textContent = d._filterUnit;
+    } else {
+      filterBanner.style.display = 'none';
+    }
+  }
+  const kpiSecTitle = document.getElementById('kpi-sec-title');
+  if (kpiSecTitle) kpiSecTitle.textContent = d._filterUnit ? `ตัวชี้วัดหลัก (KPIs) — ${d._filterUnit}` : 'ตัวชี้วัดหลัก (KPIs)';
+
+  // Date
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('last-updated').textContent = d._ts ? new Date(d._ts).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const srcBadgeEl = document.getElementById('kpi-source-badge');
+  if (srcBadgeEl) {
+    srcBadgeEl.textContent = d._realKpi ? '· คำนวณจาก WO จริง' : '· ข้อมูลตัวอย่าง (DEMO)';
+    srcBadgeEl.style.color = d._realKpi ? '#059669' : '#d97706';
+    srcBadgeEl.style.fontSize = '11px';
+    srcBadgeEl.style.fontWeight = '600';
+  }
+
+  // OEE
+  const oeeOk = d.oee >= (d.oee_target||85);
+  document.getElementById('oee-val').textContent = d.oee.toFixed(1)+'%';
+  setArc('oee-arc', d.oee);
+  document.getElementById('oee-arc').style.stroke = oeeOk ? '#059669' : '#d97706';
+  document.getElementById('oee-val').style.color = oeeOk ? 'var(--green)' : 'var(--amber)';
+  document.getElementById('oee-badge').innerHTML = `<span class="kpi-badge ${oeeOk?'badge-green':'badge-amber'}">${oeeOk?'▲ เกินเป้า':'▼ ต่ำกว่าเป้า'}</span> เป้า ${d.oee_target||85}%`;
+
+  // Availability
+  const availOk = d.availability >= (d.avail_target||90);
+  document.getElementById('avail-val').textContent = d.availability.toFixed(1)+'%';
+  setArc('avail-arc', d.availability);
+  document.getElementById('avail-arc').style.stroke = availOk ? '#059669' : '#d97706';
+  document.getElementById('avail-val').style.color = availOk ? 'var(--green)' : 'var(--amber)';
+  document.getElementById('avail-badge').innerHTML = `<span class="kpi-badge ${availOk?'badge-green':'badge-amber'}">${availOk?'▲ เกินเป้า':'▼ ต่ำกว่าเป้า'}</span> เป้า ${d.avail_target||90}%`;
+
+  // WO Pending
+  const woPend = d.wo_pending||0;
+  document.getElementById('wo-val').textContent = woPend;
+  document.getElementById('wo-val').style.color = woPend>3?'var(--red)':woPend>1?'var(--amber)':'var(--green)';
+  document.getElementById('wo-sub').innerHTML =
+    `<span class="kpi-badge badge-red">⚠ ${d.wo_critical||0} Critical</span> &nbsp; <span class="kpi-badge badge-amber">${d.wo_high||0} High</span>`;
+
+  // Cost MTD
+  const costPct = Math.min(100, (d.cost_mtd/d.cost_budget)*100);
+  const costColor = costPct>90?'var(--red)':costPct>70?'var(--amber)':'var(--green)';
+  document.getElementById('cost-val').textContent = fmtBaht(d.cost_mtd);
+  document.getElementById('cost-val').style.color = costColor;
+  document.getElementById('cost-sub').innerHTML =
+    `<span class="kpi-badge ${costPct>90?'badge-red':costPct>70?'badge-amber':'badge-green'}">${costPct.toFixed(0)}% ของงบ</span>&nbsp; งบ ${fmtBaht(d.cost_budget)}` +
+    (d.cost_per_bcm!=null
+      ? `<div style="margin-top:4px;font-size:11px;color:var(--text2)">฿ ${d.cost_per_bcm.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})} / BCM <button class="info-btn" type="button" onclick="showTip(this,'BCM (Bank Cubic Meter) แปลว่า ปริมาตรดิน/หินที่ขุดหรือเคลื่อนย้ายได้ หน่วยลูกบาศก์เมตร เป็นหน่วยวัดผลผลิตของเหมือง — ตัวเลขนี้คือค่าใช้จ่ายซ่อมบำรุงเฉลี่ยต่อ 1 ลูกบาศก์เมตรที่ขุดได้')">ⓘ</button> &nbsp;<span style="color:var(--text3)">(ผลผลิต ${d.bcm_mtd.toLocaleString()} BCM เดือนนี้)</span></div>`
+      : `<div style="margin-top:4px;font-size:11px;color:var(--text3)">฿/BCM: — (ยังไม่มีข้อมูลผลผลิต BCM เดือนนี้ — บันทึกได้ที่ Dashboard)</div>`);
+
+  // Machine Status — เรียงลำดับตามลำดับ Unit คงที่ (เหมือนหน้า ob9_home.html): Spreader A/B,
+  // Tripper A/B, Line Shift A1.1/A9(BWE)/B1.1 — ไม่เรียงตามสถานะ (แดง/เหลือง/เขียว) อีกต่อไปตามที่
+  // ผู้ใช้ขอ (แสดงแยกเป็นการ์ดเดี่ยวรายเครื่องเสมอ ไม่รวมกลุ่ม/ไม่ต้องกดขยายอีกชั้น)
+  const mg = document.getElementById('machine-grid');
+  const _unitOrder = {};
+  UNIT_META.forEach((u,i)=>{ _unitOrder[u.name] = i; });
+  const _machinesSorted = (d.machines||[]).slice().sort((a,b)=>{
+    const ai = _unitOrder[a.name] ?? 999;
+    const bi = _unitOrder[b.name] ?? 999;
+    return (ai - bi) || (a.name||'').localeCompare(b.name||'');
+  });
+  mg.innerHTML = _machinesSorted.map(m=>{
+    const safeName = (m.name||'').replace(/'/g,"\\'");
+    const hasMeta = !!getUnitMeta(m.name);
+    const clickFn = hasMeta ? `filterToUnit('${safeName}')` : `viewUnitDetail('${safeName}')`;
+    return `
+    <div class="machine-card" style="cursor:pointer" onclick="${clickFn}" title="กดเพื่อดูรายละเอียด">
+      <div class="status-dot dot-${m.status}"><div class="dot-inner"></div></div>
+      <div class="machine-info">
+        <h3>${m.name}</h3>
+        <p>${m.note||''}</p>
+        <div class="machine-oee" style="color:${m.status==='green'?'var(--green)':m.status==='amber'?'var(--amber)':'var(--red)'}">${m.oee!=null?('OEE '+m.oee.toFixed(1)+'%'):'ยังไม่มี OEE วันนี้'}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const mgNote = document.getElementById('machine-grid-note');
+  if(mgNote) mgNote.style.display = d._machinesFallback ? 'block' : 'none';
+
+  // Top Failures
+  const maxCnt = Math.max(...(d.top_failures||[{count:1}]).map(f=>f.count),1);
+  const colors = ['f0','f1','f2','f3','f4'];
+  document.getElementById('failures-list').innerHTML = (d.top_failures||[]).map((f,i)=>`
+    <div class="bar-row">
+      <span class="bar-name" title="${f.system}">${f.system}</span>
+      <div class="bar-track"><div class="bar-fill ${colors[i]}" style="width:${(f.count/maxCnt*100).toFixed(0)}%"></div></div>
+      <span class="bar-count">${f.count}x</span>
+    </div>`).join('');
+
+  // Mini KPIs
+  const mttrOk = d.mttr <= 6;
+  document.getElementById('mttr-val').textContent = d.mttr.toFixed(1);
+  document.getElementById('mttr-bar').style.width = Math.min(100, (6/Math.max(d.mttr,0.1))*100).toFixed(0)+'%';
+  document.getElementById('mttr-bar').style.background = mttrOk ? 'var(--green)' : 'var(--red)';
+
+  const mtbfOk = d.mtbf >= 150;
+  document.getElementById('mtbf-val').textContent = d.mtbf.toFixed(0);
+  document.getElementById('mtbf-bar').style.width = Math.min(100, (d.mtbf/150)*100).toFixed(0)+'%';
+  document.getElementById('mtbf-bar').style.background = mtbfOk ? 'var(--blue-mid)' : 'var(--amber)';
+
+  const inspectPct = d.inspect_pct || 0;
+  document.getElementById('inspect-val').textContent = inspectPct+'%';
+  document.getElementById('inspect-bar').style.width = inspectPct+'%';
+  document.getElementById('inspect-bar').style.background = inspectPct>=90 ? 'var(--green)' : 'var(--amber)';
+
+  const budgetPct = Math.min(100, (d.cost_mtd/200000)*100);
+  document.getElementById('budget-val').textContent = fmtBaht(d.cost_mtd);
+  document.getElementById('budget-bar').style.width = budgetPct.toFixed(0)+'%';
+  document.getElementById('budget-bar').style.background = budgetPct>90?'var(--red)':budgetPct>70?'var(--amber)':'var(--green)';
+
+  // Recent WOs table
+  const priorityTh = {critical:'🔴 Critical',high:'🟡 High',normal:'🔵 Normal',medium:'🔵 Medium'};
+  const statusTh = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จสิ้น'};
+  const woListEl = document.getElementById('wo-tbody');
+  const woBadgeEl = document.getElementById('wo-count-badge');
+  if (woBadgeEl) woBadgeEl.textContent = (d.wos||[]).length + ' รายการล่าสุด';
+  if (woListEl) {
+    woListEl.innerHTML = (d.wos||[]).map(w=>`
+      <tr>
+        <td>${w.id}</td>
+        <td>${w.machine||'—'}</td>
+        <td class="hide-mobile">${w.system||'—'}</td>
+        <td><span class="priority-tag ${w.priority==='critical'?'p-critical':w.priority==='high'?'p-high':'p-normal'}">${priorityTh[w.priority]||w.priority||'—'}</span></td>
+        <td><span class="status-tag ${w.status==='completed'?'s-done':w.status==='in_progress'?'s-inprog':'s-pending'}">${statusTh[w.status]||w.status||'—'}</span></td>
+        <td class="hide-mobile">${fmtDate(w.date)}</td>
+        <td class="hide-mobile">${w.cost?fmtBaht(w.cost):'—'}</td>
+        <td><span style="cursor:pointer" onclick="viewWODetailExec('${w.id}')" title="ดูรายละเอียด">🔍</span></td>
+      </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">ไม่มี Work Order</td></tr>';
+  }
+}
+
+// ── REFRESH — ปุ่ม "↻ รีเฟรช" ────────────────────────────────────────────
+function refreshData(){
+  render(loadData());
+}
+
+// ── INIT — เรียกโหลด/แสดงข้อมูลทันทีที่หน้าพร้อม พร้อมสำรองหลายชั้นกันพลาด ──
+(function _initExecutivePage(){
+  let _done = false;
+  function _go(){
+    if (_done) return;
+    try {
+      render(loadData());
+      _done = true;
+    } catch(e) { console.error('Init render() failed:', e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _go);
+  } else {
+    _go();
+  }
+  window.addEventListener('load', _go);
+  setTimeout(_go, 300);
+})();
+</script>
+</body>
+</html>
