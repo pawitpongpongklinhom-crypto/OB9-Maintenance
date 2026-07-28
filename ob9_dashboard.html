@@ -1287,6 +1287,7 @@
     <button class="btn-live">LIVE</button>
     <button class="btn-refresh">⟳ Refresh</button>
     <span id="syncBadge" class="sync-badge" style="display:none"></span>
+    <span id="smuStaleBadge" class="sync-badge" style="display:none;background:#4a1f0a;color:#fb923c;border:1px solid #9a5a2a;cursor:help" title=""></span>
     <!-- TIER NAV -->
     <button onclick="window.open('ob9_executive.html','_blank')" style="background:#0a2a3a;color:#38bdf8;border:1px solid #2a6a90;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="เปิด Executive Dashboard">📊 Exec</button>
     <button onclick="window.open('ob9_inspect.html','_blank')" style="background:#0a2a1a;color:#4ade80;border:1px solid #2a6a3a;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="เปิดฟอร์มตรวจเช็ค">✅ Inspect</button>
@@ -11397,6 +11398,9 @@ function onFailedPartChange() {
       refreshAllPMChecklistRows();
       pullPmChecklistFromSheet();
     }, 350);
+    // (28 ก.ค. 69) เช็ค SMU sync ค้างทันทีที่โหลดหน้า แล้วเช็คซ้ำทุก 10 นาที (เผื่อเปิดหน้าค้างไว้นาน)
+    setTimeout(checkSmuSyncStaleness, 400);
+    setInterval(checkSmuSyncStaleness, 10 * 60 * 1000);
   });
 
   // ── 📍 ปุ่ม "ดูตำแหน่งชิ้นส่วนบนเครื่องจักร" — ผู้ใช้ขอให้มีปุ่มดูภาพขยาย/ตำแหน่งของแต่ละแถวใน
@@ -12004,7 +12008,35 @@ function onFailedPartChange() {
         }
       })
       .catch(function(){})
-      .finally(function(){ if (cb) cb(); });
+      .finally(function(){ checkSmuSyncStaleness(); if (cb) cb(); });
+  }
+
+  // (28 ก.ค. 69) ตรวจสอบว่าการ sync SMU อัตโนมัติทุก 3 ชม. (scheduled task ที่ต้องพึ่งเบราว์เซอร์/login
+  // ของ Claude ณ เวลานั้นพอดี) พลาดไปหรือไม่ — เดิมถ้าพลาดจะเงียบ ไม่มีใครรู้จนกว่าจะสังเกตเห็น SMU ไม่ตรง
+  // เอง ฟังก์ชันนี้เทียบ updatedAt ล่าสุดของข้อมูล Equipment SMU-KWH กับเวลาปัจจุบัน ถ้าเก่าเกิน 6 ชม.
+  // (พลาดไป 2 รอบติดกัน) จะโชว์ badge เตือนสีส้มที่ header ให้กดปุ่ม Refresh หรือแจ้ง sync manual แทน
+  var SMU_STALE_HOURS = 6;
+  function checkSmuSyncStaleness() {
+    try {
+      var badge = document.getElementById('smuStaleBadge');
+      if (!badge) return;
+      var data = getEquipData();
+      if (!data || !data.length) { badge.style.display = 'none'; return; }
+      var latest = 0;
+      data.forEach(function(r){
+        var t = r.updatedAt ? Date.parse(r.updatedAt) : NaN;
+        if (!isNaN(t) && t > latest) latest = t;
+      });
+      if (!latest) { badge.style.display = 'none'; return; }
+      var hoursOld = (Date.now() - latest) / 36e5;
+      if (hoursOld > SMU_STALE_HOURS) {
+        badge.style.display = '';
+        badge.textContent = '⚠ SMU sync ค้าง ' + Math.floor(hoursOld) + ' ชม.';
+        badge.title = 'ข้อมูล SMU จาก production-itd อัปเดตล่าสุดเมื่อ ' + hoursOld.toFixed(1) + ' ชม.ที่แล้ว (ปกติควรทุก 3 ชม.) — กด ⏱ SMU → Production ITD → "ดึงข้อมูลตอนนี้" หรือแจ้งให้ sync ให้ใหม่';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch(e) {}
   }
 
   // ── Production Summary (Today/MTD/YTD BCM จริงจาก production-itd.ith.co.th/dashboard/summary) ──
