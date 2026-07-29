@@ -492,6 +492,22 @@ const UNIT_META = [
   {id:'ls_b11',     name:'Line Shift B1.1',   code:'08-SF0003'},
 ];
 function getUnitMeta(name){ return UNIT_META.find(u=>u.name===name) || null; }
+// ★ 29 ก.ค. 69 — แก้บั๊กเดียวกับที่พบใน ob9_dashboard.html (MTBF ไม่ตรงกันเพราะ WO บางใบ เช่น WO-0016
+// ไม่มี unitCode เลย มีแต่ข้อความ "unit: Spreader.A") — ที่นี่กรอง WO ด้วย unitCode ตรงๆ อย่างเดียว
+// (ไม่มี fallback) ก็มีความเสี่ยงเดียวกัน ทำให้ตัวเลข WO/downtime ของหน้านี้เมื่อกรองดูเฉพาะ Unit อาจนับ
+// ไม่ครบ ไม่ตรงกับ Dashboard ที่แก้ไปแล้ว — เพิ่ม fallback กรองด้วยข้อความ unit แบบเดียวกัน
+const UNIT_FUZZY_MAP = {
+  'Spreader A': ['spreader.a','spreader a'], 'Spreader B': ['spreader.b','spreader b'],
+  'Tripper A':  ['tripper car.a','tripper a'], 'Tripper B': ['tripper car.b','tripper b'],
+  'Line Shift A1.1': ['a1.1','a11'], 'Line Shift A9(BWE)': ['a9'], 'Line Shift B1.1': ['b1.1','b11']
+};
+function woMatchesUnit(w, unitMeta){
+  if (!unitMeta) return true;
+  if ((w.unitCode||'') === unitMeta.code) return true;
+  const patterns = UNIT_FUZZY_MAP[unitMeta.name] || [];
+  const u = (w.unit||'').toLowerCase();
+  return patterns.some(p => u.indexOf(p) >= 0);
+}
 function getUnitSmu(id){
   try{
     const map = JSON.parse(localStorage.getItem('ob9_smu_by_machine')||'{}');
@@ -514,7 +530,7 @@ function loadData(){
     const wosRaw = localStorage.getItem('ob9_work_orders');
     if(wosRaw){
       let wos = JSON.parse(wosRaw);
-      if(Array.isArray(wos) && unitMeta) wos = wos.filter(w=>w.unitCode===unitMeta.code);
+      if(Array.isArray(wos) && unitMeta) wos = wos.filter(w=>woMatchesUnit(w, unitMeta));
       if(Array.isArray(wos) && (wos.length || unitMeta)){
         const norm = s => (s||'').toString().toLowerCase();
         d.wo_pending  = wos.filter(w=>norm(w.status)==='pending').length;
@@ -659,7 +675,7 @@ function loadData(){
     const wos2 = wosRaw2 ? JSON.parse(wosRaw2) : [];
     const norm2 = s => (s||'').toString().toLowerCase();
     const buildFallbackEntry = (u) => {
-      const list = (Array.isArray(wos2)?wos2:[]).filter(w => w.unitCode === u.code && !['completed','closed','done'].includes(norm2(w.status)));
+      const list = (Array.isArray(wos2)?wos2:[]).filter(w => woMatchesUnit(w, u) && !['completed','closed','done'].includes(norm2(w.status)));
       const hasCritical = list.some(w=>norm2(w.priority)==='critical');
       const hasHigh = list.some(w=>norm2(w.priority)==='high');
       const status = hasCritical ? 'red' : (hasHigh ? 'amber' : 'green');
