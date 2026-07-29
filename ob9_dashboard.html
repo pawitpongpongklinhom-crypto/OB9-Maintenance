@@ -2870,12 +2870,14 @@
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
               <span style="font-size:10px;font-weight:700;color:#7ec8f0">📡 Production ITD — ข้อมูลจริง (Today / MTD / YTD)</span>
               <button class="info-btn" type="button" onclick="showTip(this,'ดึงจากหน้า production-itd.ith.co.th/dashboard/summary โดยตรง (ไม่ใช่กรอกเอง) — Today คือวันนี้, MTD (Month To Date) คือสะสมตั้งแต่ต้นเดือน, YTD (Year To Date) คือสะสมตั้งแต่ต้นปี ค่า Target ที่นี่จะใช้แทนค่าที่เคยตั้ง/กรอกเองในหน้านี้')">ⓘ</button>
-              <button onclick="pullProductionSummaryFromSheet(renderProdItdBox)" style="margin-left:auto;background:#0a1825;border:1px solid #1e3a52;color:#5a8aaa;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:10px">🔄 ดึงล่าสุด</button>
+              <button onclick="pullProductionSummaryFromSheet(renderProdItdBox); pullLineProductionFromSheet(renderProdItdLineBreakdown);" style="margin-left:auto;background:#0a1825;border:1px solid #1e3a52;color:#5a8aaa;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:10px">🔄 ดึงล่าสุด</button>
             </div>
             <div id="prodItdRows">
               <div style="font-size:11px;color:#5a8aaa">ยังไม่มีข้อมูล — รอ sync จาก production-itd.ith.co.th</div>
             </div>
             <div id="prodItdHistoryBox" style="margin-top:8px;display:none"></div>
+            <!-- (29 ก.ค. 69) BCM แยกตาม Spreader A/B — ผูกจาก Line A/B ของ production-itd -->
+            <div id="prodItdLineRows"></div>
           </div>
 
           <!-- Chart + Downtime row -->
@@ -3301,6 +3303,7 @@ var INSPECTION_SHEET_NAME = "Inspections";
 var EQUIP_SHEET_NAME = "Equipment SMU-KWH";
 var CONFIG_SHEET_NAME = "Config";
 var PROD_SUMMARY_SHEET_NAME = "Production Summary";
+var LINE_PROD_SHEET_NAME = "Line Production";
 var SECRET_TOKEN = "ob9maemoh2569"; // ตรงกับช่อง Secret Token ใน Dashboard แล้ว ไม่ต้องแก้
 
 // Utility: Google Sheets มักแปลงข้อความวันที่ "YYYY-MM-DD" เป็น Date object ของเซลล์เองอัตโนมัติ
@@ -3336,6 +3339,7 @@ function doPost(e) {
     if (data.type === "equipmentSmuKwh") return _postEquipmentSmuKwh(data);
     if (data.type === "config")          return _postConfig(data);
     if (data.type === "productionSummary") return _postProductionSummary(data);
+    if (data.type === "lineProduction")  return _postLineProduction(data);
     return _postWorkOrders(data);
   } catch(err) {
     return ContentService.createTextOutput(JSON.stringify({ok:false,msg:err.message}))
@@ -3417,6 +3421,7 @@ function doGet(e) {
   if (data.type === "equipmentSmuKwh") return _getEquipmentSmuKwh();
   if (data.type === "config")          return _getConfig();
   if (data.type === "productionSummary") return _getProductionSummary();
+  if (data.type === "lineProduction")  return _getLineProduction();
   return _getWorkOrders();
 }
 
@@ -3695,6 +3700,63 @@ function _getProductionSummary() {
     };
   });
   return ContentService.createTextOutput(JSON.stringify({ok:true, productionSummary:list}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── Line Production (BCM รายวันแยกตาม Line จาก production-itd.ith.co.th/dashboard/summary) ──
+// ★ ใหม่ 29 ก.ค. 69 — ผู้ใช้ขอให้เอา Total BCM / Day BCM / Night BCM ของแต่ละ Line (A/B/N) มาผูกกับ
+// Spreader ที่ทำงานอยู่บน Line นั้นจริงๆ (BCM ของ Line = ผลงานของ Spreader บน Line นั้น ตามที่ยืนยันแล้ว)
+// ใช้ spdSwapped ตัวเดียวกับที่ equipmentSmuKwh ใช้ ในการ map machineId ตอน scrape (ไม่ใช่ตอน render)
+// เพื่อให้ฝั่ง Client อ่านตรงๆ ได้เลยโดยไม่ต้องรู้เรื่อง swap — merge ตามคีย์ date|machineId เหมือน
+// equipmentSmuKwh/productionSummary ด้านบน (ไม่ clear ทั้งชีต จะได้ดูย้อนหลังได้)
+function _postLineProduction(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(LINE_PROD_SHEET_NAME) || ss.insertSheet(LINE_PROD_SHEET_NAME);
+  var items = data.items || [];
+  var existing = {};
+  var order = [];
+  if (sh.getLastRow() >= 2) {
+    sh.getRange(2, 1, sh.getLastRow()-1, 9).getValues().forEach(function(r){
+      var d = _fmtDate_(r[0]);
+      if (!d || !r[1]) return;
+      var key = d + '|' + r[1];
+      if (!(key in existing)) order.push(key);
+      existing[key] = {
+        date:d, machineId:r[1], machineName:r[2]||"", line:r[3]||"",
+        totalBcm:r[4]||0, dayBcm:r[5]||0, nightBcm:r[6]||0, target:r[7]||0, updatedAt:r[8]||""
+      };
+    });
+  }
+  items.forEach(function(r){
+    var key = (r.date||"") + '|' + (r.machineId||"");
+    if (!r.date || !r.machineId) return;
+    if (!(key in existing)) order.push(key);
+    existing[key] = r;
+  });
+  sh.clearContents();
+  sh.appendRow(["Date","Machine ID","Machine Name","Line","Total BCM","Day BCM","Night BCM","Target","Updated At"]);
+  order.forEach(function(key){
+    var r = existing[key];
+    sh.appendRow([r.date, r.machineId, r.machineName||"", r.line||"", r.totalBcm||0, r.dayBcm||0, r.nightBcm||0, r.target||0, r.updatedAt||""]);
+  });
+  return ContentService.createTextOutput(JSON.stringify({ok:true, synced: items.length, total: order.length}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+function _getLineProduction() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(LINE_PROD_SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) {
+    return ContentService.createTextOutput(JSON.stringify({ok:true, lineProduction:[]}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  var rows = sh.getRange(2, 1, sh.getLastRow()-1, 9).getValues();
+  var list = rows.map(function(r){
+    return {
+      date:_fmtDate_(r[0]), machineId:r[1], machineName:r[2]||"", line:r[3]||"",
+      totalBcm:r[4]||0, dayBcm:r[5]||0, nightBcm:r[6]||0, target:r[7]||0, updatedAt:r[8]||""
+    };
+  });
+  return ContentService.createTextOutput(JSON.stringify({ok:true, lineProduction:list}))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -12072,6 +12134,48 @@ function onFailedPartChange() {
       .finally(function(){ if (cb) cb(); });
   }
 
+  // (29 ก.ค. 69) Line Production — BCM รายวันแยก Line A/B จาก production-itd.ith.co.th/dashboard/summary
+  // ผูกกับ Spreader ที่ทำงานอยู่บน Line นั้นจริง (ยืนยันกับผู้ใช้แล้ว: BCM ของ Line = ผลงาน Spreader บน
+  // Line นั้น) — machineId ถูก resolve ผ่าน spdSwapped ไว้แล้วตอน scrape/push (เหมือน equipmentSmuKwh)
+  // ฝั่งนี้แค่อ่านตรงๆ ตาม machineId ไม่ต้องรู้เรื่อง swap อีก
+  var LINE_PROD_KEY = 'ob9_line_production';
+  function getLineProdData() {
+    try { return JSON.parse(localStorage.getItem(LINE_PROD_KEY)||'[]'); } catch(e){ return []; }
+  }
+  function setLineProdData(list) { localStorage.setItem(LINE_PROD_KEY, JSON.stringify(list)); }
+
+  function pullLineProductionFromSheet(cb) {
+    var s = getSyncSettings();
+    if (!s.url) { if (cb) cb(); return; }
+    var url = s.url + '?token=' + encodeURIComponent(s.token||'') + '&type=lineProduction';
+    fetch(url, {mode:'cors'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (d && d.ok && d.lineProduction) { setLineProdData(d.lineProduction); } })
+      .catch(function(){})
+      .finally(function(){ if (cb) cb(); });
+  }
+
+  function renderProdItdLineBreakdown() {
+    var el = document.getElementById('prodItdLineRows');
+    if (!el) return;
+    var data = getLineProdData();
+    var today = new Date().toISOString().slice(0,10);
+    var labels = { spreader_a: 'Spreader A', spreader_b: 'Spreader B' };
+    var cards = ['spreader_a','spreader_b'].map(function(mid){
+      var row = data.find(function(r){ return r.date === today && r.machineId === mid; });
+      var total = row ? (row.totalBcm||0) : 0;
+      var day = row ? (row.dayBcm||0) : 0;
+      var night = row ? (row.nightBcm||0) : 0;
+      return '<div style="flex:1;min-width:130px;background:#061422;border-radius:6px;padding:8px 10px">' +
+        '<div style="font-size:9px;color:#5a8aaa;margin-bottom:2px">' + labels[mid] + ' — BCM วันนี้ (จาก Line)</div>' +
+        '<div style="font-size:15px;font-weight:800;color:#c8dde8">' + Math.round(total).toLocaleString() + ' <span style="font-size:9px;font-weight:400;color:#5a8aaa">BCM</span></div>' +
+        '<div style="font-size:9px;color:#5a8aaa">Day ' + Math.round(day).toLocaleString() + ' · Night ' + Math.round(night).toLocaleString() + '</div>' +
+      '</div>';
+    });
+    el.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' + cards.join('') + '</div>' +
+      (data.length ? '' : '<div style="font-size:10px;color:#5a8aaa;margin-top:6px">ยังไม่มีข้อมูล Line Production — รอ sync</div>');
+  }
+
   function renderProdItdBox() {
     var rowsEl = document.getElementById('prodItdRows');
     var histEl = document.getElementById('prodItdHistoryBox');
@@ -12848,6 +12952,7 @@ function onFailedPartChange() {
   try { pullStatusFromSheet(function(){ refreshStatusBoxDisplay(); }); } catch(e) { try{ refreshStatusBoxDisplay(); }catch(e2){} }
   try { pullEquipmentFromSheet(); } catch(e) {}
   try { pullProductionSummaryFromSheet(function(){ if (typeof renderProdItdBox === 'function') renderProdItdBox(); }); } catch(e) {}
+  try { pullLineProductionFromSheet(function(){ if (typeof renderProdItdLineBreakdown === 'function') renderProdItdLineBreakdown(); }); } catch(e) {}
 
   // ══════════════════════════════════════════════════════════════
   // ── Spare Part Stock + อัตราการใช้ (ต่อชิ้นส่วน — รายการเดียวกับตาราง Spare Parts) ──
