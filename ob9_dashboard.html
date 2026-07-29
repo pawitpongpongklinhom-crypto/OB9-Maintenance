@@ -9862,6 +9862,18 @@ function onFailedPartChange() {
   function renderMtbfPanel() {
     var wos = [];
     try { wos = JSON.parse(localStorage.getItem('ob9_work_orders')||'[]'); } catch(e){}
+
+    // (29 ก.ค. 69) แก้บั๊ก: เดิม panel นี้ไม่กรองด้วยเครื่องที่กำลังเลือกอยู่เลย (รวม WO ทั้งระบบ +
+    // SMU รวมทั้งระบบเสมอ) ทำให้ MTBF/MTTR/OEE ขึ้นค่าเดียวกันไม่ว่าจะเลือกดูเครื่องไหนก็ตาม (ผู้ใช้พบ
+    // จากการเทียบ Spreader A กับ B) แก้โดยกรอง wos ด้วย unitCode ของ currentMachineKey (ผ่าน
+    // _DT_UNITCODE_MAP เดียวกับที่ getMachineDowntimeReal ใช้) และส่งชื่อเครื่องนั้นเข้า getTotalSmu()
+    // แทนการ hardcode 'all' — ให้ SMU/MTBF/MTTR/OEE เป็นของเครื่องที่เลือกจริงๆ
+    var _unitCode = (typeof _DT_UNITCODE_MAP !== 'undefined') ? _DT_UNITCODE_MAP[currentMachineKey] : null;
+    var _machMeta = _unitCode ? PROD_MACHINES.find(function(m){ return m.code === _unitCode; }) : null;
+    if (_unitCode) {
+      wos = wos.filter(function(w){ return (w.unitCode||'') === _unitCode; });
+    }
+
     var corrective = wos.filter(function(w){ return w.maintenanceType==='corrective'; });
     var closed     = wos.filter(function(w){ return w.status==='completed'; });
     // ISO 22400-2: UDT = CM/Breakdown only; PDT = PM/PdM
@@ -9871,9 +9883,11 @@ function onFailedPartChange() {
     var pdtWos2 = wos.filter(function(w){ return w.downtimeType==='PM' || w.downtimeType==='PdM'; });
     var udtMin2 = udtWos2.reduce(function(s,w){ return s+(w.downtimeDuration||0); },0);
     var pdtMin2 = pdtWos2.reduce(function(s,w){ return s+(w.downtimeDuration||0); },0);
-    var udtHr2  = udtMin2 ? udtMin2/60 : 214.5;
+    // fallback 214.5 ชม. ใช้เฉพาะตอนไม่กรอง (มุมมองรวมทั้งระบบ) — ถ้ากรองเฉพาะเครื่องแล้วไม่มี WO จริง
+    // ให้ถือว่า UDT = 0 ชม. (ไม่ใช่เลขรวมทั้งระบบที่ไม่เกี่ยวกับเครื่องนี้)
+    var udtHr2  = udtMin2 ? udtMin2/60 : (_unitCode ? 0 : 214.5);
     var pdtHr2  = pdtMin2/60;
-    var smu = (typeof getTotalSmu === 'function') ? getTotalSmu('all') : 24851;
+    var smu = (typeof getTotalSmu === 'function') ? getTotalSmu(_machMeta ? _machMeta.name : 'all') : 24851;
     var n   = corrective.length || 1;
     // MTBF & MTTR จาก UDT เท่านั้น (ISO 22400-2)
     var mtbf  = ((smu - udtHr2) / n).toFixed(1);
