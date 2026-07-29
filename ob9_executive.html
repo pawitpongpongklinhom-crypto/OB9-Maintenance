@@ -546,10 +546,14 @@ function loadData(){
         }).sort((a,b)=>b.count-a.count).slice(0,5);
 
         // ── OEE / Availability / MTBF / MTTR / ค่าซ่อม — คำนวณจริงจาก WO (สูตรเดียวกับ Dashboard, ISO 22400-2) ──
-        // หมายเหตุ: SMU ยังเป็นค่าฐานคงที่ (24,851 ชม.) เพราะยังไม่มีระบบอ่านมิเตอร์เครื่องจักรแบบ live
-        // ป้อนเข้ามา — ถ้าจะให้แม่นขึ้นต้องเชื่อมข้อมูล SMU จริงจาก Dashboard/PLC ภายหลัง
-        // ส่วน Availability/MTBF/MTTR/ค่าซ่อม คำนวณจาก downtime และ WO จริงทั้งหมดแล้ว ไม่ใช่ DEMO อีกต่อไป
-        const smuBase = unitMeta ? getUnitSmu(unitMeta.id) : 24851;
+        // SMU อ่านค่าจริงต่อเครื่องจาก 'ob9_smu_by_machine' (key เดียวกับที่ Dashboard sync ไว้จริง ผ่าน
+        // getUnitSmu()) ถ้าเลือกดูเฉพาะ Unit จะใช้ SMU ของ Unit นั้น
+        // ★ 29 ก.ค. 69 — แก้บั๊ก: เดิมตอนดู "ภาพรวมทุกเครื่อง" (ไม่เลือก Unit) smuBase จะ hardcode
+        // เป็น 24,851 (ค่าของ Spreader A เครื่องเดียว) ทั้งที่ downtime/WO ด้านบนนับรวมทุกเครื่อง (7 เครื่อง)
+        // ทำให้ Availability/OEE/MTBF ของภาพรวมผิดเพี้ยน (หารด้วยฐาน SMU เครื่องเดียวแต่ตัวตั้งเป็นของทั้งกอง)
+        // และไม่ตรงกับ SMU รวมทั้งระบบที่ Dashboard แสดง (~154,370) แก้เป็นรวม SMU ของทุกเครื่องใน
+        // UNIT_META แทน ให้ตรงกับวิธีคิดเดียวกับ getTotalSmu('all') ฝั่ง Dashboard
+        const smuBase = unitMeta ? getUnitSmu(unitMeta.id) : UNIT_META.reduce((s,u)=>s+getUnitSmu(u.id),0);
         const udtWos = wos.filter(w => (w.downtimeType==='CM') || (!w.downtimeType && norm(w.maintenanceType)==='corrective' && (w.downtimeDuration||0)>0));
         const pdtWos = wos.filter(w => w.downtimeType==='PM' || w.downtimeType==='PdM');
         const udtMin = udtWos.reduce((s,w)=>s+(w.downtimeDuration||0),0);
