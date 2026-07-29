@@ -2837,7 +2837,11 @@
 
         <!-- ══ PRODUCTION BLOCK ══ -->
         <div class="prod-block ov-card" style="margin-top:12px">
-          <!-- Header row -->
+          <!-- Header row + KPI row (manual "Production Summary" widget) -->
+          <!-- ★ 29 ก.ค. 69 — ผู้ใช้ขอซ่อนกล่องกรอกเอง (Actual/Target แบบ manual) นี้ทิ้ง เพราะสับสนกับ
+               กล่อง "📡 Production ITD" ด้านล่างที่ดึงข้อมูลจริงอัตโนมัติจาก production-itd.ith.co.th แล้ว
+               โค้ดยังอยู่ครบ (ไม่ลบ) แค่ห่อด้วย display:none — เผื่ออยากเปิดกลับมาใช้ภายหลัง -->
+          <div style="display:none">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
             <div style="font-size:12px;font-weight:700;color:#7ec8f0">⚡ Production Summary — BCM / Output</div>
             <!-- Line tabs -->
@@ -2860,6 +2864,7 @@
             <div class="prod-kpi"><div class="prod-kpi-val" id="pkPct"    style="color:#38bdf8">—%</div><div class="prod-kpi-lbl">Achievement</div><div class="prod-kpi-sub">ความสำเร็จ</div></div>
             <div class="prod-kpi"><div class="prod-kpi-val" id="pkShift"  style="color:#c8dde8">—</div><div class="prod-kpi-lbl">Shift วันนี้</div><div class="prod-kpi-sub">รอบการทำงาน</div></div>
             <div class="prod-kpi"><div class="prod-kpi-val" id="pkDtHr"   style="color:#e74c3c">—</div><div class="prod-kpi-lbl">Downtime (ชม.)</div><div class="prod-kpi-sub">จาก WO</div></div>
+          </div>
           </div>
 
           <!-- Production ITD — Today/MTD/YTD จริง (แทนที่การกรอกเป้าหมายเอง) -->
