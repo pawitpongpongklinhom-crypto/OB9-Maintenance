@@ -4174,6 +4174,21 @@ function _getConfig() {
     const m = MACHINES[key];
     if (!m) return;
     currentMachineKey = key;
+    // (29 ก.ค. 69) แก้บั๊ก: เดิม _ovMachineFilter (ตัวกรองที่ใช้คำนวณ Executive Summary KPI แถวบนสุด —
+    // OEE/Availability/MTBF/MTTR/SMU/Downtime) จะซิงค์กับ currentMachineKey แค่ทิศทางเดียว (กดที่การ์ด
+    // 🚦 Traffic Light จะอัปเดต currentMachineKey ให้ด้วย) แต่กดเลือกเครื่องจากเมนูซ้าย (เช่น Spreader B)
+    // กลับไม่อัปเดต _ovMachineFilter คืนกลับ ทำให้ Executive Summary ยังค้างเป็น "ทั้งระบบ" (SMU รวม
+    // ~154,370) ในขณะที่ panel อื่นๆ ในหน้าเดียวกัน (SMU ปัจจุบัน, MTBF & MTTR Analysis, เปรียบเทียบ
+    // Spreader A vs B) แสดงค่าเฉพาะเครื่องที่เลือกถูกต้องแล้ว (เช่น SMU ~30,342) — ตัวเลขสองชุดจึงขัดแย้ง
+    // กันเองบนหน้าเดียวกัน แก้โดยซิงค์ _ovMachineFilter ให้ตรงกับเครื่องที่เลือกทุกครั้งที่นี่ด้วย
+    if (typeof _ovMachineFilter !== 'undefined') {
+      var _keyToOvName = {
+        'spreader-a':'Spreader A', 'spreader-b':'Spreader B',
+        'tripper-a':'Tripper A',   'tripper-b':'Tripper B',
+        'a11':'Line Shift A1.1',   'a9':'Line Shift A9(BWE)', 'b11':'Line Shift B1.1'
+      };
+      if (_keyToOvName[key]) _ovMachineFilter = _keyToOvName[key];
+    }
     document.getElementById('mipTitle').textContent = m.title;
     document.getElementById('mipSubtitle').textContent = m.subtitle;
     // Criticality badge
