@@ -4138,6 +4138,25 @@ function _getConfig() {
     'tripper-a':'08-TP00001', 'tripper-b':'08-TP00002',
     'a11':'08-SF00001', 'a9':'08-SF00002', 'b11':'08-SF0003'
   };
+  // (29 ก.ค. 69) แก้บั๊ก: WO บางใบ (เช่น WO-0016) ไม่มี unitCode เลย (บันทึกไว้แต่ field "unit" เป็น
+  // ข้อความ เช่น "Spreader.A") ทำให้การกรองด้วย unitCode ตรงๆ (แบบเดิม) มองข้าม WO เหล่านี้ไปเงียบๆ —
+  // ส่งผลให้ตัวเลข Downtime/MTBF ของ "MTBF & MTTR Analysis" (ที่ใช้ getMachineDowntimeReal นี้ทางอ้อม
+  // ผ่าน renderMtbfPanel) ต่ำ/สูงไม่ตรงกับ "Executive Summary" ที่มี fallback กรองด้วยข้อความ unit
+  // อยู่แล้ว (_execTlToUnit) — ผู้ใช้จับได้จากการเทียบ MTBF สองกล่องบนหน้าเดียวกัน (8283.7 vs 6213)
+  // แก้โดยเพิ่ม fallback กรองด้วยข้อความ unit แบบเดียวกับ _execTlToUnit ให้ทุกจุดที่ใช้ key มาตรฐาน
+  // (spreader-a ฯลฯ) นับ WO ชุดเดียวกันเสมอ ไม่ว่าจะมาจาก panel ไหน
+  const _DT_UNIT_FUZZY_MAP = {
+    'spreader-a': ['spreader.a','spreader a'], 'spreader-b': ['spreader.b','spreader b'],
+    'tripper-a':  ['tripper car.a','tripper a'], 'tripper-b': ['tripper car.b','tripper b'],
+    'a11': ['a1.1','a11'], 'a9': ['a9'], 'b11': ['b1.1','b11']
+  };
+  function _woMatchesUnitKey(w, key) {
+    var code = _DT_UNITCODE_MAP[key];
+    if (code && (w.unitCode||'') === code) return true;
+    var patterns = _DT_UNIT_FUZZY_MAP[key] || [];
+    var u = (w.unit||'').toLowerCase();
+    return patterns.some(function(p){ return u.indexOf(p) >= 0; });
+  }
   function getMachineDowntimeReal(key) {
     var code = _DT_UNITCODE_MAP[key];
     if (!code) return { day: null, month: null, year: null };
@@ -4145,7 +4164,7 @@ function _getConfig() {
     var now = new Date();
     var dayMin = 0, monthMin = 0, yearMin = 0;
     wos.forEach(function(w) {
-      if ((w.unitCode||'') !== code) return;
+      if (!_woMatchesUnitKey(w, key)) return;
       var mins = w.downtimeDuration || 0;
       if (!mins) return;
       var dt = new Date(w.createdAt || w.date || now);
@@ -9889,7 +9908,10 @@ function onFailedPartChange() {
     var _unitCode = (typeof _DT_UNITCODE_MAP !== 'undefined') ? _DT_UNITCODE_MAP[currentMachineKey] : null;
     var _machMeta = _unitCode ? PROD_MACHINES.find(function(m){ return m.code === _unitCode; }) : null;
     if (_unitCode) {
-      wos = wos.filter(function(w){ return (w.unitCode||'') === _unitCode; });
+      // ★ 29 ก.ค. 69 — ใช้ _woMatchesUnitKey (unitCode + fallback ข้อความ unit) แทนเทียบ unitCode ตรงๆ
+      // เพราะ WO บางใบ (เช่น WO-0016) ไม่มี unitCode เลย ทำให้ MTBF ที่นี่เคยขึ้นไม่ตรงกับ Executive
+      // Summary ซึ่งมี fallback แบบนี้อยู่แล้ว (8283.7 vs 6213 ของ Spreader A เดียวกัน)
+      wos = wos.filter(function(w){ return _woMatchesUnitKey(w, currentMachineKey); });
     }
 
     var corrective = wos.filter(function(w){ return w.maintenanceType==='corrective'; });
