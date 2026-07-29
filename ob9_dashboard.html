@@ -9787,6 +9787,9 @@ function onFailedPartChange() {
     setVal('execMTBF',  mtbf);
     setVal('execMTTR',  mttr === '—' ? '—' : mttr+' ชม.');
     setVal('execDT',    totalDThr === null ? '—' : totalDThr+' ชม.');
+    // แก้บั๊ก: execSMU เดิมมีแต่ refreshSmuDisplay() คอยอัปเดต (hardcode 'all' เสมอ) จุดนี้ตั้งค่าซ้ำให้ตรงกับ
+    // smu ตัวเดียวกับที่ใช้คำนวณ OEE/MTBF/Availability ด้านบน เพื่อกันกรณี refreshSmuDisplay() ทำงานคนละจังหวะ
+    setVal('execSMU', smu.toLocaleString());
 
     // ── Traffic light per machine — ใช้ข้อมูลจริงจาก Daily Inspection (ob9_inspections) ──
     // แก้บั๊ก: ของเดิมนับจากตาราง PM Library กลาง (#tbody) ซึ่งไม่แยกเครื่อง A/B และไม่รองรับ Line Shift เลย
@@ -12556,7 +12559,13 @@ function onFailedPartChange() {
   function refreshSmuDisplay() {
     var total = getTotalSmu('all');
     var el1 = document.getElementById('smuVal'); if (el1) el1.textContent = total.toLocaleString();
-    var el2 = document.getElementById('execSMU'); if (el2) el2.textContent = total.toLocaleString();
+    // (29 ก.ค. 69) แก้บั๊ก: execSMU (กล่อง SMU ใน Executive Summary) เดิม hardcode getTotalSmu('all')
+    // เสมอ ทำให้ขึ้นค่ารวมทั้งระบบ (~154,370) ไม่ตรงกับกล่องอื่นๆ ที่แก้ให้ตามเครื่องที่เลือกแล้ว (SMU ปัจจุบัน,
+    // MTBF & MTTR Analysis, เปรียบเทียบ Spreader A vs B) — แก้ให้ใช้ _ovMachineFilter เดียวกับที่
+    // renderExecSummary() ใช้คำนวณ OEE/MTBF/MTTR ตัวอื่นในแถวเดียวกัน ให้สอดคล้องกันทั้งแถว
+    var _ovName = (typeof _ovMachineFilter !== 'undefined') ? _ovMachineFilter : 'all';
+    var totalExec = getTotalSmu(_ovName);
+    var el2 = document.getElementById('execSMU'); if (el2) el2.textContent = totalExec.toLocaleString();
   }
 
   function openSmuModal() {
