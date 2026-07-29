@@ -11881,25 +11881,67 @@ function onFailedPartChange() {
     }
   }
 
+  // (29 ก.ค. 69) ตามคำขอผู้ใช้: ตัดแถว Tripper A/B และ Line Shift A1.1/A9/B1.1 ออก เหลือเทียบเฉพาะ
+  // Spreader A vs Spreader B โดยเพิ่มตัวเลขเปรียบเทียบ วัน/เดือน/ปี ใน 4 ตัวชี้วัด: BCM, Downtime, SMU,
+  // ค่าไฟ (ผู้ใช้ยืนยันแนวทาง "ทำตามดีที่มี เติมหมายเหตุ" — ใช้ข้อมูลจริงเท่าที่มี ไม่รอให้ครบ พร้อมโชว์
+  // หมายเหตุเมื่อบางช่วงเวลายังไม่มีข้อมูลย้อนหลังครบ เช่น BCM/SMU เพิ่งเริ่ม sync 29 ก.ค. 69)
   function buildProdMachineRows(machines, todayBCM) {
     var el = document.getElementById('prodMachineRows');
     if (!el) return;
-    var maxTarget = Math.max.apply(null, machines.map(function(m){ return m.target; }));
-    el.innerHTML = '<div style="font-size:9px;color:#3a6080;margin-bottom:5px;font-weight:700">ผลผลิตรายเครื่อง วันนี้</div>' +
-      machines.map(function(m){
-        var bcm = todayBCM[m.id] || 0;
-        var pct = m.target ? Math.round(bcm / m.target * 100) : 0;
-        var barW = Math.min(pct, 100);
-        var stc = pct >= 80 ? '#2eff88' : pct >= 50 ? '#f39c12' : '#e74c3c';
-        var stl = pct >= 80 ? 'OK' : pct >= 50 ? 'LOW' : bcm === 0 ? '—' : 'CRIT';
-        return '<div class="prod-mrow">' +
-          '<div class="prod-mname">'+m.name+'</div>' +
-          '<div class="prod-mcode">'+m.code+'</div>' +
-          '<div class="prod-mbar-wrap"><div class="prod-mbar" style="width:'+barW+'%;background:'+m.color+'"></div></div>' +
-          '<div class="prod-mbcm" style="color:'+m.color+'">'+(bcm>0?bcm.toLocaleString()+' BCM':'—')+'</div>' +
-          '<div class="prod-mst"><span style="font-size:8px;padding:1px 5px;border-radius:3px;background:'+stc+'22;color:'+stc+';border:1px solid '+stc+'44">'+stl+'</span></div>' +
-        '</div>';
-      }).join('');
+
+    var bcmA = getLineBcmReal('spreader_a'),        bcmB = getLineBcmReal('spreader_b');
+    var dtA  = getMachineDowntimeReal('spreader-a'), dtB  = getMachineDowntimeReal('spreader-b');
+    var smuA = getSmuDeltaReal('spreader_a'),        smuB = getSmuDeltaReal('spreader_b');
+    var pwA  = getPowerCostReal('spreader_a'),       pwB  = getPowerCostReal('spreader_b');
+
+    function fmt(v, unit) {
+      if (v === null || v === undefined || v === '') return '<span style="color:#2a4a62">—</span>';
+      var n = parseFloat(v);
+      var s = isNaN(n) ? String(v) : n.toLocaleString('en-US', {maximumFractionDigits:1});
+      return s + (unit ? ' '+unit : '');
+    }
+
+    function metricBlock(icon, label, dataA, dataB, unit) {
+      var periods = [['วันนี้','day'], ['เดือนนี้ (MTD)','month'], ['ปีนี้ (YTD)','year']];
+      return '<tr><td colspan="3" style="padding:8px 6px 3px;font-size:10px;font-weight:700;color:#7ec8f0;border-top:1px solid #1e3a52">'+icon+' '+label+'</td></tr>' +
+        periods.map(function(p){
+          return '<tr>' +
+            '<td style="padding:3px 6px;color:#5a8aaa;font-size:9px">'+p[0]+'</td>' +
+            '<td style="padding:3px 6px;text-align:right;color:#f39c12;font-size:10px">'+fmt(dataA[p[1]], unit)+'</td>' +
+            '<td style="padding:3px 6px;text-align:right;color:#f39c12;font-size:10px">'+fmt(dataB[p[1]], unit)+'</td>' +
+          '</tr>';
+        }).join('');
+    }
+
+    var rowsHtml =
+      metricBlock('📦', 'BCM', bcmA, bcmB, '') +
+      metricBlock('⏱', 'Downtime (จาก WO)', dtA, dtB, 'ชม.') +
+      metricBlock('⚙', 'SMU (ชั่วโมงเดินเครื่องสะสม)', smuA, smuB, 'ชม.') +
+      metricBlock('⚡', 'ค่าไฟ', pwA, pwB, 'บาท');
+
+    var bcmLimited = bcmA.monthLimited || bcmB.monthLimited || bcmA.yearLimited || bcmB.yearLimited;
+    var smuLimited = smuA.limited || smuB.limited;
+    var noteHtml = (bcmLimited || smuLimited)
+      ? '<div style="margin-top:8px;padding:6px 8px;background:#2a1a05;border:1px solid #f39c1244;border-radius:6px;font-size:9px;color:#f0c987;line-height:1.5">'
+        + '⚠ หมายเหตุ: '
+        + (bcmLimited ? 'BCM เพิ่ง sync จริงจาก production-itd ตั้งแต่ 29 ก.ค. 69 ตัวเลข "เดือนนี้/ปีนี้" จึงยังนับได้เฉพาะตั้งแต่วันเริ่ม sync ไม่ใช่ทั้งเดือน/ปีจริง ' : '')
+        + (smuLimited ? 'SMU ยังไม่มี reading ย้อนหลังก่อนช่วงเวลาที่เทียบ (เพิ่งเริ่มเก็บ) จึงยังไม่แสดงผลต่างบางช่วง ' : '')
+        + 'ตัวเลขจะแม่นยำและครบช่วงมากขึ้นเมื่อสะสมประวัติ sync นานขึ้น</div>'
+      : '';
+
+    el.innerHTML =
+      '<div style="font-size:9px;color:#3a6080;margin-bottom:6px;font-weight:700">📊 เปรียบเทียบ Spreader A vs Spreader B</div>' +
+      '<div style="overflow-x:auto">' +
+        '<table style="width:100%;border-collapse:collapse">' +
+          '<thead><tr>' +
+            '<th style="text-align:left;padding:3px 6px;font-size:9px;color:#5a8aaa">ช่วงเวลา</th>' +
+            '<th style="text-align:right;padding:3px 6px;font-size:9px;color:#f39c12">Spreader A</th>' +
+            '<th style="text-align:right;padding:3px 6px;font-size:9px;color:#f39c12">Spreader B</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rowsHtml + '</tbody>' +
+        '</table>' +
+      '</div>' +
+      noteHtml;
   }
 
   function switchProdLine(el) {
@@ -12042,6 +12084,37 @@ function onFailedPartChange() {
   function setEquipData(list) { localStorage.setItem(EQUIP_KEY, JSON.stringify(list)); }
   function equipKeyOf_(r) { return (r.date||'')+'|'+(r.machineId||'')+'|'+(r.equipment||''); }
 
+  // (29 ก.ค. 69) SMU สะสมของเครื่อง (ชั่วโมงเดินเครื่อง) แยกวัน/เดือน/ปี — ใช้สำหรับเทียบ Spreader A vs B
+  // SMU เป็นมิเตอร์สะสม (เพิ่มขึ้นเรื่อยๆ ไม่รีเซ็ต) ค่า "ต่อช่วงเวลา" จึงต้องหักลบจาก reading ฐานก่อนหน้า
+  // ช่วงนั้น (เช่น SMU วันนี้ - SMU เมื่อวาน = ชั่วโมงที่เดินเครื่องวันนี้) ถ้าไม่มี reading ก่อนหน้าช่วงนั้น
+  // เลย (เช่นเพิ่งเริ่ม sync) จะคืนค่า null และ limited:true แทนการเดาค่า — ไปแสดงเป็นหมายเหตุที่ UI แทน
+  function getSmuDeltaReal(machineId) {
+    var rows = getEquipData().filter(function(r){ return r.machineId === machineId && typeof r.smu === 'number' && r.smu > 0; });
+    var out = { day:null, month:null, year:null, earliestDate:null, limited:false };
+    if (!rows.length) { out.limited = true; return out; }
+    var byDate = {};
+    rows.forEach(function(r){ if (!byDate[r.date] || r.smu > byDate[r.date]) byDate[r.date] = r.smu; });
+    var dates = Object.keys(byDate).sort();
+    out.earliestDate = dates[0];
+    var todayStr = new Date().toISOString().slice(0,10);
+    var latestDate = dates[dates.length-1];
+    var latestSmu = byDate[latestDate];
+    function baseBefore(targetStr) {
+      var best = null;
+      dates.forEach(function(d){ if (d < targetStr && (!best || d > best)) best = d; });
+      return best;
+    }
+    function delta(targetStr) {
+      var base = baseBefore(targetStr);
+      if (!base) { out.limited = true; return null; }
+      return Math.max(0, latestSmu - byDate[base]);
+    }
+    out.day   = delta(todayStr);
+    out.month = delta(todayStr.slice(0,7)+'-01');
+    out.year  = delta(todayStr.slice(0,4)+'-01-01');
+    return out;
+  }
+
   // ── Config สลับไลน์ (spdSwapped) ── เก็บที่ Sheet (type=config) เป็น source of truth เดียว
   // ให้ทั้ง Dashboard และ Scheduled Task (ที่ Claude รันแยกต่างหาก ไม่ผ่านหน้านี้) อ่านค่าเดียวกันเสมอ
   var _equipConfigCache = { spdSwapped: false };
@@ -12148,6 +12221,38 @@ function onFailedPartChange() {
     try { return JSON.parse(localStorage.getItem(LINE_PROD_KEY)||'[]'); } catch(e){ return []; }
   }
   function setLineProdData(list) { localStorage.setItem(LINE_PROD_KEY, JSON.stringify(list)); }
+
+  // (29 ก.ค. 69) BCM สะสมแยกวัน/เดือน/ปี ต่อ Spreader — mirror แนวคิดเดียวกับ getPowerCostReal()
+  // monthLimited/yearLimited = true เมื่อข้อมูลย้อนหลังที่มี (earliestDate) ยังไม่ครอบคลุมถึงต้นเดือน/ต้นปี
+  // จริง (เพราะ sync ประเภทนี้เพิ่งเริ่ม 29 ก.ค. 69) — ใช้ flag นี้โชว์หมายเหตุที่ UI แทนการปล่อยให้เข้าใจผิด
+  // ว่าตัวเลข MTD/YTD ครบสมบูรณ์ทั้งช่วง
+  function getLineBcmReal(machineId) {
+    var rows = getLineProdData().filter(function(r){ return r.machineId === machineId; });
+    var todayStr0 = new Date().toISOString().slice(0,10);
+    var out = { day:null, month:null, year:null, earliestDate:null,
+                monthLimited:true, yearLimited:true };
+    if (!rows.length) return out;
+    var monthStartStr = todayStr0.slice(0,7)+'-01';
+    var yearStartStr  = todayStr0.slice(0,4)+'-01-01';
+    var dayVal=0, monthVal=0, yearVal=0, earliest=null;
+    rows.forEach(function(r){
+      if (!r.date) return;
+      if (!earliest || r.date < earliest) earliest = r.date;
+      var bcm = r.totalBcm || 0;
+      if (r.date.slice(0,4) === todayStr0.slice(0,4)) {
+        yearVal += bcm;
+        if (r.date.slice(0,7) === todayStr0.slice(0,7)) monthVal += bcm;
+        if (r.date === todayStr0) dayVal += bcm;
+      }
+    });
+    out.day   = dayVal   > 0 ? dayVal   : null;
+    out.month = monthVal > 0 ? monthVal : null;
+    out.year  = yearVal  > 0 ? yearVal  : null;
+    out.earliestDate = earliest;
+    out.monthLimited = !earliest || earliest > monthStartStr;
+    out.yearLimited  = !earliest || earliest > yearStartStr;
+    return out;
+  }
 
   function pullLineProductionFromSheet(cb) {
     var s = getSyncSettings();
