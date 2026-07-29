@@ -9275,12 +9275,19 @@ function onFailedPartChange() {
     return 30; // ไม่รู้จักรูปแบบ (เช่น "พร+7วัน" ที่ไม่มีตัวเลขวันชัดเจน) — fallback 30 วัน กันพังทั้งแถว
   }
 
-  // คำนวณ STATUS สดจาก lastDate + จำนวนวันของรอบตรวจ — DUE = เลยกำหนดแล้ว, WARN = เหลือ ≤3 วัน, OK = ปกติ
+  // คำนวณ STATUS สดจาก lastDate + จำนวนวันของรอบตรวจ — DUE = เลยกำหนดแล้ว, OK = ปกติ
+  // WARN = เหลือ ≤ warnDays ก่อนถึงกำหนด
+  // (29 ก.ค. 69) เดิมใช้ fixed "เหลือ ≤3 วัน = WARN" กับทุกรอบตรวจเหมือนกันหมด ทำให้รายการที่ตรวจ "ทุกวัน"
+  // (Daily) พอตรวจวันนี้เสร็จ ครบกำหนดครั้งถัดไปคือพรุ่งนี้ (เหลือ 1 วัน) ซึ่งน้อยกว่า 3 อยู่แล้ว เลยขึ้น WARN
+  // ทันทีทุกครั้งแม้เพิ่งตรวจเสร็จ — ผู้ใช้ยืนยันให้เปลี่ยนเป็นสัดส่วนตามความถี่รอบตรวจแทน (~20% ของ interval,
+  // ปัดเศษ, จำกัดเพดานไว้ 45 วัน กัน Yearly เตือนล่วงหน้าไกลเกินไป): Daily ~0 วัน (เตือนเมื่อถึงวันจริงเท่านั้น),
+  // Weekly ~1-2 วัน, Monthly ~5-7 วัน, Quarterly ~2-3 สัปดาห์, Yearly ~45 วัน
   function _pmComputeStatus(lastDate, intervalDays) {
     var next = new Date(lastDate.getTime() + intervalDays*86400000);
     var today = new Date(); today.setHours(0,0,0,0);
     var daysLeft = Math.round((next - today) / 86400000);
-    var status = daysLeft < 0 ? 'DUE' : (daysLeft <= 3 ? 'WARN' : 'OK');
+    var warnDays = Math.min(45, Math.round(intervalDays * 0.2));
+    var status = daysLeft < 0 ? 'DUE' : (daysLeft <= warnDays ? 'WARN' : 'OK');
     return { next: next, status: status };
   }
 
