@@ -254,8 +254,10 @@
     </div>
   </div>
 
-  <!-- STATUS STRIP -->
-  <div class="strip">
+  <!-- STATUS STRIP — ★ 29 ก.ค. 69: ผู้ใช้ขอให้เหลือแค่กรอบ "สถานะเครื่องจักร" (การ์ดด้านล่าง) เพราะข้อมูล
+       ซ้ำกัน แต่การ์ดด้านล่างมีรายละเอียดมากกว่า (SMU/DT/DUE + กดเข้า Dashboard ได้) จึงซ่อนแถบนี้ทั้งหมด
+       (ไม่ลบทิ้ง เผื่อย้อนกลับ) ย้ายการ์ด "Work Orders" มาไว้ในแถวการ์ดด้านล่างแทนแล้ว (ดู #mc_workorders) -->
+  <div class="strip" style="display:none">
     <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=spreader-a')">
       <div class="sl"><span class="sdot" id="sdot_spreader-a" style="background:var(--green)"></span>Spreader A</div>
       <div class="sv cg" id="sv_spreader-a">RUNNING</div>
@@ -263,12 +265,6 @@
     </div>
     <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=spreader-b')">
       <div class="sl"><span class="sdot" id="sdot_spreader-b" style="background:var(--green)"></span>Spreader B</div>
-      <!-- ★ 29 ก.ค. 69 — แก้บั๊ก: เดิม dot/class ของ Spreader B ถูก hardcode เป็นสีเหลือง (amber/WARN) ไว้
-           ตั้งแต่แรก ทั้งที่ข้อความยังเขียนว่า "RUNNING" (ขัดกันเอง) และไม่ตรงกับการ์ด "สถานะเครื่องจักร"
-           ด้านล่างที่เคย hardcode เป็น "⚠ WARN" แยกต่างหาก ทั้งที่ไม่มีข้อมูล Breakdown/Relocate จริงมา
-           ยืนยันเลย (ผู้ใช้จับได้จากการเทียบ RUNNING บนแถบบนกับ WARN ที่การ์ดล่างของเครื่องเดียวกัน)
-           ปรับให้ default เหมือนเครื่องอื่นทุกเครื่อง (เขียว/RUNNING) — ถ้ามีข้อมูลจริง Breakdown/Relocate
-           ≥12 ชม. วันนี้ applyOpStatusOverrides() จะเปลี่ยนให้เองอัตโนมัติเหมือนเครื่องอื่น -->
       <div class="sv cg" id="sSpBStatus">RUNNING</div>
       <div class="su" id="sSpB">—</div>
     </div>
@@ -296,11 +292,6 @@
       <div class="sl"><span class="sdot" id="sdot_b11" style="background:var(--green)"></span>Line Shift B1.1</div>
       <div class="sv cg" id="sv_b11">RUNNING</div>
       <div class="su" id="sLSB11">—</div>
-    </div>
-    <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html')">
-      <div class="sl"><span class="sdot" style="background:var(--red)"></span>Work Orders</div>
-      <div class="sv cr" id="sWO">— Open</div>
-      <div class="su" id="sWOSub">—</div>
     </div>
   </div>
 
@@ -375,6 +366,18 @@
         <div><div class="msv cg" id="mc_smu_b11">—</div><div class="msl">SMU (hrs)</div></div>
         <div><div class="msv" id="mc_dt_b11">—</div><div class="msl">DT วันนี้</div></div>
         <div><div class="msv" id="mc_due_b11">—</div><div class="msl">DUE</div></div>
+      </div>
+    </a>
+    <!-- ★ 29 ก.ค. 69 — ย้าย "Work Orders" มาไว้ในแถวการ์ดนี้แทน ตามที่ผู้ใช้ขอ หลังซ่อนแถบสถานะด้านบนทั้งหมด
+         (เดิมการ์ดนี้อยู่ในแถบสถานะด้านบน id เดียวกัน sWO/sWOSub — ย้ายมาไว้ที่นี่ที่เดียว ไม่ซ้ำกันแล้ว) -->
+    <a class="mc mcc" id="mc_workorders" onclick="goTo('ob9_dashboard.html')">
+      <div class="mbadge bcrt">🔧 WORK ORDERS</div>
+      <div class="mn">งานซ่อมค้าง</div>
+      <div class="ms">ทุกเครื่องจักร · กดเพื่อดูรายการ</div>
+      <div class="mst mst3">
+        <div><div class="msv cr" id="sWO">—</div><div class="msl">เปิดอยู่</div></div>
+        <div><div class="msv cr" id="sWOSub">—</div><div class="msl">วิกฤต</div></div>
+        <div><div class="msv">&nbsp;</div><div class="msl">&nbsp;</div></div>
       </div>
     </a>
   </div>
@@ -956,8 +959,10 @@
       const wos = JSON.parse(localStorage.getItem('ob9_work_orders') || '[]');
       const openWOs = wos.filter(w => w.status !== 'completed' && w.status !== 'closed');
       const critWOs = openWOs.filter(w => w.priority === 'critical' || w.status === 'critical');
-      document.getElementById('sWO').textContent = openWOs.length + ' Open';
-      document.getElementById('sWOSub').textContent = critWOs.length > 0 ? critWOs.length + ' Critical' : 'ไม่มีวิกฤต';
+      // ★ 29 ก.ค. 69 — เปลี่ยนจากข้อความ "N Open"/"N Critical" เป็นตัวเลขล้วน ให้เข้ากับรูปแบบการ์ด
+      // "สถานะเครื่องจักร" (SMU/DT/DUE) ที่ย้ายการ์ดนี้เข้ามาอยู่ด้วยกันแล้ว
+      document.getElementById('sWO').textContent = openWOs.length;
+      document.getElementById('sWOSub').textContent = critWOs.length;
 
       const fmtDT = ts => ts ? new Date(ts).toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'ยังไม่เคยดึง';
 
