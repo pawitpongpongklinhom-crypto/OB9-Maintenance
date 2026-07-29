@@ -2912,7 +2912,11 @@
         </div>
 
         <!-- MTBF / MTTR + Trend -->
-
+        <!-- ★ 29 ก.ค. 69 — ผู้ใช้ขอเอาออกจากหน้านี้: (1) "MTBF & MTTR Analysis" การ์ด ซ้ำซ้อนกับตัวเลข
+             MTBF/MTTR/OEE ที่ Executive Summary แถวบนสุดของหน้าแสดงอยู่แล้ว ทำให้สับสนว่าทำไมบางครั้งเลข
+             ไม่ตรงกัน (2) "Condition Trend" กราฟ ปกติไม่มีข้อมูล (ต้องบันทึกผ่าน WO modal ที่ยังไม่มีใครกรอก)
+             โค้ดยังอยู่ครบ (ไม่ลบ) แค่ห่อด้วย display:none — เผื่ออยากเปิดกลับมาใช้ภายหลัง -->
+        <div style="display:none">
         <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
           <div class="ov-card" style="flex:1;min-width:220px">
             <div style="font-size:11px;font-weight:700;color:#7ec8f0;margin-bottom:10px">⚙ MTBF &amp; MTTR Analysis</div>
@@ -2933,6 +2937,7 @@
               ยังไม่มีข้อมูล Condition Readings — บันทึกค่าใน WO modal (ISO 13374)
             </div>
           </div>
+        </div>
         </div>
 
         <!-- ══ Pareto Chart ══ -->
