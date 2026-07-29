@@ -262,8 +262,14 @@
       <div class="su" id="sSpA">—</div>
     </div>
     <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=spreader-b')">
-      <div class="sl"><span class="sdot" id="sdot_spreader-b" style="background:var(--amber)"></span>Spreader B</div>
-      <div class="sv ca" id="sSpBStatus">RUNNING</div>
+      <div class="sl"><span class="sdot" id="sdot_spreader-b" style="background:var(--green)"></span>Spreader B</div>
+      <!-- ★ 29 ก.ค. 69 — แก้บั๊ก: เดิม dot/class ของ Spreader B ถูก hardcode เป็นสีเหลือง (amber/WARN) ไว้
+           ตั้งแต่แรก ทั้งที่ข้อความยังเขียนว่า "RUNNING" (ขัดกันเอง) และไม่ตรงกับการ์ด "สถานะเครื่องจักร"
+           ด้านล่างที่เคย hardcode เป็น "⚠ WARN" แยกต่างหาก ทั้งที่ไม่มีข้อมูล Breakdown/Relocate จริงมา
+           ยืนยันเลย (ผู้ใช้จับได้จากการเทียบ RUNNING บนแถบบนกับ WARN ที่การ์ดล่างของเครื่องเดียวกัน)
+           ปรับให้ default เหมือนเครื่องอื่นทุกเครื่อง (เขียว/RUNNING) — ถ้ามีข้อมูลจริง Breakdown/Relocate
+           ≥12 ชม. วันนี้ applyOpStatusOverrides() จะเปลี่ยนให้เองอัตโนมัติเหมือนเครื่องอื่น -->
+      <div class="sv cg" id="sSpBStatus">RUNNING</div>
       <div class="su" id="sSpB">—</div>
     </div>
     <div class="sc" style="cursor:pointer" onclick="goTo('ob9_dashboard.html?machine=tripper-a')">
@@ -311,8 +317,8 @@
         <div><div class="msv" id="mc_due_spreader-a">—</div><div class="msl">DUE</div></div>
       </div>
     </a>
-    <a class="mc mcw" id="mc_spreader-b" onclick="goTo('ob9_dashboard.html?machine=spreader-b')">
-      <div class="mbadge bwrn" id="mbadge_spreader-b">⚠ WARN</div>
+    <a class="mc mcr" id="mc_spreader-b" onclick="goTo('ob9_dashboard.html?machine=spreader-b')">
+      <div class="mbadge brun" id="mbadge_spreader-b">● RUNNING</div>
       <div class="mn">Spreader B</div>
       <div class="ms">08-SP0003 · Line Shift A</div>
       <div class="mst mst3">
