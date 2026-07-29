@@ -675,12 +675,17 @@ function loadData(){
       const fam = familyOf(u.name);
       (metaByFamily[fam] = metaByFamily[fam] || []).push(u);
     });
+    // ★ 29 ก.ค. 69 — แก้บั๊ก: เดิมเช็คแค่ "มี unit ไหนของตระกูลนี้อยู่แล้วหรือยัง" (alreadyHasAnyUnit) ถ้ามี
+    // แม้แค่ 1 unit ก็ข้ามทั้งตระกูลไปเลย ไม่เติม unit ที่ยังขาดให้ — ทำให้กรณี ob9_exec_data มีแค่
+    // "Spreader B" (จาก Daily Inspection ที่ตรวจแต่ B) จะไม่มีการ์ด "Spreader A" ขึ้นเลย (หายไปทั้งที่ควร
+    // ขึ้นเป็นเขียว "ไม่มี WO ค้าง" อย่างน้อย) ผู้ใช้พบว่า Spreader A หายไปจากรายการ "สถานะเครื่องจักร"
+    // แก้เป็นเช็คทีละ unit แทน เติมเฉพาะ unit ที่ยังขาดจริงๆ โดยไม่แตะ/ซ้ำ unit ที่มีข้อมูลจริงอยู่แล้ว
     Object.keys(metaByFamily).forEach(fam => {
       const metas = metaByFamily[fam];
-      const alreadyHasAnyUnit = metas.some(u => d.machines.some(m=>m.name===u.name));
-      if (alreadyHasAnyUnit) return; // มีอย่างน้อย 1 unit ของตระกูลนี้แยกอยู่แล้วจากข้อมูลจริง ไม่ต้องเติม
+      const missingUnits = metas.filter(u => !d.machines.some(m=>m.name===u.name));
+      if (!missingUnits.length) return; // ครบทุก unit ของตระกูลนี้แล้ว ไม่ต้องเติม
       d.machines = d.machines.filter(m => m.name !== fam); // ลบการ์ดรวม (ไม่ระบุ unit) ของตระกูลนี้ทิ้ง ถ้ามี
-      metas.forEach(u => d.machines.push(buildFallbackEntry(u))); // เติมทุก unit ของตระกูลนี้จาก WO จริงแทน
+      missingUnits.forEach(u => d.machines.push(buildFallbackEntry(u))); // เติมเฉพาะ unit ที่ขาดจาก WO จริง
     });
   } catch(e) {}
 
