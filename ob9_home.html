@@ -48,7 +48,7 @@
   .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
   .sv{font-size:18px;font-weight:800}
   .su{font-size:10px;color:var(--text3);margin-top:2px}
-  .cg{color:var(--green)} .cr{color:var(--red)} .ca{color:var(--amber)} .cb{color:var(--blue)}
+  .cg{color:var(--green)} .cr{color:var(--red)} .ca{color:var(--amber)} .cb{color:var(--blue)} .cm{color:var(--text3)}
 
   /* SECTION LABEL */
   .sec{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;margin-top:24px}
@@ -747,6 +747,29 @@
     'b11':        { sv:'sv_b11',        dot:'sdot_b11',        mc:'mc_b11',        mbadge:'mbadge_b11' },
   };
 
+  /* ── (29 ก.ค. 69) เช็คสถานะจริงจาก SMU ก่อนปล่อยเป็นค่าตั้งต้น RUNNING ──
+     ผู้ใช้ตรวจพบว่า Line Shift A9(BWE) โชว์ RUNNING ทั้งที่ SMU ค้างที่ 17,571 มา 5 วันติด (เช็คกับเว็บ
+     production-itd.ith.co.th/smu-kwh ตรงๆ ยืนยันว่า Run(hr)=0 จริง ไม่ได้ทำงาน) และ Spreader A /
+     Line Shift B1.1 ไม่เคยมีข้อมูล SMU เลย (เว็บต้นทางฝั่ง LINE B ว่างเปล่าทั้งหมด — ไม่ใช่บั๊กการดึงข้อมูล
+     ของเรา) แต่ระบบ default ให้เขียว RUNNING ทั้งที่ไม่มีหลักฐานอะไรเลย ตอนนี้เช็ค ob9_equipment_smu_kwh
+     จริง: ไม่มีข้อมูลเลย → "❔ ไม่มีข้อมูล SMU" (เทา); มีข้อมูลแต่ค่าล่าสุดเท่ากับค่าก่อนหน้า (SMU ไม่ขยับ =
+     ไม่ได้ทำงาน) → "⏸ SMU ไม่ขยับ" (เทา) เช็คนี้ทำงานเฉพาะตอนไม่มี Breakdown/Relocate ≥12ชม. วันนี้เท่านั้น
+     (เงื่อนไขนั้นสำคัญกว่าเสมอ) */
+  function getEquipDataHome() {
+    try { return JSON.parse(localStorage.getItem('ob9_equipment_smu_kwh') || '[]'); } catch(e) { return []; }
+  }
+  function getSmuActivityState(smuId) {
+    var rows = getEquipDataHome().filter(function(r){ return r.machineId === smuId && typeof r.smu === 'number'; });
+    if (!rows.length) return 'nodata';
+    var byDate = {};
+    rows.forEach(function(r){ if (!(r.date in byDate) || r.smu > byDate[r.date]) byDate[r.date] = r.smu; });
+    var dates = Object.keys(byDate).sort();
+    if (dates.length < 2) return null; // ข้อมูลจุดเดียว ยังสรุปแนวโน้มไม่ได้ ปล่อยค่าเดิมไว้ก่อน
+    var last = byDate[dates[dates.length - 1]];
+    var prev = byDate[dates[dates.length - 2]];
+    return (last === prev) ? 'flat' : null;
+  }
+
   function applyOpStatusOverrides() {
     var todayStr = new Date().toISOString().slice(0,10);
     Object.keys(HOME_MACHINE_META).forEach(function(key) {
@@ -761,7 +784,15 @@
       } else if ((h.relocate||0) >= 12) {
         state = { label:'🚚 ย้ายแนวทำงาน', dotColor:'#f39c12', svClass:'ca', mcClass:'mcw', badgeClass:'bwrn', badgeText:'🚚 RELOCATE' };
       }
-      if (!state) return; // ไม่มี Breakdown/Relocate วันนี้ ≥12 ชม. → ปล่อยค่าตั้งต้นในหน้า HTML ไว้เหมือนเดิม
+      if (!state) {
+        var act = getSmuActivityState(meta.smuId);
+        if (act === 'nodata') {
+          state = { label:'❔ ไม่มีข้อมูล SMU', dotColor:'#9CA3AF', svClass:'cm', mcClass:'mcm', badgeClass:'bmnt', badgeText:'❔ NO DATA' };
+        } else if (act === 'flat') {
+          state = { label:'⏸ SMU ไม่ขยับ (ไม่ได้ทำงาน)', dotColor:'#9CA3AF', svClass:'cm', mcClass:'mcm', badgeClass:'bmnt', badgeText:'⏸ IDLE' };
+        }
+      }
+      if (!state) return; // มีข้อมูล SMU จริงและขยับตามปกติ → ปล่อยค่าตั้งต้น RUNNING ในหน้า HTML ไว้เหมือนเดิม
 
       var svEl = document.getElementById(ids.sv);
       if (svEl) { svEl.textContent = state.label; svEl.className = 'sv ' + state.svClass; }
