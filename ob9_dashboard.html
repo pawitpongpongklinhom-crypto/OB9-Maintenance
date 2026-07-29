@@ -5893,20 +5893,21 @@ function _getConfig() {
   }
 
   // ── OEE Performance Rate จาก BCM จริง (ISO 22400-2) ──
-  function _calcOEEPerformance() {
+  // ★ 29 ก.ค. 69 — แก้บั๊ก: เดิมฟังก์ชันนี้ดึง getProdData() (ข้อมูลกรอกเองแบบเก่า PROD_KEY='ob9_production')
+  // ซึ่งมีแต่แถวทดสอบ/สาธิตค้างอยู่ 8 แถว (ไม่ใช่ของจริง) และไม่แยกตามเครื่องเลย ทำให้ค่า Performance
+  // ที่คำนวณได้เป็นค่าคงที่เดียว (~0.468) แล้วถูกนำไปคูณคำนวณ OEE ของทุกเครื่อง — OEE จึงขึ้น 45.9%
+  // เท่ากันหมดไม่ว่าจะดูเครื่องไหน (ผู้ใช้ตรวจพบจากการเทียบ 7 เครื่องพร้อมกัน) แก้เป็นใช้ BCM จริงที่ sync
+  // จาก production-itd (getLineProdData(), ตัวเดียวกับที่กล่อง "📡 Production ITD" และ "เปรียบเทียบ
+  // Spreader A vs B" ใช้อยู่แล้ว) โดยรับ machineId (เช่น 'spreader_a') เป็น optional parameter เพื่อกรอง
+  // เฉพาะเครื่องนั้น — ถ้าไม่ส่ง หรือยังไม่มีข้อมูลจริงเพียงพอ จะ fallback เป็น 0.92 เหมือนเดิม
+  function _calcOEEPerformance(machineId) {
     try {
-      var allProd = typeof getProdData === 'function' ? getProdData() : [];
-      var totalActual = allProd.reduce(function(s,r){ return s+(r.bcm||0); }, 0);
-      var customTarget = parseFloat((localStorage.getItem('ob9_bcm_target')||'').replace(/,/g,''));
-      // Theoretical BCM = target × number of months in dataset (approximate)
-      var months = 1;
-      if (allProd.length > 0) {
-        var dates = allProd.map(function(r){ return r.date ? r.date.slice(0,7) : ''; }).filter(Boolean);
-        months = Math.max([...new Set(dates)].length, 1);
-      }
-      var theoretical = (customTarget > 0 ? customTarget : 150000) * months;
-      if (theoretical <= 0 || totalActual <= 0) return 0.92; // fallback
-      return Math.min(totalActual / theoretical, 1.0);
+      var rows = (typeof getLineProdData === 'function') ? getLineProdData() : [];
+      if (machineId) rows = rows.filter(function(r){ return r.machineId === machineId; });
+      var totalActual = rows.reduce(function(s,r){ return s+(r.totalBcm||0); }, 0);
+      var totalTarget = rows.reduce(function(s,r){ return s+(r.target||0); }, 0);
+      if (totalTarget <= 0 || totalActual <= 0) return 0.92; // fallback — ยังไม่มีข้อมูลจริงเพียงพอ
+      return Math.min(totalActual / totalTarget, 1.0);
     } catch(e) { return 0.92; }
   }
 
@@ -9797,8 +9798,9 @@ function onFailedPartChange() {
     // OEE Availability = (SMU - UDT only) / SMU × 100  (PDT ไม่นับ)
     var avail = (((smu - udtHr) / smu) * 100).toFixed(1);
 
-    // OEE simplified = Availability × 0.92 (performance) × 0.98 (quality)
-    var oee = (parseFloat(avail) * _calcOEEPerformance() * 0.98 / 100 * 100).toFixed(1);
+    // OEE simplified = Availability × Performance (จาก BCM จริงเฉพาะเครื่องนี้) × 0.98 (quality)
+    var _perfMachId = (_ovMachineFilter !== 'all') ? ((PROD_MACHINES.find(function(m){ return m.name === _ovMachineFilter; })||{}).id || null) : null;
+    var oee = (parseFloat(avail) * _calcOEEPerformance(_perfMachId) * 0.98 / 100 * 100).toFixed(1);
 
     var setVal = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
     setVal('execOEE',   oee+'%');
@@ -9934,7 +9936,7 @@ function onFailedPartChange() {
     var mttr  = udtWos2.length ? (udtHr2 / udtWos2.length).toFixed(1) : 'N/A';
     // OEE Availability = (SMU - UDT) / SMU  (ไม่รวม PDT)
     var avail = (((smu - udtHr2) / smu) * 100).toFixed(2);
-    var oee   = (parseFloat(avail) * _calcOEEPerformance() * 0.98).toFixed(2);
+    var oee   = (parseFloat(avail) * _calcOEEPerformance(_machMeta ? _machMeta.id : null) * 0.98).toFixed(2);
     var avgL  = closed.length ? (closed.reduce(function(s,w){return s+(parseFloat(w.laborHours)||0);},0)/closed.length).toFixed(1) : 'N/A';
     var el = document.getElementById('ovMtbfPanel');
     if (!el) return;
