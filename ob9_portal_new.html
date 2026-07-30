@@ -103,6 +103,18 @@
   }
   input:focus { border-color: var(--navy); background: #fff; }
 
+  /* (30 ก.ค. 69) ปุ่ม 👁 โชว์/ซ่อนรหัสพนักงาน — ผู้ใช้ขอเพราะพิมพ์รหัสบนมือถือแล้วเดายากว่าพิมพ์ถูกหรือไม่
+     เนื่องจากช่องถูก mask เป็นจุดตลอด ไอคอนเบราว์เซอร์บางรุ่นก็ไม่ชัดเจน/กดยาก เลยทำปุ่มของเราเองแทน */
+  .id-wrap { position: relative; }
+  .id-wrap input { padding-right: 44px; }
+  .id-toggle {
+    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+    width: 34px; height: 34px; border: none; background: transparent; cursor: pointer;
+    font-size: 17px; display: flex; align-items: center; justify-content: center;
+    color: var(--text2, #6b7280); border-radius: 8px;
+  }
+  .id-toggle:active { background: rgba(0,0,0,.06); }
+
   .btn {
     width: 100%;
     margin-top: 24px;
@@ -200,7 +212,10 @@
     <datalist id="empNameHistory"><!-- เติมด้วย JS จากรายชื่อที่เคย login สำเร็จในเครื่องนี้ --></datalist>
 
     <label for="empId">รหัสพนักงาน</label>
-    <input type="password" id="empId" placeholder="กรอกรหัสพนักงาน" autocomplete="off">
+    <div class="id-wrap">
+      <input type="password" id="empId" placeholder="กรอกรหัสพนักงาน" autocomplete="off">
+      <button type="button" class="id-toggle" id="idToggleBtn" onclick="toggleIdVisibility()" aria-label="แสดง/ซ่อนรหัสพนักงาน" tabindex="-1">👁️</button>
+    </div>
 
     <div class="remember-row" onclick="document.getElementById('rememberId').click()">
       <input type="checkbox" id="rememberId" onclick="event.stopPropagation()">
@@ -361,6 +376,15 @@
   // (30 ก.ค. 69) ขยายเพิ่ม: ไม่สนตัวพิมพ์เล็ก/ใหญ่ และไม่สนช่องว่าง/สัญลักษณ์อื่นๆ ด้วย (เดิมเทียบตรงตัว
   // ทำให้พนักงานที่พิมพ์ "6wx-08717" แทน "6WX-08717" บนคีย์บอร์ดมือถือ เข้าระบบไม่ได้ทั้งที่รหัสถูก)
   function normId(s) { return (s || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+  // (30 ก.ค. 69) สลับโชว์/ซ่อนช่องรหัสพนักงาน — ให้พนักงานเช็คเองได้ว่าพิมพ์ถูกก่อนกด "เข้าสู่ระบบ"
+  function toggleIdVisibility() {
+    const inp = document.getElementById('empId');
+    const btn = document.getElementById('idToggleBtn');
+    const showing = inp.type === 'text';
+    inp.type = showing ? 'password' : 'text';
+    btn.textContent = showing ? '👁️' : '🙈';
+  }
 
   // (30 ก.ค. 69) เทียบชื่อแบบทนทานต่อความต่างที่มองไม่เห็นด้วยตา — ปัญหาจริงที่พบ: พนักงานที่เพิ่มใหม่ (คนอื่น
   // นอกจากนายพนมชัย) เข้าระบบผ่านมือถือไม่ได้ ทั้งที่ชื่อ/รหัสดูถูกต้องทุกตัวอักษร สาเหตุที่เป็นไปได้สูงสุดคือ:
