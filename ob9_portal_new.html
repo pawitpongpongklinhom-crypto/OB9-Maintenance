@@ -331,7 +331,11 @@
       return fetch(url, { mode: 'cors' })
         .then(r => r.json())
         .then(d => {
-          if (d && d.ok && Array.isArray(d.employeePermissions)) {
+          // ★ 30 ก.ค. 69 — แก้บั๊กร้ายแรง: เดิมทับ cache ทุกครั้งที่ดึงสำเร็จ แม้ Sheet จะว่างเปล่า (เช่น ยัง
+          // ไม่เคย push ขึ้นไปเลย) ผลคือรายชื่อพนักงานจริงที่มีอยู่แล้วในเครื่องถูกลบทิ้งกลายเป็น [] ทันที —
+          // เกิดขึ้นจริงกับเครื่องของผู้ใช้เอง ทำให้รายชื่อ 5 คนหายไป ตอนนี้ทับ cache เฉพาะกรณีที่ Sheet มี
+          // ข้อมูลจริง (length > 0) เท่านั้น ถ้า Sheet ว่างให้ถือว่าเครื่องนี้มีข้อมูลที่ถูกต้องกว่าอยู่แล้ว ไม่แตะ
+          if (d && d.ok && Array.isArray(d.employeePermissions) && d.employeePermissions.length > 0) {
             localStorage.setItem(EMP_PERMISSION_KEY, JSON.stringify(d.employeePermissions));
             return true;
           }
