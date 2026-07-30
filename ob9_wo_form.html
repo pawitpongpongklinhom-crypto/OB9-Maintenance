@@ -18,7 +18,7 @@
 <title>OB9 — Work Order</title>
 <style>
 :root{
-  --bg:#f0f2f5;--card:#fff;--border:#e5e7eb;--text:#111827;--text2:#6b7280;--text3:#9ca3af;
+  --bg:#f0f2f5;--card:#fff;--border:#e5e7eb;--text:#111827;--text2:#6b7280;--text3:#9ca3af;--muted:#f3f4f6;
   --green:#059669;--green-bg:#d1fae5;--green-dk:#065f46;
   --amber:#d97706;--amber-bg:#fef3c7;--amber-dk:#92400e;
   --red:#dc2626;--red-bg:#fee2e2;--red-dk:#991b1b;
@@ -27,7 +27,11 @@
   --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08);
 }
 @media(prefers-color-scheme:dark){
-  :root{--bg:#111827;--card:#1f2937;--border:#374151;--text:#f9fafb;--text2:#9ca3af;--text3:#6b7280;}
+  /* ★ 30 ก.ค. 69 — เพิ่ม --muted แยกสำหรับโหมดมืด (เดิมช่องผู้แจ้งที่ readonly เขียน background เป็น
+     #f3f4f6 (เทาอ่อน) ตายตัวในโค้ด JS ไม่ผูกกับตัวแปรสี พอเปิดมือถือที่เป็น Dark Mode ตัวหนังสือจะเปลี่ยนเป็น
+     var(--text) สีขาวเกือบสนิท (#f9fafb) ทับบนพื้นเทาอ่อนตายตัวนั้น ทำให้อ่านแทบไม่ออก — ตอนนี้ใช้ --muted
+     ที่ปรับตามโหมดแทน (เข้มพอดีกับตัวหนังสือสีอ่อนของ Dark Mode) */
+  :root{--bg:#111827;--card:#1f2937;--border:#374151;--text:#f9fafb;--text2:#9ca3af;--text3:#6b7280;--muted:#374151;}
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
@@ -687,7 +691,10 @@ document.addEventListener('DOMContentLoaded',()=>{
         var reqEl = document.getElementById('inp-requester');
         reqEl.value = s.name;
         reqEl.readOnly = true;
-        reqEl.style.background = '#f3f4f6';
+        // ★ 30 ก.ค. 69 — เดิม background เขียนเป็น #f3f4f6 ตายตัว ไม่ผูกกับโหมดสี ทำให้ Dark Mode บนมือถือ
+        // ตัวหนังสือ (var(--text) เกือบขาว) ทับพื้นเทาอ่อนที่ออกแบบไว้สำหรับ Light Mode เท่านั้น อ่านไม่ออก
+        // เปลี่ยนไปใช้ var(--muted) ที่ปรับสีเองตามโหมดแทน
+        reqEl.style.background = 'var(--muted)';
         reqEl.title = 'ดึงชื่ออัตโนมัติจากบัญชีที่ล็อกอิน (' + (s.id||'') + ')';
         return;
       }
