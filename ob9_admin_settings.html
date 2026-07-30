@@ -142,6 +142,23 @@
   }
   function saveEmployees(list) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    pushEmployeesToSheet(list);
+  }
+
+  /* ── ★ ใหม่ 29 ก.ค. 69 — sync รายชื่อพนักงานขึ้น Google Sheet ทุกครั้งที่แก้ไข ──
+     สาเหตุ: ผู้ใช้เจอปัญหาจริง — login จากมือถือไม่ได้ทั้งที่ชื่อ/รหัสถูกต้อง เพราะรายชื่อพนักงานเดิมเก็บใน
+     localStorage ของเครื่อง/เบราว์เซอร์ที่ตั้งค่าเท่านั้น ไม่มีฐานข้อมูลกลาง เพิ่มการ push ขึ้น Sheet ที่นี่
+     (เหมือน Machine Status/Config เดิม) แล้ว ob9_portal_new.html จะดึงรายชื่อชุดนี้มาทับ cache ของตัวเอง
+     ก่อนเช็ค login ทุกครั้ง — ทำงานเงียบๆ เบื้องหลัง ไม่บล็อกการใช้งานหน้านี้แม้อินเทอร์เน็ต/Sheet มีปัญหา */
+  function pushEmployeesToSheet(list) {
+    try {
+      const s = JSON.parse(localStorage.getItem('ob9_sync_settings') || '{}');
+      if (!s.url) return; // ยังไม่ได้ตั้งค่า sync — ข้ามเงียบๆ (ใช้ localStorage อย่างเดียวไปก่อน)
+      fetch(s.url, {
+        method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ token: s.token || '', type: 'employeePermissions', items: list })
+      }).catch(() => {}); // เงียบๆ ถ้าพัง — รายชื่อยังอยู่ใน localStorage เครื่องนี้เหมือนเดิม ไม่เสียข้อมูล
+    } catch (e) {}
   }
   function showMsg(text, ok) {
     const box = document.getElementById('msgBox');

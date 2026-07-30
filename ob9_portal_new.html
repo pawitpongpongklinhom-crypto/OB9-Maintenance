@@ -316,6 +316,32 @@
     try { return JSON.parse(localStorage.getItem(EMP_PERMISSION_KEY) || '[]'); } catch(e) { return []; }
   }
 
+  /* ── ★ ใหม่ 29 ก.ค. 69 — ดึงรายชื่อพนักงานจาก Google Sheet มาทับ cache ในเครื่องนี้ ──
+     เดิมรายชื่อพนักงาน (ตั้งค่าที่หน้า ob9_admin_settings.html) เก็บใน localStorage อย่างเดียว ไม่มีฐาน
+     ข้อมูลกลาง ทำให้เข้าระบบจากมือถือ/เครื่องอื่นไม่เห็นรายชื่อเลย (ผู้ใช้เจอปัญหานี้จริง — เข้าไม่ได้บนมือถือ
+     ทั้งที่ชื่อ/รหัสถูกต้อง) ตอนนี้ดึงจาก Sheet ผ่าน Apps Script เดียวกับ WO/Production มาทับ cache ก่อน
+     เช็ค login ทุกครั้งที่โหลดหน้า (เงียบๆ ไม่ต้องรอ) และดึงซ้ำอีกครั้งถ้าหาไม่เจอใน cache ตอนกด login
+     (เผื่อเครื่องนี้ไม่เคยดึงมาก่อนเลย หรือเพิ่ง add พนักงานใหม่ที่เครื่องอื่น) */
+  const SYNC_SETTINGS_KEY = 'ob9_sync_settings';
+  function pullEmployeesFromSheet() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SYNC_SETTINGS_KEY) || '{}');
+      if (!s.url) return Promise.resolve(false);
+      const url = s.url + '?token=' + encodeURIComponent(s.token || '') + '&type=employeePermissions';
+      return fetch(url, { mode: 'cors' })
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.ok && Array.isArray(d.employeePermissions)) {
+            localStorage.setItem(EMP_PERMISSION_KEY, JSON.stringify(d.employeePermissions));
+            return true;
+          }
+          return false;
+        })
+        .catch(() => false);
+    } catch (e) { return Promise.resolve(false); }
+  }
+  pullEmployeesFromSheet(); // ดึงเงียบๆ ตั้งแต่โหลดหน้า ไม่ต้องรอผลก่อนให้ผู้ใช้กรอกฟอร์ม
+
   function permKeyFor(target) {
     // แปลง target เป็นคีย์ที่ใช้ใน permissions object ของพนักงาน
     return target === 'workorder' ? 'workorder' : target; // executive / workorder / inspection ตรงกันอยู่แล้ว
@@ -330,7 +356,7 @@
   // ก็ถือว่าตรงกัน แค่ตัวเลข/ตัวอักษรต้องถูก ไม่ต้องกังวลเรื่องใส่ขีดหรือไม่ใส่
   function normId(s) { return (s || '').replace(/-/g, ''); }
 
-  function checkLogin() {
+  async function checkLogin() {
     const name = document.getElementById('empName').value.trim();
     const id = document.getElementById('empId').value.trim();
     const errEl = document.getElementById('errorMsg');
@@ -363,8 +389,18 @@
     }
 
     // 3) ไม่ใช่ Admin — เช็คกับรายชื่อพนักงานทั่วไปที่ Admin อนุญาตไว้
-    const employees = loadEmployeePermissions();
-    const emp = employees.find(e => e.name === name && normId(e.id) === normId(id));
+    let employees = loadEmployeePermissions();
+    let emp = employees.find(e => e.name === name && normId(e.id) === normId(id));
+    if (!emp) {
+      // ★ 29 ก.ค. 69 — หาไม่เจอใน cache เครื่องนี้ ลองดึงจาก Sheet มาทับอีกครั้งก่อนฟันธงว่าไม่พบ
+      // (เผื่อเครื่องนี้ยังไม่เคยดึงมาก่อนเลย เช่น มือถือเปิดครั้งแรก) — รอผลครั้งนี้เพราะเป็นการกด login จริง
+      errEl.style.display = 'none';
+      const pulled = await pullEmployeesFromSheet();
+      if (pulled) {
+        employees = loadEmployeePermissions();
+        emp = employees.find(e => e.name === name && normId(e.id) === normId(id));
+      }
+    }
     if (emp) {
       const perms = { executive: !!emp.executive, workorder: !!emp.workorder, inspection: !!emp.inspection };
 
