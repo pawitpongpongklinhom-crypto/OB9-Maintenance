@@ -160,6 +160,31 @@
       }).catch(() => {}); // เงียบๆ ถ้าพัง — รายชื่อยังอยู่ใน localStorage เครื่องนี้เหมือนเดิม ไม่เสียข้อมูล
     } catch (e) {}
   }
+
+  /* ── ★ 30 ก.ค. 69 (4) — ดึงรายชื่อจาก Google Sheet มาทับ cache ในเครื่องนี้ก่อนเสมอ ──
+     สาเหตุ: หน้านี้เดิมอ่านจาก localStorage ของเครื่องที่เปิดอย่างเดียวตอนโหลดหน้า (ไม่เคยดึงจาก Sheet ก่อน)
+     ถ้าเครื่อง/เบราว์เซอร์ไหนมี cache เก่า/ว่างเปล่าค้างอยู่ (เช่นไม่เคยเปิดหน้านี้มาก่อน หรือเคยล้างข้อมูล
+     เบราว์เซอร์) แล้ว Admin กดลบ/แก้ไขอะไรสักอย่าง ระบบจะ push รายชื่อที่ (ผิด/ว่างเปล่า) ในเครื่องนั้นทับขึ้น
+     Sheet ทันที ทำให้รายชื่อจริงที่เคยตั้งไว้แล้วหายไปทั้งหมด (เคยเกิดขึ้นจริง) แก้โดยดึงจาก Sheet มาทับ cache
+     ก่อนเสมอทุกครั้งที่เปิดหน้านี้ (เหมือนที่ ob9_portal_new.html ทำอยู่แล้วตอน login) — ใช้เงื่อนไขเดียวกัน คือ
+     ทับเฉพาะตอนที่ Sheet มีข้อมูลจริง (length > 0) เท่านั้น กัน Sheet ว่างเปล่าชั่วคราวมาลบข้อมูลเครื่องทิ้ง */
+  function pullEmployeesFromSheet() {
+    try {
+      const s = JSON.parse(localStorage.getItem('ob9_sync_settings') || '{}');
+      if (!s.url) return Promise.resolve(false);
+      const url = s.url + '?token=' + encodeURIComponent(s.token || '') + '&type=employeePermissions';
+      return fetch(url, { mode: 'cors' })
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.ok && Array.isArray(d.employeePermissions) && d.employeePermissions.length > 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(d.employeePermissions));
+            return true;
+          }
+          return false;
+        })
+        .catch(() => false);
+    } catch (e) { return Promise.resolve(false); }
+  }
   function showMsg(text, ok) {
     const box = document.getElementById('msgBox');
     box.textContent = text;
@@ -302,7 +327,10 @@
     XLSX.writeFile(wb, 'OB9_Employee_Permission_Template.xlsx');
   }
 
+  // ★ 30 ก.ค. 69 (4) — เรนเดอร์ทันทีด้วย cache ที่มีอยู่ก่อน (กันจอว่างระหว่างรอเน็ต) แล้วดึงจาก Sheet มาทับ +
+  // เรนเดอร์ซ้ำอีกครั้งเมื่อดึงเสร็จ ให้หน้านี้เห็นข้อมูลล่าสุดจาก Sheet เสมอก่อนที่ Admin จะแก้ไขอะไรต่อ
   renderTable();
+  pullEmployeesFromSheet().then(pulled => { if (pulled) renderTable(); });
 </script>
 </body>
 </html>
