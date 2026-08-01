@@ -343,11 +343,27 @@
      ทั้งที่ชื่อ/รหัสถูกต้อง) ตอนนี้ดึงจาก Sheet ผ่าน Apps Script เดียวกับ WO/Production มาทับ cache ก่อน
      เช็ค login ทุกครั้งที่โหลดหน้า (เงียบๆ ไม่ต้องรอ) และดึงซ้ำอีกครั้งถ้าหาไม่เจอใน cache ตอนกด login
      (เผื่อเครื่องนี้ไม่เคยดึงมาก่อนเลย หรือเพิ่ง add พนักงานใหม่ที่เครื่องอื่น) */
+  // (1 ส.ค. 69) ★★ พบสาเหตุตัวจริงของปัญหา login มือถือไม่ได้ทั้งหมดตั้งแต่แรก ★★ — ob9_wo_form.html และ
+  // ob9_inspect.html มี DEFAULT_SYNC_URL/TOKEN ฝังไว้ในโค้ดอยู่แล้ว (ช่างหน้างานเปิดจากเครื่องไหนก็ใช้ได้
+  // ทันที) แต่หน้า login นี้ (ob9_portal_new.html) และ ob9_admin_settings.html ไม่เคยมี default เลย — เดิม
+  // pullEmployeesFromSheet() จะเช็ค s.url ก่อน ถ้าไม่มี (เครื่องที่ไม่เคยเปิด Dashboard มาตั้งค่าด้วยตัวเอง
+  // มาก่อน — ซึ่งคือมือถือของพนักงานแทบทุกคน เพราะหน้า Dashboard/ตั้งค่า Sync เป็นของ Admin) จะ return
+  // false ทันที ไม่ยิง fetch เลย แปลว่ารายชื่อพนักงานจะไม่มีทางถูกดึงมาได้เลยบนมือถือเครื่องใหม่ ไม่ว่าจะแก้
+  // normId/normName/target=admin/cache ไปกี่รอบก็ตาม เพราะ employees array ว่างเปล่าตั้งแต่ต้น — ตอนนี้ใส่
+  // DEFAULT_SYNC_URL/TOKEN แบบเดียวกับ WO form ให้ และตั้งค่าอัตโนมัติลง localStorage เครื่องนั้นถ้ายังไม่มี
   const SYNC_SETTINGS_KEY = 'ob9_sync_settings';
+  const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyBuEG2maSWE0Y_lQK9I7ikTw7RLXkdsS4INX0kMgj5QMuvq_2EcJVEwxu0pbnqs9J8/exec';
+  const DEFAULT_SYNC_TOKEN = 'ob9maemoh2569';
+  function getPortalSyncSettings() {
+    try {
+      let s = JSON.parse(localStorage.getItem(SYNC_SETTINGS_KEY) || '{}');
+      if (!s.url) { s = { url: DEFAULT_SYNC_URL, token: DEFAULT_SYNC_TOKEN }; localStorage.setItem(SYNC_SETTINGS_KEY, JSON.stringify(s)); }
+      return s;
+    } catch (e) { return { url: DEFAULT_SYNC_URL, token: DEFAULT_SYNC_TOKEN }; }
+  }
   function pullEmployeesFromSheet() {
     try {
-      const s = JSON.parse(localStorage.getItem(SYNC_SETTINGS_KEY) || '{}');
-      if (!s.url) return Promise.resolve(false);
+      const s = getPortalSyncSettings();
       const url = s.url + '?token=' + encodeURIComponent(s.token || '') + '&type=employeePermissions';
       return fetch(url, { mode: 'cors' })
         .then(r => r.json())

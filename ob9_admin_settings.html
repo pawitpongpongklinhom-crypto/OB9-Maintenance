@@ -150,6 +150,18 @@
      localStorage ของเครื่อง/เบราว์เซอร์ที่ตั้งค่าเท่านั้น ไม่มีฐานข้อมูลกลาง เพิ่มการ push ขึ้น Sheet ที่นี่
      (เหมือน Machine Status/Config เดิม) แล้ว ob9_portal_new.html จะดึงรายชื่อชุดนี้มาทับ cache ของตัวเอง
      ก่อนเช็ค login ทุกครั้ง — ทำงานเงียบๆ เบื้องหลัง ไม่บล็อกการใช้งานหน้านี้แม้อินเทอร์เน็ต/Sheet มีปัญหา */
+  // (1 ส.ค. 69) ★★ พบสาเหตุตัวจริงของปัญหา login มือถือไม่ได้ ★★ — หน้านี้ไม่เคยมี DEFAULT_SYNC_URL/TOKEN
+  // เหมือน ob9_wo_form.html/ob9_inspect.html เลย ถ้า Admin เปิดหน้านี้จากเครื่อง/เบราว์เซอร์ที่ไม่เคยตั้งค่า
+  // sync มาก่อน (เช่นเปิดจากมือถือ) push/pull จะเงียบๆ ไม่ทำงานเลยทั้งคู่ — ใส่ default เดียวกับ WO form ให้
+  const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyBuEG2maSWE0Y_lQK9I7ikTw7RLXkdsS4INX0kMgj5QMuvq_2EcJVEwxu0pbnqs9J8/exec';
+  const DEFAULT_SYNC_TOKEN = 'ob9maemoh2569';
+  function getAdminSyncSettings() {
+    try {
+      let s = JSON.parse(localStorage.getItem('ob9_sync_settings') || '{}');
+      if (!s.url) { s = { url: DEFAULT_SYNC_URL, token: DEFAULT_SYNC_TOKEN }; localStorage.setItem('ob9_sync_settings', JSON.stringify(s)); }
+      return s;
+    } catch (e) { return { url: DEFAULT_SYNC_URL, token: DEFAULT_SYNC_TOKEN }; }
+  }
   function pushEmployeesToSheet(list) {
     try {
       // ★ 30 ก.ค. 69 (6) — Sheet "Employee Permissions" เคยว่างเปล่าไปดื้อๆ 2 ครั้งในวันเดียว (ไม่ทราบสาเหตุ
@@ -160,8 +172,7 @@
         console.warn('pushEmployeesToSheet: ปฏิเสธการ push รายชื่อว่างเปล่า (ป้องกัน Sheet ถูกล้างข้อมูลโดยไม่ตั้งใจ)');
         return;
       }
-      const s = JSON.parse(localStorage.getItem('ob9_sync_settings') || '{}');
-      if (!s.url) return; // ยังไม่ได้ตั้งค่า sync — ข้ามเงียบๆ (ใช้ localStorage อย่างเดียวไปก่อน)
+      const s = getAdminSyncSettings();
       fetch(s.url, {
         method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ token: s.token || '', type: 'employeePermissions', items: list })
@@ -178,8 +189,7 @@
      ทับเฉพาะตอนที่ Sheet มีข้อมูลจริง (length > 0) เท่านั้น กัน Sheet ว่างเปล่าชั่วคราวมาลบข้อมูลเครื่องทิ้ง */
   function pullEmployeesFromSheet() {
     try {
-      const s = JSON.parse(localStorage.getItem('ob9_sync_settings') || '{}');
-      if (!s.url) return Promise.resolve(false);
+      const s = getAdminSyncSettings();
       const url = s.url + '?token=' + encodeURIComponent(s.token || '') + '&type=employeePermissions';
       return fetch(url, { mode: 'cors' })
         .then(r => r.json())
