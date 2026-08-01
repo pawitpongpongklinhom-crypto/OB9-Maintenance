@@ -11202,11 +11202,22 @@ function onFailedPartChange() {
           setTimeout(function(){ document.getElementById('syncBadge').style.display='none'; }, 4000);
           if (typeof renderWOTable === 'function') renderWOTable();
           if (typeof drawPareto    === 'function') drawPareto();
+        } else if (d && d.ok === false) {
+          // (1 ส.ค. 69) ★ เดิมจุดนี้ซ่อน badge เงียบๆ ไม่ว่า Sheet จะตอบ ok:false (เช่น token ผิด) หรือแค่
+          // ยังไม่มี WO เลย ทำให้ Admin ไม่รู้ตัวว่า pull ล้มเหลวจริงๆ (ต่างจากกรณี Sheet ว่างเปล่าปกติ)
+          setSyncBadge('err', '✗ Pull ล้มเหลว');
+          showToast('ดึงข้อมูลจาก Google Sheet ไม่สำเร็จ: ' + (d.msg||'ไม่ทราบสาเหตุ'), '❌');
         } else {
           document.getElementById('syncBadge').style.display = 'none';
         }
       })
-      .catch(function(){ document.getElementById('syncBadge').style.display='none'; });
+      .catch(function(){
+        // (1 ส.ค. 69) ★ เดิมจุดนี้เงียบสนิทถ้า fetch ล้มเหลว (ไม่มีเน็ต/Apps Script ไม่ตอบ) ทำให้ Admin เห็น
+        // ข้อมูลเก่าค้างอยู่โดยไม่รู้ว่าจริงๆ แล้วดึงข้อมูลล่าสุดไม่สำเร็จ (อาจเป็นสาเหตุที่ WO/รายละเอียดใหม่ๆ
+        // จากเครื่องอื่นไม่ขึ้นให้เห็น) ตอนนี้แจ้งเตือนให้รู้ตัวชัดเจนแทนการซ่อนเงียบๆ
+        setSyncBadge('err', '✗ ดึงข้อมูลไม่สำเร็จ');
+        showToast('ดึงข้อมูลจาก Google Sheet ไม่สำเร็จ — ตรวจสอบอินเทอร์เน็ต แล้วลอง Sync อีกครั้ง', '❌');
+      });
   }
 
   // ══ Live multi-user sync ══
