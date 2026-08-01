@@ -427,14 +427,10 @@
       return;
     }
 
-    // 2) ถ้ากำลังจะเข้าโดยใช้ target = admin แต่รหัสไม่ตรงกับ ADMIN_USERS เลย → ไม่ต้องเช็คพนักงานทั่วไป (รหัส Admin ผิด)
-    if (TARGET === 'admin') {
-      errEl.textContent = '❌ รหัส Admin ไม่ถูกต้อง';
-      errEl.style.display = 'block';
-      errEl.style.animation = 'none';
-      setTimeout(() => { errEl.style.animation = 'shake .3s ease'; }, 10);
-      return;
-    }
+    // (1 ส.ค. 69) ★ แก้บั๊กร้ายแรง: เดิมถ้ากด "Admin" จากหน้าแรกแล้วพิมพ์ชื่อ-รหัสพนักงานทั่วไป (ไม่ใช่ Admin)
+    // ระบบจะขึ้น "รหัส Admin ไม่ถูกต้อง" ทันทีโดยไม่ยอมเช็คกับรายชื่อพนักงานเลย — ทำให้พนักงานที่เผลอกดปุ่ม
+    // "Admin" (ปุ่มเด่นสุดหน้าแรก) แทนที่จะกดการ์ดโมดูลของตัวเอง เข้าระบบไม่ได้เลยทั้งที่ชื่อ/รหัสถูกทุกตัว
+    // ตอนนี้ตัดเงื่อนไขพิเศษนี้ออก ให้ไหลไปเช็ครายชื่อพนักงานตามปกติเสมอ ไม่ว่าจะกดเข้ามาทางปุ่มไหนก็ตาม
 
     // 3) ไม่ใช่ Admin — เช็คกับรายชื่อพนักงานทั่วไปที่ Admin อนุญาตไว้
     let employees = loadEmployeePermissions();
@@ -456,7 +452,9 @@
       const perms = { executive: !!emp.executive, workorder: !!emp.workorder, inspection: !!emp.inspection };
 
       // ถ้ามาจากการ์ดเฉพาะทาง (target) แต่พนักงานคนนี้ยังไม่ได้รับสิทธิ์โมดูลนั้น → แจ้งเตือนแยก ไม่ใช่แค่ error ทั่วไป
-      if (TARGET && TARGET_URL[TARGET] && !perms[permKeyFor(TARGET)]) {
+      // (1 ส.ค. 69) target = 'admin' ไม่ใช่สิทธิ์โมดูลจริง (ไม่มีคีย์ "admin" ใน perms) — เป็นแค่ปุ่มเข้าหน้าแรกทั่วไป
+      // พนักงานทั่วไปที่ผ่านมาทางนี้ ให้เข้าได้เลยแล้วพากลับหน้าแรก (ob9_home.html) ไม่ต้องเช็คสิทธิ์เฉพาะโมดูล
+      if (TARGET && TARGET !== 'admin' && TARGET_URL[TARGET] && !perms[permKeyFor(TARGET)]) {
         errEl.textContent = '🔒 ชื่อ/รหัสถูกต้อง แต่ยังไม่ได้รับสิทธิ์เข้าโมดูลนี้ — ติดต่อ Admin เพื่อขอสิทธิ์';
         errEl.style.display = 'block';
         errEl.style.animation = 'none';
