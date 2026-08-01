@@ -152,6 +152,14 @@
      ก่อนเช็ค login ทุกครั้ง — ทำงานเงียบๆ เบื้องหลัง ไม่บล็อกการใช้งานหน้านี้แม้อินเทอร์เน็ต/Sheet มีปัญหา */
   function pushEmployeesToSheet(list) {
     try {
+      // ★ 30 ก.ค. 69 (6) — Sheet "Employee Permissions" เคยว่างเปล่าไปดื้อๆ 2 ครั้งในวันเดียว (ไม่ทราบสาเหตุ
+      // แน่ชัด อาจเป็นเครื่อง/แท็บอื่นที่มี cache เก่า/ว่างเปล่าค้างอยู่ push ทับ) เพิ่ม safety guard ตรงนี้:
+      // ห้าม push รายชื่อว่างเปล่า (list.length === 0) ขึ้น Sheet โดยเด็ดขาด ไม่ว่าจะมาจากสาเหตุอะไรก็ตาม
+      // เพราะทีมงานจริงไม่ควรว่างเปล่าเป็น 0 คนได้เลย ถ้าจงใจจะลบทุกคนจริงๆ ต้องแก้ตรงในชีตเองโดยตรง
+      if (!Array.isArray(list) || list.length === 0) {
+        console.warn('pushEmployeesToSheet: ปฏิเสธการ push รายชื่อว่างเปล่า (ป้องกัน Sheet ถูกล้างข้อมูลโดยไม่ตั้งใจ)');
+        return;
+      }
       const s = JSON.parse(localStorage.getItem('ob9_sync_settings') || '{}');
       if (!s.url) return; // ยังไม่ได้ตั้งค่า sync — ข้ามเงียบๆ (ใช้ localStorage อย่างเดียวไปก่อน)
       fetch(s.url, {
