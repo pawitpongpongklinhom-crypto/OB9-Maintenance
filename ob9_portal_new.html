@@ -436,7 +436,10 @@
       const pulled = await pullEmployeesFromSheet();
       if (pulled) {
         employees = loadEmployeePermissions();
-        emp = employees.find(e => e.name === name && normId(e.id) === normId(id));
+        // ★ 30 ก.ค. 69 (2, hotfix) — จุดนี้เดิมยังลืมเปลี่ยนเป็น normName() เหมือนจุดแรก (บรรทัด 431) ทำให้
+        // เครื่องที่ยังไม่เคยมีข้อมูลพนักงานคนนี้ cache ไว้ (ต้องดึงจาก Sheet มาใหม่ก่อนถึงจะลองเทียบรอบ 2)
+        // ยังคงเทียบชื่อแบบตรงตัวเป๊ะอยู่ดี บั๊กเดิมจึงยังไม่หายจริงสำหรับพนักงานที่เพิ่ง login ครั้งแรกในเครื่องนั้น
+        emp = employees.find(e => normName(e.name) === normName(name) && normId(e.id) === normId(id));
       }
     }
     if (emp) {
@@ -464,6 +467,18 @@
       errEl.style.display = 'none';
       document.getElementById('successFlash').style.display = 'block';
       setTimeout(() => { window.location.href = destinationAfterLogin(); }, 700);
+      return;
+    }
+
+    // ★ 30 ก.ค. 69 (2, hotfix) — ถ้ารหัสพนักงานตรงกับที่มีในระบบอยู่แล้ว แต่ชื่อไม่ตรง ให้บอกตรงๆ ว่าระบบ
+    // บันทึกชื่อไว้ว่าอะไร (แทนที่จะขึ้น error กว้างๆ แบบเดิมที่เดายากว่าปัญหาอยู่ที่ชื่อหรือรหัส) ช่วยให้พนักงาน/
+    // Admin เห็นจุดผิดพลาดได้ทันทีเอง ไม่ต้องรอดีบักผ่าน Claude ทุกครั้ง
+    const idMatch = employees.find(e => normId(e.id) === normId(id));
+    if (idMatch) {
+      errEl.textContent = '❌ รหัสพนักงานถูกต้อง แต่ชื่อไม่ตรง — ระบบบันทึกชื่อไว้ว่า "' + idMatch.name + '" กรุณาพิมพ์ชื่อให้ตรงตามนี้เป๊ะ';
+      errEl.style.display = 'block';
+      errEl.style.animation = 'none';
+      setTimeout(() => { errEl.style.animation = 'shake .3s ease'; }, 10);
       return;
     }
 
