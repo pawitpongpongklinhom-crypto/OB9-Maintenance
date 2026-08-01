@@ -651,7 +651,11 @@ function updatePosCircle(id, sys, pos){
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-let answers = {}; // id -> {status, note, sys, part, pos}
+let answers = {}; // id -> {status, note, sys, part, pos, photos}
+// (1 ส.ค. 69) ★ ใหม่ — ID เฉพาะของการตรวจครั้งนี้ สร้างไว้ล่วงหน้าตอนเลือกเครื่องจักร (เหมือน wo_form.html
+// ที่สร้าง inp-wo-id ไว้ล่วงหน้า) ใช้เป็นชื่อโฟลเดอร์ Drive ตอนแนบรูปแต่ละจุดตรวจ ก่อนกดบันทึกจริง แล้ว
+// submitForm() จะใช้ ID เดียวกันนี้เป็น id ของ record ที่บันทึกจริง เพื่อให้โฟลเดอร์รูปตรงกับ record เสมอ
+let currentInspectionId = null;
 
 function openP(url){ window.open(url,'_blank')||(location.href=url); }
 
@@ -750,6 +754,7 @@ function onUnitMachineChange(){
 function onMachineChange(){
   const machine = document.getElementById('sel-machine').value;
   answers = {};
+  currentInspectionId = 'INS-'+Date.now(); // (1 ส.ค. 69) สร้าง ID ล่วงหน้าไว้ใช้เป็นโฟลเดอร์ Drive ตอนแนบรูป
   onUnitMachineChange();
   if(!machine){
     document.getElementById('checklist-body').innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:8px">🔍</div>กรุณาเลือกเครื่องจักรก่อน</div>`;
@@ -771,6 +776,13 @@ function onMachineChange(){
       </div>
       <div class="check-note" id="note-${item.id}">
         <textarea rows="2" placeholder="ระบุรายละเอียดให้มากที่สุดเท่าที่ทำได้ เช่น จุดที่พบ, ลักษณะ/ความรุนแรงของอาการ, สาเหตุที่คาดว่าเป็นไปได้, คำแนะนำการซ่อม — ยิ่งละเอียด ช่างจะซ่อมได้ตรงจุดโดยไม่ต้องโทรถามซ้ำ" id="note-inp-${item.id}" oninput="saveNote('${item.id}',this.value)"></textarea>
+        <div style="margin-top:8px">
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--blue,#1e40af);background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:7px 10px;cursor:pointer">
+            <span>📎 แนบรูป (บังคับถ้าผิดปกติ/แจ้งซ่อม)</span>
+            <input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handleInspPhotoSelect(event,'${item.id}')">
+          </label>
+          <div id="photo-${item.id}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+        </div>
         <div style="margin-top:8px">
           <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">🔩 ระบุตำแหน่งชิ้นส่วน (ถ้าทราบ)</label>
           <select id="pos-sys-${item.id}" onchange="onPosSystemChange('${item.id}')" style="font-size:12px;padding:7px 10px">
@@ -848,7 +860,7 @@ function saveDraft(){
   const inspector = document.getElementById('inp-inspector').value.trim();
   const shift = document.getElementById('sel-shift').value;
   const date = document.getElementById('inp-date').value;
-  const draft = { machine, unit, inspector, shift, date, answers };
+  const draft = { machine, unit, inspector, shift, date, answers, currentInspectionId };
   try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){}
 }
 
@@ -872,6 +884,9 @@ function restoreDraft(){
     // render checklist ก่อน แล้วค่อยใส่สถานะกลับ
     if(d.machine){
       onMachineChange();
+      // เก็บ currentInspectionId เดิมไว้ (ไม่ใช้ตัวใหม่ที่ onMachineChange() เพิ่งสร้าง) เพื่อให้รูปที่แนบ
+      // ต่อจากตรงนี้ยังเก็บลงโฟลเดอร์ Drive เดียวกับรูปที่แนบไปแล้วก่อนหน้า (ถ้ามี)
+      if(d.currentInspectionId) currentInspectionId = d.currentInspectionId;
       if(d.answers){
         answers = d.answers;
         // วน apply สถานะกลับคืน
@@ -883,6 +898,8 @@ function restoreDraft(){
             const noteInp = document.getElementById('note-inp-'+id);
             if(noteInp) noteInp.value = n;
           }
+          const photoBox = document.getElementById('photo-'+id);
+          if(photoBox) photoBox.innerHTML = _inspPhotoThumbs(id);
         });
         updateProgress();
       }
@@ -919,6 +936,85 @@ function saveNote(id,val){
   saveDraft(); // ← บันทึกอัตโนมัติทุกครั้งที่พิมพ์หมายเหตุ
 }
 
+// ── PHOTO ATTACHMENTS (ต่อจุดตรวจ) ──────────────────────────────────────────
+// (1 ส.ค. 69) ★ ใหม่ — ผู้ใช้แจ้งว่ารายการที่ผิดปกติควรบังคับแนบรูปด้วย เพื่อยืนยันสภาพจริงหน้างาน
+// ทำตามแพทเทิร์นเดียวกับ ob9_wo_form.html: ย่อขนาดรูปก่อนเสมอ (กัน localStorage เต็ม) แล้วอัปโหลดขึ้น
+// Google Drive ผ่าน Apps Script endpoint เดียวกัน (type:'uploadPhoto') ได้ URL สั้นๆ กลับมาแทน base64
+// โฟลเดอร์ Drive ใช้ currentInspectionId (สร้างไว้ล่วงหน้าตอนเลือกเครื่องจักร) + item.id เป็นชื่อไฟล์
+// เก็บผลลัพธ์ไว้ที่ answers[id].photos (array ของ URL/base64) — ไม่ต้องแก้ Code.gs เพิ่ม เพราะ photos จะ
+// ติดไปกับ answers ที่ถูกเก็บเป็น JSON string ในคอลัมน์ "answers" อยู่แล้ว
+const PHOTO_MAX_DIM_INSP = 900, PHOTO_QUALITY_INSP = 0.65;
+function _resizeImageFileInsp(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > PHOTO_MAX_DIM_INSP || h > PHOTO_MAX_DIM_INSP) {
+          if (w >= h) { h = Math.round(h*PHOTO_MAX_DIM_INSP/w); w = PHOTO_MAX_DIM_INSP; }
+          else { w = Math.round(w*PHOTO_MAX_DIM_INSP/h); h = PHOTO_MAX_DIM_INSP; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', PHOTO_QUALITY_INSP));
+      };
+      img.onerror = () => reject(new Error('image load failed'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('file read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+async function _uploadInspPhotoToDrive(dataUrl, folderKey, which){
+  const s = getInspectSyncSettings();
+  if (!s.url || !folderKey) return null;
+  try {
+    const filename = folderKey + '_' + which + '_' + Date.now() + '.jpg';
+    const r = await fetch(s.url, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ token:s.token||'', type:'uploadPhoto', woId:folderKey, which:which, filename:filename, mimeType:'image/jpeg', dataBase64:dataUrl })
+    });
+    const j = await r.json();
+    return (j && j.ok && j.url) ? j.url : null;
+  } catch(e) { return null; }
+}
+function handleInspPhotoSelect(evt, itemId){
+  const files = Array.from(evt.target.files||[]);
+  evt.target.value = '';
+  if (!files.length) return;
+  if(!currentInspectionId) currentInspectionId = 'INS-'+Date.now();
+  showToast('📷 กำลังประมวลผล + อัปโหลดรูป...');
+  Promise.all(files.map(_resizeImageFileInsp)).then(async dataUrls=>{
+    const uploaded = await Promise.all(dataUrls.map(function(du){
+      return _uploadInspPhotoToDrive(du, currentInspectionId, itemId).then(function(url){ return url || du; });
+    }));
+    if(!answers[itemId]) answers[itemId]={status:'',note:''};
+    if(!Array.isArray(answers[itemId].photos)) answers[itemId].photos=[];
+    answers[itemId].photos.push(...uploaded);
+    saveDraft();
+    const box = document.getElementById('photo-'+itemId);
+    if (box) box.innerHTML = _inspPhotoThumbs(itemId);
+    showToast('✅ เพิ่มรูปแล้ว '+uploaded.length+' รูป');
+  }).catch(()=>{ showToast('❌ โหลดรูปไม่สำเร็จ — ไฟล์อาจเสียหรือไม่ใช่รูปภาพ'); });
+}
+function removeInspPhoto(itemId, idx){
+  if(!answers[itemId] || !Array.isArray(answers[itemId].photos)) return;
+  answers[itemId].photos.splice(idx,1);
+  saveDraft();
+  const box = document.getElementById('photo-'+itemId);
+  if (box) box.innerHTML = _inspPhotoThumbs(itemId);
+}
+function _inspPhotoThumbs(itemId){
+  const arr = (answers[itemId] && answers[itemId].photos) || [];
+  if (!arr.length) return '<div style="font-size:11px;color:var(--text3)">— ยังไม่มีรูป —</div>';
+  return arr.map((src,i)=>`<div style="position:relative;display:inline-block">
+      <img src="${src}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${src}','_blank')">
+      <button onclick="event.stopPropagation();removeInspPhoto('${itemId}',${i})" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#e74c3c;color:#fff;border:none;font-size:10px;line-height:16px;padding:0;cursor:pointer">×</button>
+    </div>`).join('');
+}
+
 function updateProgress(){
   const machine=document.getElementById('sel-machine').value;
   const total=(CHECKLISTS[machine]||[]).length;
@@ -942,6 +1038,30 @@ function submitForm(){
   const done=items.filter(i=>answers[i.id]&&answers[i.id].status).length;
   if(done<items.length){ if(!confirm(`ยังตรวจไม่ครบ ${done}/${items.length} รายการ\nต้องการบันทึกต่อไหม?`)) return; }
 
+  // (1 ส.ค. 69) ★ ใหม่ — บังคับแนบรูป + ระบุรายละเอียด สำหรับทุกจุดที่ผิดปกติ/แจ้งซ่อม (warn/crit)
+  // ก่อนบันทึกได้ ตามที่ผู้ใช้แจ้ง: "ไม่เพิ่มรูปบันทึกไม่ได้ / ไม่ระบุรายละเอียดบันทึกไม่ได้"
+  const flaggedItems = items.filter(i=>answers[i.id] && (answers[i.id].status==='warn' || answers[i.id].status==='crit'));
+  for(const i of flaggedItems){
+    const a = answers[i.id];
+    if(!a.note || !a.note.trim()){
+      showToast(`⚠️ กรุณาระบุรายละเอียด/อาการที่พบสำหรับ "${i.name}" ก่อนบันทึก`);
+      const noteInp = document.getElementById('note-inp-'+i.id);
+      if(noteInp) noteInp.focus();
+      return;
+    }
+    if(!Array.isArray(a.photos) || a.photos.length===0){
+      showToast(`⚠️ กรุณาแนบรูปสำหรับ "${i.name}" ก่อนบันทึก`);
+      return;
+    }
+  }
+  // บังคับหมายเหตุเพิ่มเติมโดยรวม ถ้ามีจุดผิดปกติอย่างน้อย 1 จุด
+  const overallNotesEl = document.getElementById('inp-notes');
+  if(flaggedItems.length>0 && (!overallNotesEl.value || !overallNotesEl.value.trim())){
+    showToast('⚠️ กรุณาใส่หมายเหตุเพิ่มเติม (สรุปภาพรวม) ก่อนบันทึก เนื่องจากพบจุดผิดปกติ');
+    overallNotesEl.focus();
+    return;
+  }
+
   // Save inspector name
   localStorage.setItem('ob9_inspector_name',inspector);
 
@@ -951,7 +1071,7 @@ function submitForm(){
   const warnItemObjs=items.filter(i=>answers[i.id]&&answers[i.id].status==='warn');
   const warnItems=warnItemObjs.map(i=>i.name);
   const record={
-    id:'INS-'+Date.now(),
+    id:currentInspectionId || ('INS-'+Date.now()), // ใช้ ID เดิมที่สร้างไว้ล่วงหน้า ให้ตรงกับโฟลเดอร์รูปใน Drive
     date,shift,machine,unit,inspector,
     total:items.length,done,
     ok_count:items.filter(i=>answers[i.id]&&answers[i.id].status==='ok').length,
@@ -1070,7 +1190,9 @@ function createWOsFromCritItems(critItemObjs, machine, inspector, shift, date, u
       nextMaintenanceDue:null,
       status:'pending',
       closedAt:null,
-      imagesBefore:[],
+      // (1 ส.ค. 69) ★ ใหม่ — ผูกรูปที่แนบตอนตรวจเช็คมาเป็นรูป "ก่อนซ่อม" ของ WO ที่สร้างอัตโนมัติเลย
+      // ไม่ต้องให้ช่างถ่ายซ้ำหน้างาน เพราะรูปหลักฐานสภาพผิดปกติมีอยู่แล้วตั้งแต่ตอนตรวจ
+      imagesBefore: Array.isArray(a.photos) ? [...a.photos] : [],
       imagesAfter:[],
       dept:'',
       notes:`จาก Daily Inspection (${shift}) — ${sourceLabel}${noteTxt?': '+noteTxt:''}`,
@@ -1170,28 +1292,55 @@ function viewInspectionDetail(id){
     </div>`;
 
   // รายการที่พบปัญหา (ผิดปกติ + แจ้งซ่อม) — ดึงชื่อหัวข้อจริงจาก CHECKLISTS โดยจับคู่กับ answers
+  // (1 ส.ค. 69) ★ แก้บั๊ก: เดิม Code.gs (Apps Script) ไม่มีคอลัมน์เก็บ "answers" (รายละเอียด/หมายเหตุต่อจุด
+  // ตรวจ) เลย — พนักงานกรอกรายละเอียดตอนตรวจแล้ว แต่พอ sync ผ่าน Sheet ไปเครื่องอื่น (เช่น Admin เปิดดูจาก
+  // เครื่องที่ไม่ได้ตรวจเอง) ข้อมูลนี้หายไปหมด กลายเป็นขึ้น "✅ ไม่พบจุดผิดปกติ" ทั้งที่ stats ด้านบนบอกว่ามี
+  // รายการผิดปกติอยู่ — เพิ่มคอลัมน์ answers ใน Code.gs แล้ว (deploy v19) แต่ "ข้อมูลเก่า" ที่ sync ไปก่อนหน้านี้
+  // จะยังไม่มี answers ย้อนหลังให้ (คอลัมน์ยังไม่มีตอนนั้น) จึงเพิ่ม fallback ตรงนี้: ถ้าไม่มี answers แต่
+  // นับจำนวนผิดปกติ/แจ้งซ่อมได้ > 0 ให้แสดงชื่อรายการจาก warn_items/crit_items แทน (ข้อมูลนี้มีอยู่แล้วเสมอ)
+  // พร้อมข้อความอธิบายว่าไม่มีรายละเอียดเพิ่มเติมบันทึกไว้ แทนที่จะโกหกว่า "ไม่พบจุดผิดปกติ"
   const items = CHECKLISTS[r.machine] || [];
   const answers = r.answers || {};
+  const hasAnswersData = Object.keys(answers).length > 0;
   const flagged = items
     .map(it => ({ item: it, a: answers[it.id] }))
     .filter(x => x.a && (x.a.status==='warn' || x.a.status==='crit'))
     .sort((x,y) => (x.a.status==='crit'?0:1) - (y.a.status==='crit'?0:1));
 
-  const flaggedHtml = flagged.length
-    ? flagged.map(x => {
-        const isCrit = x.a.status==='crit';
-        const badge = isCrit ? '🔴 แจ้งซ่อม' : '⚠️ ผิดปกติ';
-        const badgeColor = isCrit ? 'var(--red)' : 'var(--amber)';
-        const badgeBg = isCrit ? 'var(--red-bg)' : 'var(--amber-bg)';
+  let flaggedHtml;
+  if (flagged.length) {
+    flaggedHtml = flagged.map(x => {
+      const isCrit = x.a.status==='crit';
+      const badge = isCrit ? '🔴 แจ้งซ่อม' : '⚠️ ผิดปกติ';
+      const badgeColor = isCrit ? 'var(--red)' : 'var(--amber)';
+      const badgeBg = isCrit ? 'var(--red-bg)' : 'var(--amber-bg)';
+      return `<div style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:600;flex:1">${x.item.name}</span>
+          <span style="font-size:10px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:2px 8px;border-radius:10px;white-space:nowrap">${badge}</span>
+        </div>
+        ${x.a.note ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">${x.a.note}</div>` : ''}
+      </div>`;
+    }).join('');
+  } else if (!hasAnswersData && ((r.warn_count||0) + (r.crit_count||0) > 0)) {
+    // ข้อมูลเก่าก่อนแก้บั๊ก — ไม่มี answers แต่มีชื่อรายการจาก crit_items/warn_items ให้แสดงแทนได้
+    const oldFlagged = (r.crit_items||[]).map(n=>({name:n, isCrit:true}))
+      .concat((r.warn_items||[]).map(n=>({name:n, isCrit:false})));
+    flaggedHtml = `<div style="font-size:11px;color:var(--text3);margin-bottom:8px">⚠️ บันทึกนี้เป็นข้อมูลเก่าก่อนอัปเดตระบบ — มีเฉพาะชื่อรายการ ไม่มีรายละเอียด/หมายเหตุที่กรอกไว้ตอนตรวจ</div>`
+      + oldFlagged.map(x => {
+        const badge = x.isCrit ? '🔴 แจ้งซ่อม' : '⚠️ ผิดปกติ';
+        const badgeColor = x.isCrit ? 'var(--red)' : 'var(--amber)';
+        const badgeBg = x.isCrit ? 'var(--red-bg)' : 'var(--amber-bg)';
         return `<div style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span style="font-size:12px;font-weight:600;flex:1">${x.item.name}</span>
+            <span style="font-size:12px;font-weight:600;flex:1">${x.name}</span>
             <span style="font-size:10px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:2px 8px;border-radius:10px;white-space:nowrap">${badge}</span>
           </div>
-          ${x.a.note ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">${x.a.note}</div>` : ''}
         </div>`;
-      }).join('')
-    : '<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px">✅ ไม่พบจุดผิดปกติ — ผ่านทุกรายการ</div>';
+      }).join('');
+  } else {
+    flaggedHtml = '<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px">✅ ไม่พบจุดผิดปกติ — ผ่านทุกรายการ</div>';
+  }
 
   document.getElementById('inspDetailBody').innerHTML = `
     <div style="font-size:12px;color:var(--text2);margin-bottom:2px">${dt} · ${shiftLabel}</div>
