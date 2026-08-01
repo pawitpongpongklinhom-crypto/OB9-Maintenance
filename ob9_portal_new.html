@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- (1 ส.ค. 69) กันเบราว์เซอร์มือถือ cache หน้า login เก่าค้างไว้ — ผู้ใช้เจอปัญหาจริงว่าแก้โค้ด login
+     แล้ว push ขึ้น GitHub Pages แล้ว แต่มือถือบางเครื่องยังโหลดโค้ด JS เวอร์ชันเก่าที่มีบั๊กอยู่ (cache ของ
+     เบราว์เซอร์/OS เก็บไฟล์ static ไว้นาน) บังคับให้โหลดใหม่ทุกครั้งที่เข้าเพจนี้ */
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>OB9 — เข้าสู่ระบบ</title>
 <style>
   :root {
