@@ -57,6 +57,67 @@
   .tbadge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 5px; border-radius:5px; font-weight:800; font-size:11px; cursor:help; }
   .empty { text-align:center; color:var(--text3); padding:30px; font-size:12.5px; }
   .src-note { font-size:10.5px; color:var(--text3); margin-top:10px; line-height:1.6; }
+
+  /* ── ส่วนบันทึกเปลี่ยนถ่ายน้ำมันเกียร์จริง / ผลแล็บ / มุมมองตามสิทธิ์ (2 ส.ค. 69) ── */
+  .sec-title { font-size:14px; font-weight:700; color:var(--navy-dk); margin:32px 0 4px; display:flex; align-items:center; gap:8px; }
+  .sec-note { font-size:11.5px; color:var(--text3); margin-bottom:10px; line-height:1.6; }
+
+  .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:700; }
+  .b-mineral { background:#FFF3DC; color:var(--amber); }
+  .b-synth { background:#DBEAFE; color:var(--navy); }
+  .b-ok { background:#DCFCE7; color:var(--green); }
+  .b-warn { background:#FEF3C7; color:var(--amber); }
+  .b-danger { background:#FEE2E2; color:var(--red); }
+  .b-muted { background:#F1F3F6; color:var(--text3); }
+
+  .liveform-note { font-size:11.5px; background:#EEF4FF; border:1px solid #C9DCF5; color:var(--navy-dk); border-radius:8px; padding:8px 12px; margin-bottom:10px; line-height:1.6; }
+  table.livetable input, table.livetable select, .labform input, .labform select { width:100%; min-width:88px; padding:5px 6px; border:1px solid var(--border); border-radius:6px; font-size:11.5px; font-family:inherit; background:#fff; }
+  table.livetable td { vertical-align:middle; }
+  .rowlabel b { display:block; font-size:12px; color:var(--navy-dk); }
+  .rowlabel .pos { font-size:10.5px; color:var(--text3); }
+  .rowlabel .note { font-size:10px; color:var(--amber); margin-top:2px; }
+  .countdown-num { font-weight:700; }
+
+  .mach-tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .mach-tab { background:#fff; border:1px solid var(--border); border-radius:8px; padding:8px 16px; font-size:12.5px; font-weight:700; color:var(--text3); cursor:pointer; font-family:inherit; }
+  .mach-tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  .labform { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px; align-items:end; }
+  .labform label { font-size:10.5px; font-weight:700; color:var(--text3); display:block; margin-bottom:3px; }
+  .labform button { grid-column:1/-1; background:var(--navy); color:#fff; border:none; border-radius:8px; padding:9px; font-size:12.5px; font-weight:700; cursor:pointer; }
+
+  .role-tabs { display:flex; gap:6px; margin-bottom:14px; border-bottom:2px solid var(--border); }
+  .role-tab { background:none; border:none; padding:10px 18px; font-size:13px; font-weight:700; color:var(--text3); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; font-family:inherit; }
+  .role-tab.active { color:var(--navy); border-bottom-color:var(--navy); }
+  .role-view { display:none; }
+  .role-view.active { display:block; }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+  .kpi-card { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .kpi-card .kn { font-size:11px; color:var(--text3); font-weight:700; margin-bottom:6px; }
+  .kpi-card .kv { font-size:22px; font-weight:800; color:var(--navy-dk); }
+  .kpi-card.danger .kv { color:var(--red); }
+  .kpi-card.warn .kv { color:var(--amber); }
+  .kpi-card.ok .kv { color:var(--green); }
+
+  .budget-bar-wrap { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px; }
+  .budget-bar-track { background:#F1F3F6; border-radius:6px; height:10px; overflow:hidden; margin-top:8px; }
+  .budget-bar-fill { background:var(--navy); height:100%; }
+  .budget-input { width:140px; padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; }
+
+  .phone-frame { max-width:380px; margin:0 auto; background:#fff; border:1px solid var(--border); border-radius:16px; padding:14px; }
+  .tech-header { font-size:12.5px; font-weight:700; color:var(--navy-dk); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+  .tech-count { background:var(--red); color:#fff; border-radius:10px; padding:2px 8px; font-size:11px; font-weight:700; }
+  .tech-card { border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .tech-card.danger { border-color:#F5B5B5; background:#FEF6F6; }
+  .tech-card.warn { border-color:#FADFA8; background:#FFFBF0; }
+  .tech-card .tn { font-size:13px; font-weight:700; color:var(--navy-dk); margin-bottom:2px; }
+  .tech-card .tp { font-size:11px; color:var(--text3); margin-bottom:8px; }
+  .tech-card .th-num { font-size:18px; font-weight:800; margin-bottom:8px; }
+  .tech-card.danger .th-num { color:var(--red); }
+  .tech-card.warn .th-num { color:var(--amber); }
+  .tech-btn { width:100%; background:var(--navy); color:#fff; border:none; border-radius:8px; padding:10px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .tech-empty { text-align:center; color:var(--text3); font-size:12px; padding:20px; }
 </style>
 </head>
 <body>
@@ -98,6 +159,94 @@
     <div id="tableWrap"></div>
   </div>
   <div class="src-note">ที่มา: 5.5 Lubrication list_ARs.xlsx (Spreader), 6.5 Lubricant list TC.xlsx (Tripper Car) — เอกสารต้นฉบับผู้ผลิต thyssenkrupp Industrial Solutions</div>
+
+  <div class="sec-title">🛢️ บันทึกข้อมูลเปลี่ยนถ่ายน้ำมันเกียร์ล่าสุด — แยกตามเครื่องจักรจริง <span class="badge b-ok" style="font-size:10px">ซิงค์กับ Google Sheet</span></div>
+  <div class="liveform-note">✏️ Spreader A/B และ Tripper A/B เป็นเครื่องจักรคนละตัว แต่ละเครื่องมีชุดเกียร์ของตัวเองแยกกันโดยสิ้นเชิง — เลือกเครื่องจักรจากแท็บก่อนกรอก แต่ละชุดเกียร์เพิ่ม "ตำแหน่ง/เลขชุด" เองได้ (เช่น ซ้าย/ขวา, กล่องที่ 1/2) กด "+ เพิ่มชุด/ตำแหน่ง" ท้ายแต่ละกลุ่ม ช่อง "Top up ล่าสุด" ใช้บันทึกการเติมเสริมระหว่างรอบ เก็บแค่ครั้งล่าสุด · <b>ชม.สะสมปัจจุบัน (SMU)</b> ดึงจากข้อมูลจริงของระบบ OB9 อัตโนมัติ ไม่ต้องกรอกเอง</div>
+
+  <div class="mach-tabs" id="mach-tabs"></div>
+  <div class="liveform-note" id="smu-banner"></div>
+
+  <div class="table-scroll">
+    <table class="livetable">
+      <thead><tr><th style="min-width:150px">ชุดเกียร์ / จุด</th><th style="min-width:110px">ตำแหน่ง/เลขชุด</th><th>ประเภทน้ำมัน</th><th>ชม.สะสม ณ เปลี่ยนล่าสุด</th><th>วันที่เปลี่ยนล่าสุด</th><th>ปริมาณเปลี่ยนถ่าย (ลิตร)</th><th>คงเหลือก่อนตรวจเช็ค</th><th>คงเหลือก่อนเปลี่ยนถ่าย</th><th>สถานะ</th><th style="min-width:110px">Top up ล่าสุด</th><th>ต้นทุนล่าสุด (บาท)</th><th></th></tr></thead>
+      <tbody id="tbl-live"></tbody>
+    </table>
+  </div>
+  <div class="footnote src-note" id="gearbox-sync-note"></div>
+  <div class="src-note">หมายเหตุ: Hydraulic Unit / Hydraulic Take-up ไม่มีรอบเปลี่ยนถ่ายเป็นชั่วโมงชัดเจนในเอกสาร — ใช้ผลตรวจแล็บกำหนดรอบแทน (ส่วนถัดไป) · Rail Clamps นับรอบเป็น cycles ไม่ใช่ชั่วโมง</div>
+
+  <div class="sec-title">📊 สรุปงบประมาณบำรุงรักษาน้ำมัน/จาระบี <span class="badge b-ok" style="font-size:10px">คำนวณอัตโนมัติ</span></div>
+  <div class="sec-note">รวมค่าใช้จ่ายจากทุกเครื่องจักร (Spreader A/B, Tripper A/B) จัดกลุ่มตามปีของ "วันที่เปลี่ยนล่าสุด" ที่กรอกไว้ — เฉพาะรายการที่กรอกทั้งวันที่และต้นทุนครบ</div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ปี</th><th>จำนวนรายการเปลี่ยนถ่าย</th><th>ปริมาณน้ำมันรวม (ลิตร)</th><th>รวมค่าใช้จ่าย (บาท)</th></tr></thead>
+      <tbody id="tbl-budget"></tbody>
+    </table>
+  </div>
+  <div id="budget-empty" class="src-note"></div>
+
+  <div class="sec-title">🧪 บันทึกผลวิเคราะห์คุณภาพน้ำมันเกียร์ (Oil Analysis Log) <span class="badge b-ok" style="font-size:10px">ซิงค์กับ Google Sheet</span></div>
+  <div class="sec-note">เกณฑ์ Flender: ความหนืดเปลี่ยนแปลงไม่เกิน ±10% จากเบอร์ ISO VG ของน้ำมันจุดนั้น · น้ำ ไม่เกิน 500 ppm (เกียร์) / 300 ppm (ไฮดรอลิก) · AN ไม่เกิน 1.0 · Fe ไม่เกิน 100 ppm — เข้าเกณฑ์ผิด 1 ข้อ = เฝ้าระวัง, 2 ข้อขึ้นไป = อันตราย</div>
+
+  <div class="labform">
+    <div><label>จุดที่ตรวจ (เครื่องจักรที่เลือกไว้ด้านบน)</label><select id="lab-equip"></select></div>
+    <div><label>วันที่สุ่มตรวจ</label><input type="date" id="lab-date"></div>
+    <div><label>ความหนืด @40°C (cSt)</label><input type="number" step="0.1" id="lab-visc" placeholder="cSt"></div>
+    <div><label>ปริมาณน้ำ (ppm)</label><input type="number" step="1" id="lab-water" placeholder="ppm"></div>
+    <div><label>ค่าความเป็นกรด AN</label><input type="number" step="0.01" id="lab-an" placeholder="mgKOH/g"></div>
+    <div><label>เศษเหล็ก Fe (ppm)</label><input type="number" step="1" id="lab-fe" placeholder="ppm"></div>
+    <button type="button" onclick="addLabEntry()">+ บันทึกผลแล็บ</button>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>วันที่</th><th>เครื่องจักร</th><th>ตำแหน่งอุปกรณ์</th><th>ความหนืด @40°C</th><th>ปริมาณน้ำ</th><th>AN</th><th>Fe</th><th>สถานะ</th><th></th></tr></thead>
+      <tbody id="tbl-lab"></tbody>
+    </table>
+  </div>
+
+  <div class="sec-title">👥 มุมมองตามสิทธิ์ผู้ใช้ — คำนวณจากข้อมูลจริงที่กรอกในระบบนี้</div>
+  <div class="role-tabs">
+    <button class="role-tab active" onclick="switchRole('exec', this)">📊 ผู้บริหาร</button>
+    <button class="role-tab" onclick="switchRole('admin', this)">🛠️ Admin</button>
+    <button class="role-tab" onclick="switchRole('tech', this)">👷 ช่างซ่อม</button>
+  </div>
+
+  <div id="role-exec" class="role-view active">
+    <div class="kpi-grid" id="exec-kpi"></div>
+    <div class="budget-bar-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px">
+        <span style="font-weight:700;color:var(--navy-dk)">ค่าใช้จ่ายที่บันทึกไว้ทั้งหมด เทียบงบ (กรอกงบเองได้)</span>
+        <span>งบทั้งปี: <input type="number" class="budget-input" id="budget-input" placeholder="บาท" onchange="onBudgetChange(this.value)"> บาท</span>
+      </div>
+      <div id="budget-text" style="font-size:12px;color:var(--text3);margin-top:4px"></div>
+      <div class="budget-bar-track"><div class="budget-bar-fill" id="budget-fill" style="width:0%"></div></div>
+    </div>
+    <div class="sec-title" style="margin-top:8px">จุดที่ต้องเฝ้าระวัง (เรียงตามความเร่งด่วน)</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>เครื่องจักร</th><th>ชุดเกียร์ / ตำแหน่ง</th><th>สถานะ</th><th>คงเหลือ</th></tr></thead>
+        <tbody id="exec-urgent"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="role-admin" class="role-view">
+    <div class="sec-note">ตารางเต็ม รวมทุกเครื่องจักร เรียงเร่งด่วนขึ้นก่อน — กด "แก้ไข" เพื่อสลับไปแท็บเครื่องจักรนั้นด้านบน</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>เครื่องจักร</th><th>ชุดเกียร์</th><th>ตำแหน่ง</th><th>ประเภทน้ำมัน</th><th>ชม.ใช้งานแล้ว</th><th>คงเหลือเปลี่ยนถ่าย</th><th>สถานะ</th><th>ต้นทุนล่าสุด</th><th></th></tr></thead>
+        <tbody id="admin-full"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="role-tech" class="role-view">
+    <div class="phone-frame">
+      <div class="tech-header">🛢️ รายการที่ต้องเปลี่ยนถ่าย <span class="tech-count" id="tech-count">0</span></div>
+      <div id="tech-list"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -289,8 +438,623 @@ function switchTab(t){
 
 document.getElementById('searchInp').addEventListener('input', function(e){ searchQ = e.target.value; renderTable(); });
 
+// ══════════════════════════════════════════════════════════════════════════
+// (2 ส.ค. 69) บันทึกเปลี่ยนถ่ายน้ำมันเกียร์จริง + ผลแล็บ + มุมมองตามสิทธิ์
+// ย้ายมาจาก ob9_lubrication_standards_PREVIEW.html (ส่วนที่ 6-9) — ต่างจาก preview ตรงที่:
+//  1) "ชม.สะสมปัจจุบัน (SMU)" ไม่ให้กรอกเองแล้ว ดึงจริงจาก ob9_equipment_smu_kwh (ค่าเดียวกับ Dashboard)
+//     ใช้ค่าเดียวกันทุกชุดเกียร์ในเครื่องเดียวกัน (SMU เป็นตัวเลขของ "เครื่อง" ไม่ใช่ของ "ชุดเกียร์แต่ละชุด")
+//  2) ข้อมูลเปลี่ยนถ่าย + ผลแล็บ sync ขึ้น Google Sheet กลางจริง (type=gearboxOilLog / oilAnalysisLog)
+// ══════════════════════════════════════════════════════════════════════════
+var STORE_KEY = 'ob9_gearbox_oil_log';
+var LAB_KEY = 'ob9_oil_analysis_log';
+var BUDGET_KEY = 'ob9_gearbox_budget';
+
+var MACHINES = [
+  { id:'spreader_a', label:'Spreader A', group:'spreader' },
+  { id:'spreader_b', label:'Spreader B', group:'spreader' },
+  { id:'tripper_a', label:'Tripper A', group:'tripper' },
+  { id:'tripper_b', label:'Tripper B', group:'tripper' }
+];
+var currentMachine = MACHINES[0].id;
+var currentRole = 'exec';
+
+var ROWS = [
+  { id:'sp_planetary', group:'spreader', label:'Planetary Gear Box', pos:'Crawler Drives (เกียร์เดินรถ)', oil:'CLP VG 320', badge:'b-mineral', stdM:10000, stdS:20000, check:1000, defaultLabels:['กล่องที่ 1','กล่องที่ 2'] },
+  { id:'sp_worm', group:'spreader', label:'Worm Gear Box', pos:'Crawler Drives (เกียร์เดินรถ)', oil:'CLP VG 320', badge:'b-mineral', stdM:10000, stdS:20000, check:1000, defaultLabels:['กล่องที่ 1','กล่องที่ 2'] },
+  { id:'sp_b3fe_conv', group:'spreader', label:'Gear units B3FE', pos:'Belt Drives (Conveyor Bridge)', oil:'CLP VG 320', badge:'b-mineral', stdM:10000, stdS:20000, check:1000, defaultLabels:['ซ้าย','ขวา'] },
+  { id:'sp_b3fe_disc', group:'spreader', label:'Gear units B3FE', pos:'Belt Drives (Discharge Boom)', oil:'ISO VG 220', badge:'b-mineral', stdM:10000, stdS:20000, check:1000, defaultLabels:['ซ้าย','ขวา'] },
+  { id:'sp_hyd', group:'spreader', label:'Hydraulic Unit', pos:'Hydraulic System', oil:'Fuchs Renolin DO 22HV', badge:'b-mineral', stdM:null, stdS:null, check:null, note:'ไม่ระบุรอบเป็นชั่วโมง — ดูผลแล็บ', defaultLabels:['ชุดหลัก'] },
+  { id:'tc_travel', group:'tripper', label:'Travel Drive Gearbox', pos:'SK9055.1 AZBHK-100 L/6', oil:'CLP VG 220', badge:'b-mineral', stdM:10000, stdS:20000, check:1000, defaultLabels:['กล่องที่ 1'] },
+  { id:'tc_railclamp', group:'tripper', label:'Rail Clamps Hydraulic', pos:'CTHV-TS-100-050-LE-037PR2', oil:'HLP VG 68', badge:'b-mineral', stdM:null, stdS:null, check:null, note:'นับเป็นรอบ (cycles) ไม่ใช่ชั่วโมง', defaultLabels:['ชุดที่ 1','ชุดที่ 2','ชุดที่ 3','ชุดที่ 4'] },
+  { id:'tc_hydtakeup', group:'tripper', label:'Hydraulic Take-up Station', pos:'ABYAG-1000L/A4VSO71-45KW', oil:'HLP VG 68', badge:'b-mineral', stdM:null, stdS:null, check:null, note:'ใช้ผลตรวจแล็บรายปีกำหนดรอบ', defaultLabels:['ชุดหลัก'] }
+];
+
+function stateKey(machineId, rowId){ return machineId + '__' + rowId; }
+
+function loadState(){
+  try{
+    var state = JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
+    var changed = false;
+    MACHINES.forEach(function(mach){
+      ROWS.filter(function(r){ return r.group === mach.group; }).forEach(function(row){
+        var k = stateKey(mach.id, row.id);
+        if (!state[k] || !Array.isArray(state[k].instances) || state[k].instances.length === 0) {
+          state[k] = { instances: row.defaultLabels.map(function(lbl,i){ return { key: k+'_i'+i+'_'+Date.now()+i, label: lbl }; }) };
+          changed = true;
+        }
+      });
+    });
+    if (changed) saveState(state);
+    return state;
+  }catch(e){ return {}; }
+}
+function saveState(state){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+
+function loadLab(){ try{ return JSON.parse(localStorage.getItem(LAB_KEY)||'[]'); }catch(e){ return []; } }
+function saveLab(list){ try{ localStorage.setItem(LAB_KEY, JSON.stringify(list)); }catch(e){} }
+
+function loadBudget(){ try{ return localStorage.getItem(BUDGET_KEY) || ''; }catch(e){ return ''; } }
+function saveBudget(v){ try{ localStorage.setItem(BUDGET_KEY, v); }catch(e){} }
+
+function fmtNum2(n){ return Math.round(n).toLocaleString('th-TH'); }
+function newKey(k){ return k+'_i_'+Date.now()+'_'+Math.floor(Math.random()*1000); }
+function esc2(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── SMU จริงต่อเครื่อง — อ่านจาก key เดียวกับ Dashboard (ob9_equipment_smu_kwh)
+// หน้านี้ไม่ sync SMU เอง แค่ "อ่าน" ค่าที่ Dashboard/Scheduled Task ซิงค์ไว้แล้ว (shared localStorage, same origin)
+var EQUIP_KEY = 'ob9_equipment_smu_kwh';
+function getEquipData(){ try{ return JSON.parse(localStorage.getItem(EQUIP_KEY)||'[]'); }catch(e){ return []; } }
+function getCurrentSmu(machineId){
+  var rows = getEquipData().filter(function(r){ return r.machineId === machineId && typeof r.smu === 'number' && r.smu > 0; });
+  if (!rows.length) return null;
+  var byDate = {};
+  rows.forEach(function(r){ if (!byDate[r.date] || r.smu > byDate[r.date]) byDate[r.date] = r.smu; });
+  var dates = Object.keys(byDate).sort();
+  var latestDate = dates[dates.length-1];
+  return { smu: byDate[latestDate], date: latestDate };
+}
+
+function calcInstance(row, inst, curHr){
+  var lastHr = (inst.lastHr !== undefined && inst.lastHr !== '' && inst.lastHr !== null) ? Number(inst.lastHr) : null;
+  var oilType = inst.oilType || 'mineral';
+  var interval = row.stdM ? (oilType === 'synthetic' ? row.stdS : row.stdM) : null;
+  var used = (lastHr !== null && curHr !== null && curHr !== undefined) ? (curHr - lastHr) : null;
+  var remainChange = (used !== null && interval !== null) ? (interval - used) : null;
+  var remainCheck = (used !== null && row.check) ? (row.check - (((used % row.check) + row.check) % row.check)) : null;
+  var status = { text:'ไม่มีข้อมูลพอ', cls:'b-muted' };
+  if (interval === null) {
+    status = { text:'ดูผลแล็บ', cls:'b-muted' };
+  } else if (curHr === null || curHr === undefined) {
+    status = { text:'รอ SMU จริง', cls:'b-muted' };
+  } else if (remainChange !== null) {
+    if (remainChange < 0) status = { text:'เกินกำหนด ' + fmtNum2(Math.abs(remainChange)) + ' ชม.', cls:'b-danger' };
+    else if (remainChange <= interval * 0.1) status = { text:'ใกล้ครบกำหนด', cls:'b-warn' };
+    else status = { text:'ปกติ', cls:'b-ok' };
+  }
+  return { used, remainChange, remainCheck, status, interval };
+}
+
+/* รวมทุกแถวในทุกเครื่องจักรเป็น list เดียว สำหรับส่วนงบและมุมมองตามสิทธิ์ */
+function collectAllInstances(){
+  var state = loadState();
+  var out = [];
+  MACHINES.forEach(function(mach){
+    var smuInfo = getCurrentSmu(mach.id);
+    var curHr = smuInfo ? smuInfo.smu : null;
+    ROWS.filter(function(r){ return r.group === mach.group; }).forEach(function(row){
+      var k = stateKey(mach.id, row.id);
+      var g = state[k] || { instances: [] };
+      g.instances.forEach(function(inst){
+        out.push({ mach: mach, row: row, inst: inst, k: k, calc: calcInstance(row, inst, curHr) });
+      });
+    });
+  });
+  return out;
+}
+
+/* ── ฟอร์มกรอกข้อมูลเปลี่ยนถ่ายน้ำมันเกียร์ ── */
+function renderTabs(){
+  var wrap = document.getElementById('mach-tabs');
+  wrap.innerHTML = MACHINES.map(function(m){
+    return '<button type="button" class="mach-tab ' + (m.id===currentMachine?'active':'') + '" onclick="switchMachine(\'' + m.id + '\')">' + m.label + '</button>';
+  }).join('');
+}
+
+function switchMachine(machId, skipScroll){
+  currentMachine = machId;
+  renderTabs();
+  renderLiveTable();
+  renderLabEquipOptions();
+  if (!skipScroll) document.getElementById('mach-tabs').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function renderSmuBanner(){
+  var mach = MACHINES.find(function(m){ return m.id === currentMachine; });
+  var s = getCurrentSmu(mach.id);
+  var el = document.getElementById('smu-banner');
+  if (!el) return;
+  if (s) {
+    el.style.background = '#EEF4FF'; el.style.borderColor = '#C9DCF5'; el.style.color = 'var(--navy-dk)';
+    el.innerHTML = '📟 SMU ปัจจุบันของ <b>' + mach.label + '</b> (ข้อมูลจริงจาก Production ITD): <b>' + fmtNum2(s.smu) + ' ชม.</b> ณ ' + s.date + ' — ใช้คำนวณ "คงเหลือ" ของทุกชุดเกียร์ในเครื่องนี้อัตโนมัติ';
+  } else {
+    el.style.background = '#FFF3DC'; el.style.borderColor = '#F4A200'; el.style.color = '#7A4E00';
+    el.innerHTML = '⚠️ ยังไม่มีข้อมูล SMU จริงของ <b>' + mach.label + '</b> ในระบบ (รอ sync จาก Production ITD ที่หน้า Dashboard) — คงเหลือของจุดหล่อลื่นเครื่องนี้จะยังคำนวณไม่ได้จนกว่าจะมีข้อมูล';
+  }
+}
+
+function renderLiveTable(){
+  var state = loadState();
+  var mach = MACHINES.find(function(m){ return m.id === currentMachine; });
+  var smuInfo = getCurrentSmu(mach.id);
+  var curHr = smuInfo ? smuInfo.smu : null;
+  renderSmuBanner();
+  var rows = ROWS.filter(function(r){ return r.group === mach.group; });
+  var tbody = document.getElementById('tbl-live');
+  var html = '';
+  rows.forEach(function(row){
+    var k = stateKey(mach.id, row.id);
+    var groupState = state[k] || { instances: [] };
+    var hasStd = row.stdM !== null;
+    groupState.instances.forEach(function(inst, idx){
+      var c = calcInstance(row, inst, curHr);
+      var oilSelect = hasStd
+        ? '<select onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'oilType\',this.value)">'
+          + '<option value="mineral" ' + ((!inst.oilType || inst.oilType==='mineral')?'selected':'') + '>น้ำมันแร่</option>'
+          + '<option value="synthetic" ' + (inst.oilType==='synthetic'?'selected':'') + '>สังเคราะห์</option>'
+          + '</select>'
+        : '<span style="color:var(--text3)">-</span>';
+      var firstInGroup = idx === 0;
+      html += '<tr style="' + (firstInGroup?'border-top:2px solid var(--border)':'') + '">'
+        + '<td class="rowlabel">' + (firstInGroup ? ('<b>' + row.label + '</b><div class="pos">' + row.pos + '</div><div class="pos"><span class="badge ' + row.badge + '" style="font-size:10px">' + row.oil + '</span></div>' + (row.note?('<div class="note">' + row.note + '</div>'):'')) : '') + '</td>'
+        + '<td><input type="text" placeholder="เช่น ซ้าย/ขวา" value="' + esc2(inst.label) + '" onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'label\',this.value)"></td>'
+        + '<td>' + oilSelect + '</td>'
+        + '<td><input type="number" min="0" placeholder="ชม." value="' + (inst.lastHr ?? '') + '" onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'lastHr\',this.value)"></td>'
+        + '<td><input type="date" value="' + (inst.lastDate ?? '') + '" onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'lastDate\',this.value)"></td>'
+        + '<td><input type="number" min="0" step="0.1" placeholder="ลิตร" value="' + (inst.qtyLiters ?? '') + '" onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'qtyLiters\',this.value)"></td>'
+        + '<td>' + (c.remainCheck !== null ? ('<span class="countdown-num" style="color:' + (c.remainCheck<0?'var(--red)':'var(--text1)') + '">' + fmtNum2(c.remainCheck) + ' ชม.</span>') : '<span style="color:var(--text3)">-</span>') + '</td>'
+        + '<td>' + (c.remainChange !== null ? ('<span class="countdown-num" style="color:' + (c.remainChange<0?'var(--red)':(c.remainChange<=(c.interval*0.1)?'var(--amber)':'var(--green)')) + '">' + fmtNum2(c.remainChange) + ' ชม.</span>') : '<span style="color:var(--text3)">-</span>') + '</td>'
+        + '<td><span class="badge ' + c.status.cls + '">' + c.status.text + '</span></td>'
+        + '<td>'
+        +   '<input type="date" style="margin-bottom:3px" value="' + (inst.topUpDate ?? '') + '" onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'topUpDate\',this.value)">'
+        +   '<input type="number" min="0" step="0.1" placeholder="ลิตร" value="' + (inst.topUpQty ?? '') + '" onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'topUpQty\',this.value)">'
+        + '</td>'
+        + '<td><input type="number" min="0" placeholder="บาท" value="' + (inst.cost ?? '') + '" onchange="onField(\'' + k + '\',\'' + inst.key + '\',\'cost\',this.value)"></td>'
+        + '<td><button type="button" title="ลบแถวนี้" onclick="removeInstance(\'' + k + '\',\'' + inst.key + '\')" style="border:1px solid var(--border);background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--red);font-size:12px">✕</button></td>'
+        + '</tr>';
+    });
+    html += '<tr>'
+      + '<td colspan="12" style="background:#F8FAFC">'
+      +   '<button type="button" onclick="addInstance(\'' + k + '\')" style="border:1px dashed var(--navy);background:#fff;color:var(--navy);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:11.5px;font-weight:700">+ เพิ่มชุด/ตำแหน่ง — ' + row.label + ' (' + mach.label + ')</button>'
+      + '</td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function onField(k, instKey, field, value){
+  var state = loadState();
+  if (!state[k]) state[k] = { instances: [] };
+  var inst = state[k].instances.find(function(i){ return i.key === instKey; });
+  if (inst) inst[field] = value;
+  saveState(state);
+  renderAll();
+  _syncGearboxIfConfigured();
+}
+
+function addInstance(k){
+  var state = loadState();
+  if (!state[k]) state[k] = { instances: [] };
+  var n = state[k].instances.length + 1;
+  state[k].instances.push({ key:newKey(k), label:'ชุดที่ '+n });
+  saveState(state);
+  renderAll();
+  _syncGearboxIfConfigured();
+}
+
+function removeInstance(k, instKey){
+  var state = loadState();
+  if (!state[k]) return;
+  state[k].instances = state[k].instances.filter(function(i){ return i.key !== instKey; });
+  if (state[k].instances.length === 0) {
+    state[k].instances.push({ key:newKey(k), label:'ชุดที่ 1' });
+  }
+  saveState(state);
+  renderAll();
+  _syncGearboxIfConfigured();
+}
+
+/* ── สรุปงบประมาณ (คำนวณจากทุกเครื่องจักร) ── */
+function renderBudget(){
+  var all = collectAllInstances();
+  var byYear = {};
+  all.forEach(function(item){
+    var d = item.inst.lastDate;
+    var cost = item.inst.cost !== undefined && item.inst.cost !== '' ? Number(item.inst.cost) : null;
+    if (!d) return;
+    var year = d.slice(0,4);
+    if (!byYear[year]) byYear[year] = { count:0, liters:0, cost:0 };
+    byYear[year].count += 1;
+    byYear[year].liters += (item.inst.qtyLiters ? Number(item.inst.qtyLiters) : 0);
+    byYear[year].cost += (cost || 0);
+  });
+  var years = Object.keys(byYear).sort();
+  var tbody = document.getElementById('tbl-budget');
+  var emptyEl = document.getElementById('budget-empty');
+  if (years.length === 0) {
+    tbody.innerHTML = '';
+    emptyEl.textContent = 'ยังไม่มีข้อมูล — กรอก "วันที่เปลี่ยนล่าสุด" ด้านบน อย่างน้อย 1 รายการ ตัวเลขจะขึ้นที่นี่อัตโนมัติ';
+  } else {
+    emptyEl.textContent = '';
+    tbody.innerHTML = years.map(function(y){ return '<tr><td>' + y + '</td><td>' + byYear[y].count + '</td><td>' + byYear[y].liters.toLocaleString('th-TH') + ' ลิตร</td><td>' + fmtNum2(byYear[y].cost) + ' บาท</td></tr>'; }).join('');
+  }
+}
+
+/* ── ผลแล็บ ── */
+function parseNominalVG(oilStr){
+  var m = /VG\s*(\d+)/i.exec(oilStr || '');
+  return m ? Number(m[1]) : null;
+}
+function isHydraulicRow(row){
+  return /hydraulic/i.test(row.label) || /hydraulic/i.test(row.pos);
+}
+
+function renderLabEquipOptions(){
+  var mach = MACHINES.find(function(m){ return m.id === currentMachine; });
+  var state = loadState();
+  var sel = document.getElementById('lab-equip');
+  var rows = ROWS.filter(function(r){ return r.group === mach.group; });
+  var opts = [];
+  rows.forEach(function(row){
+    var k = stateKey(mach.id, row.id);
+    var g = state[k] || { instances: [] };
+    g.instances.forEach(function(inst){
+      opts.push('<option value="' + k + '::' + inst.key + '">' + esc2(row.label) + ' — ' + esc2(inst.label) + ' (' + mach.label + ')</option>');
+    });
+  });
+  sel.innerHTML = opts.join('');
+}
+
+function findRowByKeyPrefix(k){
+  var rowId = k.split('__')[1];
+  return ROWS.find(function(r){ return r.id === rowId; });
+}
+
+function addLabEntry(){
+  var equipVal = document.getElementById('lab-equip').value;
+  var date = document.getElementById('lab-date').value;
+  var visc = document.getElementById('lab-visc').value;
+  var water = document.getElementById('lab-water').value;
+  var an = document.getElementById('lab-an').value;
+  var fe = document.getElementById('lab-fe').value;
+  if (!equipVal || !date) { alert('กรุณาเลือกจุดที่ตรวจและวันที่ก่อนบันทึก'); return; }
+  var parts = equipVal.split('::');
+  var k = parts[0], instKey = parts[1];
+  var list = loadLab();
+  list.push({ id:'lab_'+Date.now(), k:k, instKey:instKey, date:date, visc:visc, water:water, an:an, fe:fe, createdAt:new Date().toISOString() });
+  saveLab(list);
+  document.getElementById('lab-visc').value = '';
+  document.getElementById('lab-water').value = '';
+  document.getElementById('lab-an').value = '';
+  document.getElementById('lab-fe').value = '';
+  renderAll();
+  _syncLabIfConfigured();
+}
+
+function deleteLabEntry(id){
+  saveLab(loadLab().filter(function(e){ return e.id !== id; }));
+  renderAll();
+  _syncLabIfConfigured();
+}
+
+function calcLabStatus(entry){
+  var row = findRowByKeyPrefix(entry.k);
+  var nominalVG = row ? parseNominalVG(row.oil) : null;
+  var waterLimit = row && isHydraulicRow(row) ? 300 : 500;
+  var issues = 0;
+  var visc = entry.visc !== '' ? Number(entry.visc) : null;
+  var water = entry.water !== '' ? Number(entry.water) : null;
+  var an = entry.an !== '' ? Number(entry.an) : null;
+  var fe = entry.fe !== '' ? Number(entry.fe) : null;
+  if (nominalVG && visc !== null) { if (Math.abs(visc - nominalVG) / nominalVG > 0.1) issues++; }
+  if (water !== null && water > waterLimit) issues++;
+  if (an !== null && an > 1.0) issues++;
+  if (fe !== null && fe > 100) issues++;
+  if (issues === 0) return { text:'ปกติ', cls:'b-ok' };
+  if (issues === 1) return { text:'เฝ้าระวัง', cls:'b-warn' };
+  return { text:'อันตราย', cls:'b-danger' };
+}
+
+function renderLab(){
+  var list = loadLab().slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var tbody = document.getElementById('tbl-lab');
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">ยังไม่มีผลแล็บที่บันทึกไว้</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(entry){
+    var mach = MACHINES.find(function(m){ return entry.k.indexOf(m.id+'__') === 0; });
+    var row = findRowByKeyPrefix(entry.k);
+    var state = loadState();
+    var g = (state[entry.k] || { instances: [] });
+    var inst = g.instances.find(function(i){ return i.key === entry.instKey; });
+    var status = calcLabStatus(entry);
+    return '<tr>'
+      + '<td>' + esc2(entry.date) + '</td>'
+      + '<td>' + (mach ? esc2(mach.label) : '-') + '</td>'
+      + '<td>' + (row ? esc2(row.label) : '-') + (inst ? (' — '+esc2(inst.label)) : '') + '</td>'
+      + '<td>' + (entry.visc !== '' ? entry.visc+' cSt' : '-') + '</td>'
+      + '<td>' + (entry.water !== '' ? entry.water+' ppm' : '-') + '</td>'
+      + '<td>' + (entry.an !== '' ? entry.an : '-') + '</td>'
+      + '<td>' + (entry.fe !== '' ? entry.fe+' ppm' : '-') + '</td>'
+      + '<td><span class="badge ' + status.cls + '">' + status.text + '</span></td>'
+      + '<td><button type="button" onclick="deleteLabEntry(\'' + entry.id + '\')" style="border:1px solid var(--border);background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--red);font-size:12px">✕</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+/* ── มุมมองตามสิทธิ์ ── */
+function switchRole(id, btn){
+  currentRole = id;
+  document.querySelectorAll('.role-view').forEach(function(v){ v.classList.remove('active'); });
+  document.querySelectorAll('.role-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('role-'+id).classList.add('active');
+  btn.classList.add('active');
+  renderRoleViews();
+}
+
+function severityRank(cls){
+  if (cls === 'b-danger') return 0;
+  if (cls === 'b-warn') return 1;
+  if (cls === 'b-ok') return 2;
+  return 3;
+}
+
+function renderRoleViews(){
+  var all = collectAllInstances();
+  var counts = { 'b-danger':0, 'b-warn':0, 'b-ok':0, 'b-muted':0 };
+  all.forEach(function(item){ counts[item.calc.status.cls]++; });
+
+  if (currentRole === 'exec') {
+    document.getElementById('exec-kpi').innerHTML =
+      '<div class="kpi-card danger"><div class="kn">เกินกำหนด</div><div class="kv">' + counts['b-danger'] + '</div></div>'
+      + '<div class="kpi-card warn"><div class="kn">ใกล้ครบกำหนด</div><div class="kv">' + counts['b-warn'] + '</div></div>'
+      + '<div class="kpi-card ok"><div class="kn">ปกติ</div><div class="kv">' + counts['b-ok'] + '</div></div>'
+      + '<div class="kpi-card"><div class="kn">รอกรอกข้อมูล / SMU / ดูผลแล็บ / นับรอบ</div><div class="kv">' + counts['b-muted'] + '</div></div>';
+
+    var budget = loadBudget();
+    document.getElementById('budget-input').value = budget;
+    var spent = all.reduce(function(s,item){ return s + (item.inst.cost ? Number(item.inst.cost) : 0); }, 0);
+    var budgetNum = budget ? Number(budget) : 0;
+    var pct = budgetNum > 0 ? Math.min(100, Math.round(spent / budgetNum * 100)) : 0;
+    document.getElementById('budget-fill').style.width = pct + '%';
+    document.getElementById('budget-text').textContent = budgetNum > 0
+      ? (fmtNum2(spent) + ' / ' + fmtNum2(budgetNum) + ' บาท (' + pct + '%)')
+      : (fmtNum2(spent) + ' บาท (ยังไม่ได้กรอกงบเปรียบเทียบ)');
+
+    var urgent = all.filter(function(item){ return item.calc.status.cls === 'b-danger' || item.calc.status.cls === 'b-warn'; })
+      .sort(function(a,b){ return (a.calc.remainChange ?? 0) - (b.calc.remainChange ?? 0); })
+      .slice(0, 5);
+    var urgentBody = document.getElementById('exec-urgent');
+    urgentBody.innerHTML = urgent.length === 0
+      ? '<tr><td colspan="4" style="text-align:center;color:var(--text3)">ไม่มีจุดที่ต้องเฝ้าระวังตอนนี้</td></tr>'
+      : urgent.map(function(item){ return '<tr>'
+          + '<td>' + item.mach.label + '</td>'
+          + '<td>' + esc2(item.row.label) + ' — ' + esc2(item.inst.label) + '</td>'
+          + '<td><span class="badge ' + item.calc.status.cls + '">' + item.calc.status.text + '</span></td>'
+          + '<td>' + (item.calc.remainChange !== null ? (fmtNum2(item.calc.remainChange)+' ชม.') : '-') + '</td>'
+          + '</tr>'; }).join('');
+  }
+
+  if (currentRole === 'admin') {
+    var sorted = all.slice().sort(function(a,b){ return severityRank(a.calc.status.cls) - severityRank(b.calc.status.cls); });
+    document.getElementById('admin-full').innerHTML = sorted.map(function(item){ return '<tr>'
+      + '<td>' + item.mach.label + '</td>'
+      + '<td>' + esc2(item.row.label) + '</td>'
+      + '<td>' + esc2(item.inst.label) + '</td>'
+      + '<td>' + (item.inst.oilType === 'synthetic' ? 'สังเคราะห์' : (item.row.stdM ? 'น้ำมันแร่' : '-')) + '</td>'
+      + '<td>' + (item.calc.used !== null ? (fmtNum2(item.calc.used)+' ชม.') : '-') + '</td>'
+      + '<td>' + (item.calc.remainChange !== null ? (fmtNum2(item.calc.remainChange)+' ชม.') : '-') + '</td>'
+      + '<td><span class="badge ' + item.calc.status.cls + '">' + item.calc.status.text + '</span></td>'
+      + '<td>' + (item.inst.cost ? (fmtNum2(item.inst.cost)+' บาท') : '-') + '</td>'
+      + '<td><button type="button" onclick="switchMachine(\'' + item.mach.id + '\')" style="border:1px solid var(--border);background:#fff;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">แก้ไข</button></td>'
+      + '</tr>'; }).join('');
+  }
+
+  if (currentRole === 'tech') {
+    var needsWork = all.filter(function(item){ return item.calc.status.cls === 'b-danger' || item.calc.status.cls === 'b-warn'; })
+      .sort(function(a,b){ return (a.calc.remainChange ?? 0) - (b.calc.remainChange ?? 0); });
+    document.getElementById('tech-count').textContent = needsWork.length;
+    var listEl = document.getElementById('tech-list');
+    if (needsWork.length === 0) {
+      listEl.innerHTML = '<div class="tech-empty">ไม่มีจุดที่ต้องเปลี่ยนถ่ายตอนนี้</div>';
+    } else {
+      listEl.innerHTML = needsWork.map(function(item){ return ''
+        + '<div class="tech-card ' + (item.calc.status.cls === 'b-danger' ? 'danger' : 'warn') + '">'
+        +   '<div class="tn">' + esc2(item.row.label) + ' — ' + item.mach.label + '</div>'
+        +   '<div class="tp">' + esc2(item.row.pos) + ' (' + esc2(item.inst.label) + ')</div>'
+        +   '<div class="th-num">' + (item.calc.remainChange < 0 ? ('เกินกำหนด '+fmtNum2(Math.abs(item.calc.remainChange))+' ชม.') : ('เหลืออีก '+fmtNum2(item.calc.remainChange)+' ชม.')) + '</div>'
+        +   '<button class="tech-btn" onclick="markChanged(\'' + item.k + '\',\'' + item.inst.key + '\')">✅ บันทึกว่าเปลี่ยนถ่ายแล้ว</button>'
+        + '</div>'; }).join('');
+    }
+  }
+}
+
+function onBudgetChange(v){
+  saveBudget(v);
+  renderRoleViews();
+}
+
+function markChanged(k, instKey){
+  var state = loadState();
+  var group = state[k];
+  var inst = group && group.instances.find(function(i){ return i.key === instKey; });
+  if (!inst) return;
+  var mach = MACHINES.find(function(m){ return k.indexOf(m.id+'__') === 0; });
+  var s = mach ? getCurrentSmu(mach.id) : null;
+  if (!s) { alert('ยังไม่มีข้อมูล SMU จริงของเครื่องนี้ในระบบ — รอ sync จาก Production ITD ที่หน้า Dashboard ก่อน แล้วค่อยกดบันทึกเปลี่ยนถ่าย'); return; }
+  inst.lastHr = s.smu;
+  inst.lastDate = new Date().toISOString().slice(0,10);
+  saveState(state);
+  renderAll();
+  _syncGearboxIfConfigured();
+}
+
+function renderAll(){
+  renderLiveTable();
+  renderBudget();
+  renderLab();
+  renderRoleViews();
+}
+
+// ── Sync ขึ้น Google Sheet กลาง (ใช้ตั้งค่าเดียวกับ Dashboard/WO Form: key 'ob9_sync_settings') ──
+var SYNC_KEY = 'ob9_sync_settings';
+var DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyBuEG2maSWE0Y_lQK9I7ikTw7RLXkdsS4INX0kMgj5QMuvq_2EcJVEwxu0pbnqs9J8/exec';
+var DEFAULT_SYNC_TOKEN = 'ob9maemoh2569';
+var OLD_SYNC_URL = 'https://script.google.com/macros/s/AKfycbwTh_ehdzHW_fgL8VDoEkNDCzYh7Behd7soxf0x4gRwKGvBlDJeBxkt_FEIOaNDfaV6/exec';
+function getSyncSettings(){
+  try{
+    var s = JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');
+    if (!s.url) { s = {url:DEFAULT_SYNC_URL, token:DEFAULT_SYNC_TOKEN}; localStorage.setItem(SYNC_KEY, JSON.stringify(s)); }
+    else if (s.url === OLD_SYNC_URL) { s.url = DEFAULT_SYNC_URL; localStorage.setItem(SYNC_KEY, JSON.stringify(s)); }
+    return s;
+  }catch(e){ return {url:DEFAULT_SYNC_URL, token:DEFAULT_SYNC_TOKEN}; }
+}
+
+function flattenGearboxItems(){
+  var state = loadState();
+  var items = [];
+  MACHINES.forEach(function(mach){
+    ROWS.filter(function(r){ return r.group === mach.group; }).forEach(function(row){
+      var k = stateKey(mach.id, row.id);
+      var g = state[k] || { instances: [] };
+      g.instances.forEach(function(inst){
+        items.push({
+          key: k+'__'+inst.key, machineId: mach.id, rowId: row.id, instKey: inst.key,
+          label: inst.label||'', oilType: inst.oilType||'',
+          lastHr: (inst.lastHr!==undefined && inst.lastHr!==null) ? inst.lastHr : '',
+          lastDate: inst.lastDate||'',
+          qtyLiters: (inst.qtyLiters!==undefined && inst.qtyLiters!==null) ? inst.qtyLiters : '',
+          topUpDate: inst.topUpDate||'',
+          topUpQty: (inst.topUpQty!==undefined && inst.topUpQty!==null) ? inst.topUpQty : '',
+          cost: (inst.cost!==undefined && inst.cost!==null) ? inst.cost : '',
+          updatedAt: new Date().toISOString()
+        });
+      });
+    });
+  });
+  return items;
+}
+
+function applyRemoteGearboxItems(items){
+  var state = {};
+  (items||[]).forEach(function(it){
+    var k = stateKey(it.machineId, it.rowId);
+    if (!state[k]) state[k] = { instances: [] };
+    state[k].instances.push({
+      key: it.instKey, label: it.label||'', oilType: it.oilType||'',
+      lastHr: (it.lastHr!==''&&it.lastHr!=null) ? it.lastHr : undefined,
+      lastDate: it.lastDate||undefined,
+      qtyLiters: (it.qtyLiters!==''&&it.qtyLiters!=null) ? it.qtyLiters : undefined,
+      topUpDate: it.topUpDate||undefined,
+      topUpQty: (it.topUpQty!==''&&it.topUpQty!=null) ? it.topUpQty : undefined,
+      cost: (it.cost!==''&&it.cost!=null) ? it.cost : undefined,
+      updatedAt: it.updatedAt
+    });
+  });
+  // เติม default instance ให้กลุ่มที่ยังไม่มีข้อมูลเลยบน Sheet (เช่นเพิ่งเริ่มใช้ระบบ ยังไม่เคย sync)
+  MACHINES.forEach(function(mach){
+    ROWS.filter(function(r){ return r.group === mach.group; }).forEach(function(row){
+      var k = stateKey(mach.id, row.id);
+      if (!state[k] || !state[k].instances.length) {
+        state[k] = { instances: row.defaultLabels.map(function(lbl,i){ return { key:k+'_i'+i+'_'+Date.now()+i, label:lbl }; }) };
+      }
+    });
+  });
+  saveState(state);
+}
+
+var _gearboxSyncDebounce = null;
+function _syncGearboxIfConfigured(){
+  try{
+    var s = getSyncSettings();
+    if (s.url) {
+      if (_gearboxSyncDebounce) clearTimeout(_gearboxSyncDebounce);
+      _gearboxSyncDebounce = setTimeout(pushGearboxOilLog, 800);
+    }
+  }catch(e){}
+}
+function pushGearboxOilLog(){
+  var s = getSyncSettings();
+  if (!s.url) return;
+  var items = flattenGearboxItems();
+  if (!items.length) return;
+  fetch(s.url, { method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({token:s.token||'', type:'gearboxOilLog', items:items}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var note = document.getElementById('gearbox-sync-note');
+      if (d && d.ok) { localStorage.setItem('ob9_last_gearbox_sync', new Date().toISOString()); if (note) note.textContent = '✅ ซิงค์ขึ้น Google Sheet ล่าสุด: ' + new Date().toLocaleString('th-TH'); }
+      else if (note) { note.textContent = '⚠ ซิงค์ไม่สำเร็จ: ' + ((d && d.msg) || 'ไม่ทราบสาเหตุ'); }
+    })
+    .catch(function(){ var note = document.getElementById('gearbox-sync-note'); if (note) note.textContent = '❌ ซิงค์ไม่สำเร็จ — ตรวจสอบการเชื่อมต่อ'; });
+}
+function pullGearboxOilLogFromSheet(cb){
+  var s = getSyncSettings();
+  if (!s.url) { if (cb) cb(); return; }
+  var url = s.url + '?token=' + encodeURIComponent(s.token||'') + '&type=gearboxOilLog';
+  fetch(url, {mode:'cors'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.ok && d.gearboxOilLog) applyRemoteGearboxItems(d.gearboxOilLog); })
+    .catch(function(){})
+    .finally(function(){ if (cb) cb(); });
+}
+
+function flattenLabItems(){
+  return loadLab().map(function(e){
+    return { id:e.id, k:e.k, instKey:e.instKey, date:e.date, visc:e.visc, water:e.water, an:e.an, fe:e.fe, createdAt: e.createdAt || new Date().toISOString() };
+  });
+}
+function applyRemoteLabItems(items){
+  if (!items) return;
+  var list = items.map(function(it){ return { id:it.id, k:it.k, instKey:it.instKey, date:it.date, visc:it.visc, water:it.water, an:it.an, fe:it.fe, createdAt:it.createdAt }; });
+  saveLab(list);
+}
+var _labSyncDebounce = null;
+function _syncLabIfConfigured(){
+  try{
+    var s = getSyncSettings();
+    if (s.url) { if (_labSyncDebounce) clearTimeout(_labSyncDebounce); _labSyncDebounce = setTimeout(pushOilAnalysisLog, 800); }
+  }catch(e){}
+}
+function pushOilAnalysisLog(){
+  var s = getSyncSettings();
+  if (!s.url) return;
+  var items = flattenLabItems();
+  if (!items.length) return;
+  fetch(s.url, { method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({token:s.token||'', type:'oilAnalysisLog', items:items}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.ok) localStorage.setItem('ob9_last_lab_sync', new Date().toISOString()); })
+    .catch(function(){});
+}
+function pullOilAnalysisLogFromSheet(cb){
+  var s = getSyncSettings();
+  if (!s.url) { if (cb) cb(); return; }
+  var url = s.url + '?token=' + encodeURIComponent(s.token||'') + '&type=oilAnalysisLog';
+  fetch(url, {mode:'cors'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.ok && d.oilAnalysisLog) applyRemoteLabItems(d.oilAnalysisLog); })
+    .catch(function(){})
+    .finally(function(){ if (cb) cb(); });
+}
+
 renderLegend();
 renderTable();
+
+renderTabs();
+renderLabEquipOptions();
+renderAll();
+// ดึงข้อมูลล่าสุดจาก Sheet กลางมาทับของเครื่องนี้ตอนเปิดหน้า (เหมือน equipmentSmuKwh ของ Dashboard)
+pullGearboxOilLogFromSheet(function(){ renderAll(); });
+pullOilAnalysisLogFromSheet(function(){ renderAll(); });
 </script>
 </body>
 </html>
