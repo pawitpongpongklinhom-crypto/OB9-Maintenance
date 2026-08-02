@@ -6494,7 +6494,7 @@ function calcRPN() {
     const priCls = {critical:'pri-critical',high:'pri-high',medium:'pri-medium',low:'pri-low'};
     const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว'};
     const stCls = {pending:'ws-pending',in_progress:'ws-in_progress',completed:'ws-completed'};
-    const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM'};
+    const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};
     const fmLabel = {wear:'Wear',leakage:'Leakage',vibration:'Vibration',overheating:'Overheating',breakage:'Breakage',corrosion:'Corrosion',jamming:'Jamming',other:'Other'};
     const piLabel = {full:'🔴 Full Stop',full_stop:'🔴 Full Stop',partial:'🟡 Partial',none:'🟢 None'};
     el.innerHTML = wos.map(w => {
@@ -6561,7 +6561,7 @@ function calcRPN() {
     const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว'};
     const stColor = {pending:'#dc2626',in_progress:'#2563eb',completed:'#059669'};
     const stBg = {pending:'#fee2e2',in_progress:'#dbeafe',completed:'#d1fae5'};
-    const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM'};
+    const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};
     const fmLabel = {wear:'Wear',leakage:'Leakage',vibration:'Vibration',overheating:'Overheating',breakage:'Breakage',corrosion:'Corrosion',jamming:'Jamming',other:'Other'};
     const piLabel = {full:'🔴 Full Stop',full_stop:'🔴 Full Stop',partial:'🟡 Partial',none:'🟢 None'};
     const d = w.createdAt ? new Date(w.createdAt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '—';
@@ -14833,6 +14833,7 @@ function checkCBMThreshold() {
             <option value="preventive">Preventive (PM)</option>
             <option value="predictive">Predictive (PdM)</option>
             <option value="inspect">Inspection</option>
+            <option value="lube_change">เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น</option>
           </select>
         </div>
         <div class="wo-field" style="flex:0 0 auto;min-width:140px">

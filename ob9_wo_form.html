@@ -302,6 +302,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
         <div class="type-group" id="type-group">
           <button class="type-pill sel" data-type="CM" onclick="setType(this,'CM')">🔧 CM</button>
           <button class="type-pill" data-type="PM" onclick="setType(this,'PM')">🛠️ PM</button>
+          <button class="type-pill" data-type="LubeChange" onclick="setType(this,'LubeChange')">🛢️ เปลี่ยนถ่าย</button>
           <button class="type-pill" data-type="EM" onclick="setType(this,'EM')">⚡ EM</button>
           <button class="type-pill" data-type="Inspection" onclick="setType(this,'Inspection')">🔍 Inspection</button>
           <button class="type-pill" data-type="Modification" onclick="setType(this,'Modification')">⚙️ Modification</button>
@@ -824,7 +825,7 @@ function generateWoId(){
 // Priority mapping: field form → Dashboard format
 const PRI_MAP = {critical:'critical', high:'high', normal:'medium', planned:'low'};
 // WO type mapping: field form → Dashboard maintenanceType
-const TYPE_MAP = {CM:'corrective', PM:'preventive', EM:'corrective', Inspection:'inspection', Modification:'modification'};
+const TYPE_MAP = {CM:'corrective', PM:'preventive', EM:'corrective', Inspection:'inspection', Modification:'modification', LubeChange:'lube_change'};
 
 // ── MACHINE / SYSTEM CHANGE ───────────────────────────────────────────────
 function onMachineChange(){
