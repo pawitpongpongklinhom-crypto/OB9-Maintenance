@@ -195,6 +195,10 @@
       <div class="icon">✅</div>
       <div class="t">ตรวจเช็คประจำวัน/<br>Daily Inspection</div>
     </a>
+    <a class="mcard" id="cardLube" onclick="goModule('lubrication','ob9_lubrication.html')">
+      <div class="icon">🛢️</div>
+      <div class="t">เปลี่ยนถ่ายน้ำมันเกียร์/<br>ช่างซ่อม</div>
+    </a>
   </div>
   <div id="loggedInNote" style="display:none;font-size:11.5px;color:var(--text3);margin-top:10px">
     เข้าสู่ระบบแล้วในชื่อ <b id="loggedInName">—</b> — กดการ์ดด้านบนเพื่อเข้าใช้งานได้ทันที (ไม่ต้อง login ซ้ำ)
@@ -644,6 +648,7 @@
       applyCardPermission('cardExecutive', perms.executive);
       applyCardPermission('cardWo', perms.workorder);
       applyCardPermission('cardInspect', perms.inspection);
+      applyCardPermission('cardLube', perms.lubrication);
       renderStatusSummary(perms);
     }
   })();

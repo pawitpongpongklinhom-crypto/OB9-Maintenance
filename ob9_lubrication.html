@@ -3,13 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <script>
-// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น — ตามรูปแบบเดียวกับ
-// ob9_asset_register.html / ob9_documents.html / ob9_training.html (หน้าอ้างอิง/วางแผนของ Admin) ──
+// ── OB9 Access Gate (2 ส.ค. 69, แก้ไข) — เดิมเฉพาะ Admin (super-admin) เท่านั้นเหมือน
+// ob9_asset_register.html / ob9_documents.html / ob9_training.html (หน้าอ้างอิง/วางแผนของ Admin)
+// ตอนนี้เปิดเพิ่มให้พนักงานที่ Admin ให้สิทธิ์ "เปลี่ยนถ่ายน้ำมัน" (permissions.lubrication) เข้าได้ด้วย
+// แต่จะเห็นเฉพาะมุมมองช่างซ่อม (ปิดงานเปลี่ยนถ่าย) เท่านั้น ไม่เห็นตารางอ้างอิง/ฟอร์มกรอกของ Admin —
+// ตัวแปร window.__OB9_TECH_ONLY__ ใช้ตัดสินใจตอน render ว่าจะโชว์แบบเต็ม (Admin) หรือแบบช่างซ่อมอย่างเดียว
 (function(){
   try{
     var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
-    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=lubrication'); return; }
+    var isTechOnly = !s.isSuperAdmin && s.type === 'field' && s.permissions && s.permissions.lubrication;
+    if(!s.isSuperAdmin && !isTechOnly){ location.replace('ob9_home.html'); return; }
+    window.__OB9_TECH_ONLY__ = !!isTechOnly;
+    window.__OB9_TECH_NAME__ = s.name || '';
   }catch(e){ location.replace('ob9_portal_new.html'); }
 })();
 </script>
@@ -108,7 +114,7 @@
   .phone-frame { max-width:380px; margin:0 auto; background:#fff; border:1px solid var(--border); border-radius:16px; padding:14px; }
   .tech-header { font-size:12.5px; font-weight:700; color:var(--navy-dk); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
   .tech-count { background:var(--red); color:#fff; border-radius:10px; padding:2px 8px; font-size:11px; font-weight:700; }
-  .tech-card { border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .tech-card { border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:10px; max-width:420px; background:#fff; }
   .tech-card.danger { border-color:#F5B5B5; background:#FEF6F6; }
   .tech-card.warn { border-color:#FADFA8; background:#FFFBF0; }
   .tech-card .tn { font-size:13px; font-weight:700; color:var(--navy-dk); margin-bottom:2px; }
@@ -117,7 +123,35 @@
   .tech-card.danger .th-num { color:var(--red); }
   .tech-card.warn .th-num { color:var(--amber); }
   .tech-btn { width:100%; background:var(--navy); color:#fff; border:none; border-radius:8px; padding:10px; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .tech-empty { text-align:center; color:var(--text3); font-size:12px; padding:20px; }
+  .tech-btn.cancel { background:#fff; color:var(--text3); border:1px solid var(--border); margin-top:6px; }
+  .tech-empty { text-align:center; color:var(--text3); font-size:12px; padding:20px; background:#fff; border:1px solid var(--border); border-radius:12px; }
+
+  /* ── มุมมองช่างซ่อม แยกตามเครื่องจักร + ปิดงานเปลี่ยนถ่าย (2 ส.ค. 69) ── */
+  .who-box { background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:12px; max-width:420px; }
+  .who-box label { font-size:10.5px; font-weight:700; color:var(--text3); display:block; margin-bottom:4px; }
+  .who-box input { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:inherit; }
+
+  .tmt-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; max-width:640px; }
+  .tmt-tab { flex:1; min-width:110px; text-align:center; background:#fff; border:1px solid var(--border); border-radius:8px; padding:9px 6px; font-size:12px; font-weight:700; color:var(--text3); cursor:pointer; }
+  .tmt-tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .tmt-tab .cnt { display:block; font-size:15px; font-weight:800; margin-top:2px; }
+  .tmt-tab.active .cnt { color:#fff; }
+  .tmt-tab:not(.active) .cnt.danger { color:var(--red); }
+  .tmt-tab:not(.active) .cnt.warn { color:var(--amber); }
+  .tmt-tab:not(.active) .cnt.ok { color:var(--green); }
+
+  .close-form { margin-top:12px; padding-top:12px; border-top:1px dashed var(--border); display:none; max-width:420px; }
+  .close-form.open { display:block; }
+  .close-form .frow { margin-bottom:8px; }
+  .close-form label { font-size:10.5px; font-weight:700; color:var(--text3); display:block; margin-bottom:3px; }
+  .close-form input, .close-form textarea { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:12.5px; font-family:inherit; }
+  .close-form textarea { min-height:50px; resize:vertical; }
+  .frow2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+  .done-card { background:#F0FDF4; border:1px solid #BBF7D0; border-radius:12px; padding:12px 14px; margin-bottom:10px; font-size:12px; max-width:420px; }
+  .done-card .dn { font-weight:700; color:var(--navy-dk); margin-bottom:3px; }
+  .done-card .dd { color:var(--text3); font-size:11px; line-height:1.6; }
+  .badge-done { display:inline-block; background:var(--green); color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -125,12 +159,17 @@
 <nav class="topnav">
   <div class="tn-brand">
     <div class="tn-logo">OB9</div>
-    <span>ตารางหยอดน้ำมัน/จาระบี (Lubrication Schedule)</span>
+    <span id="topnavTitle">ตารางหยอดน้ำมัน/จาระบี (Lubrication Schedule)</span>
   </div>
   <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
 </nav>
 
 <div class="wrap">
+  <div id="techWhoBar" style="display:none;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <span>👷 เข้าสู่ระบบในชื่อ <b id="techWhoName">—</b> — ด้านล่างคือจุดที่ต้องเปลี่ยนถ่ายน้ำมันเกียร์ แยกตามเครื่องจักรที่รับผิดชอบ</span>
+  </div>
+
+  <div id="staticScheduleBlock">
   <h1>ตารางหยอดน้ำมัน/จาระบี — Lubrication Schedule</h1>
   <div class="sub">
     ข้อมูลอ้างอิงจริงจากคู่มือผู้ผลิต (thyssenkrupp Industrial Solutions) — จุดหล่อลื่นทุกจุด ชนิดน้ำมัน/จาระบี ปริมาณบรรจุ
@@ -159,7 +198,9 @@
     <div id="tableWrap"></div>
   </div>
   <div class="src-note">ที่มา: 5.5 Lubrication list_ARs.xlsx (Spreader), 6.5 Lubricant list TC.xlsx (Tripper Car) — เอกสารต้นฉบับผู้ผลิต thyssenkrupp Industrial Solutions</div>
+  </div>
 
+  <div id="dataEntryBlock">
   <div class="sec-title">🛢️ บันทึกข้อมูลเปลี่ยนถ่ายน้ำมันเกียร์ล่าสุด — แยกตามเครื่องจักรจริง <span class="badge b-ok" style="font-size:10px">ซิงค์กับ Google Sheet</span></div>
   <div class="liveform-note">✏️ Spreader A/B และ Tripper A/B เป็นเครื่องจักรคนละตัว แต่ละเครื่องมีชุดเกียร์ของตัวเองแยกกันโดยสิ้นเชิง — เลือกเครื่องจักรจากแท็บก่อนกรอก แต่ละชุดเกียร์เพิ่ม "ตำแหน่ง/เลขชุด" เองได้ (เช่น ซ้าย/ขวา, กล่องที่ 1/2) กด "+ เพิ่มชุด/ตำแหน่ง" ท้ายแต่ละกลุ่ม ช่อง "Top up ล่าสุด" ใช้บันทึกการเติมเสริมระหว่างรอบ เก็บแค่ครั้งล่าสุด · <b>ชม.สะสมปัจจุบัน (SMU)</b> ดึงจากข้อมูลจริงของระบบ OB9 อัตโนมัติ ไม่ต้องกรอกเอง</div>
 
@@ -174,7 +215,9 @@
   </div>
   <div class="footnote src-note" id="gearbox-sync-note"></div>
   <div class="src-note">หมายเหตุ: Hydraulic Unit / Hydraulic Take-up ไม่มีรอบเปลี่ยนถ่ายเป็นชั่วโมงชัดเจนในเอกสาร — ใช้ผลตรวจแล็บกำหนดรอบแทน (ส่วนถัดไป) · Rail Clamps นับรอบเป็น cycles ไม่ใช่ชั่วโมง</div>
+  </div>
 
+  <div id="budgetBlock">
   <div class="sec-title">📊 สรุปงบประมาณบำรุงรักษาน้ำมัน/จาระบี <span class="badge b-ok" style="font-size:10px">คำนวณอัตโนมัติ</span></div>
   <div class="sec-note">รวมค่าใช้จ่ายจากทุกเครื่องจักร (Spreader A/B, Tripper A/B) จัดกลุ่มตามปีของ "วันที่เปลี่ยนล่าสุด" ที่กรอกไว้ — เฉพาะรายการที่กรอกทั้งวันที่และต้นทุนครบ</div>
   <div class="table-scroll">
@@ -184,7 +227,9 @@
     </table>
   </div>
   <div id="budget-empty" class="src-note"></div>
+  </div>
 
+  <div id="labBlock">
   <div class="sec-title">🧪 บันทึกผลวิเคราะห์คุณภาพน้ำมันเกียร์ (Oil Analysis Log) <span class="badge b-ok" style="font-size:10px">ซิงค์กับ Google Sheet</span></div>
   <div class="sec-note">เกณฑ์ Flender: ความหนืดเปลี่ยนแปลงไม่เกิน ±10% จากเบอร์ ISO VG ของน้ำมันจุดนั้น · น้ำ ไม่เกิน 500 ppm (เกียร์) / 300 ppm (ไฮดรอลิก) · AN ไม่เกิน 1.0 · Fe ไม่เกิน 100 ppm — เข้าเกณฑ์ผิด 1 ข้อ = เฝ้าระวัง, 2 ข้อขึ้นไป = อันตราย</div>
 
@@ -204,8 +249,10 @@
       <tbody id="tbl-lab"></tbody>
     </table>
   </div>
+  </div>
 
-  <div class="sec-title">👥 มุมมองตามสิทธิ์ผู้ใช้ — คำนวณจากข้อมูลจริงที่กรอกในระบบนี้</div>
+  <div id="roleSectionTitle" class="sec-title">👥 มุมมองตามสิทธิ์ผู้ใช้ — คำนวณจากข้อมูลจริงที่กรอกในระบบนี้</div>
+  <div id="roleTabsBlock">
   <div class="role-tabs">
     <button class="role-tab active" onclick="switchRole('exec', this)">📊 ผู้บริหาร</button>
     <button class="role-tab" onclick="switchRole('admin', this)">🛠️ Admin</button>
@@ -240,12 +287,15 @@
       </table>
     </div>
   </div>
+  </div>
 
   <div id="role-tech" class="role-view">
-    <div class="phone-frame">
-      <div class="tech-header">🛢️ รายการที่ต้องเปลี่ยนถ่าย <span class="tech-count" id="tech-count">0</span></div>
-      <div id="tech-list"></div>
+    <div class="who-box">
+      <label>👷 ชื่อช่างที่ปฏิบัติงาน</label>
+      <input type="text" id="techNameInput" placeholder="ชื่อ-นามสกุล">
     </div>
+    <div class="tmt-tabs" id="techMachTabs"></div>
+    <div id="techListArea"></div>
   </div>
 </div>
 
@@ -861,22 +911,250 @@ function renderRoleViews(){
   }
 
   if (currentRole === 'tech') {
-    var needsWork = all.filter(function(item){ return item.calc.status.cls === 'b-danger' || item.calc.status.cls === 'b-warn'; })
-      .sort(function(a,b){ return (a.calc.remainChange ?? 0) - (b.calc.remainChange ?? 0); });
-    document.getElementById('tech-count').textContent = needsWork.length;
-    var listEl = document.getElementById('tech-list');
-    if (needsWork.length === 0) {
-      listEl.innerHTML = '<div class="tech-empty">ไม่มีจุดที่ต้องเปลี่ยนถ่ายตอนนี้</div>';
-    } else {
-      listEl.innerHTML = needsWork.map(function(item){ return ''
-        + '<div class="tech-card ' + (item.calc.status.cls === 'b-danger' ? 'danger' : 'warn') + '">'
-        +   '<div class="tn">' + esc2(item.row.label) + ' — ' + item.mach.label + '</div>'
-        +   '<div class="tp">' + esc2(item.row.pos) + ' (' + esc2(item.inst.label) + ')</div>'
-        +   '<div class="th-num">' + (item.calc.remainChange < 0 ? ('เกินกำหนด '+fmtNum2(Math.abs(item.calc.remainChange))+' ชม.') : ('เหลืออีก '+fmtNum2(item.calc.remainChange)+' ชม.')) + '</div>'
-        +   '<button class="tech-btn" onclick="markChanged(\'' + item.k + '\',\'' + item.inst.key + '\')">✅ บันทึกว่าเปลี่ยนถ่ายแล้ว</button>'
-        + '</div>'; }).join('');
-    }
+    renderTechContent();
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   มุมมองช่างซ่อม — แยกตามเครื่องจักรจริง + ปิดงานเปลี่ยนถ่าย (2 ส.ค. 69)
+   ใช้ทั้งเป็นแท็บ "ช่างซ่อม" ที่ Admin สลับดูได้ และเป็นมุมมองเดียวที่พนักงานสิทธิ์
+   "เปลี่ยนถ่ายน้ำมัน" (permissions.lubrication) เห็นหลัง login — ดู applyTechOnlyMode()
+   ปิดงาน = อัปเดตชุดเกียร์นั้นจริง (lastHr=SMU จริง ณ ตอนนี้, lastDate, ปริมาณ, ต้นทุน) และ
+   สร้าง Work Order ประเภท "เปลี่ยนถ่าย" (lube_change) ให้อัตโนมัติ แบบเดียวกับที่ Admin คาดหวัง
+   ตามลิงก์ในกล่องด้านบนของหน้านี้ ("บันทึกผ่านหน้าแจ้งซ่อม... เลือกประเภทงาน เปลี่ยนถ่าย")
+   ══════════════════════════════════════════════════════════════════════════ */
+var techCurrentMachine = MACHINES[0].id;
+var techOpenKey = null; // k + '::' + instKey ของฟอร์มปิดงานที่เปิดอยู่
+
+// (machineId → ข้อมูลที่ WO ใช้) ตรงกับตารางเดียวกับ ob9_wo_form.html (resolveUnitLink)
+// เพื่อให้ WO ที่สร้างจากที่นี่ กรอง/แสดงผลรวมกับ WO ที่แจ้งซ่อมมือได้ถูกต้องเป๊ะ
+var WO_MACHINE_LINK = {
+  spreader_a: { machine:'Spreader ARs2400',  unit:'Spreader.A',    unitCode:'08-SP0002' },
+  spreader_b: { machine:'Spreader ARs2400',  unit:'Spreader.B',    unitCode:'08-SP0003' },
+  tripper_a:  { machine:'Tripper Car Ü2200', unit:'Tripper car.A', unitCode:'08-TP00001' },
+  tripper_b:  { machine:'Tripper Car Ü2200', unit:'Tripper car.B', unitCode:'08-TP00002' }
+};
+
+function techKeyOf(item){ return item.k + '::' + item.inst.key; }
+
+function renderTechContent(){
+  var all = collectAllInstances();
+  var tabsEl = document.getElementById('techMachTabs');
+  if (!tabsEl) return; // ยังไม่เคย render (เช่นตอนหน้าโหลดครั้งแรกก่อนคลิกแท็บช่างซ่อม)
+
+  tabsEl.innerHTML = MACHINES.map(function(m){
+    var items = all.filter(function(it){ return it.mach.id === m.id && (it.calc.status.cls === 'b-danger' || it.calc.status.cls === 'b-warn'); });
+    var danger = items.filter(function(it){ return it.calc.status.cls === 'b-danger'; }).length;
+    var warn = items.length - danger;
+    var cntHtml = '<span class="cnt ok">0</span>';
+    if (danger > 0) cntHtml = '<span class="cnt danger">' + danger + '</span>';
+    else if (warn > 0) cntHtml = '<span class="cnt warn">' + warn + '</span>';
+    return '<div class="tmt-tab ' + (m.id===techCurrentMachine?'active':'') + '" onclick="switchTechMachine(\'' + m.id + '\')">' + m.label + cntHtml + '</div>';
+  }).join('');
+
+  var items = all.filter(function(it){ return it.mach.id === techCurrentMachine && (it.calc.status.cls === 'b-danger' || it.calc.status.cls === 'b-warn'); })
+    .sort(function(a,b){ return (a.calc.remainChange ?? 0) - (b.calc.remainChange ?? 0); });
+  var machLabel = MACHINES.find(function(m){ return m.id === techCurrentMachine; }).label;
+
+  var html = '<div class="sec-note">🛢️ จุดที่ต้องเปลี่ยนถ่าย — ' + machLabel + ' (' + items.length + ')</div>';
+  if (items.length === 0) {
+    html += '<div class="tech-empty">ไม่มีจุดที่ต้องเปลี่ยนถ่ายของเครื่องนี้ตอนนี้ 🎉</div>';
+  } else {
+    html += items.map(function(item){
+      var key = techKeyOf(item);
+      var isForm = techOpenKey === key;
+      var numHtml;
+      if (item.calc.status.cls === 'b-danger') numHtml = '<div class="th-num">เกินกำหนด ' + fmtNum2(Math.abs(item.calc.remainChange)) + ' ชม.</div>';
+      else numHtml = '<div class="th-num">เหลืออีก ' + fmtNum2(item.calc.remainChange) + ' ชม.</div>';
+      return '<div class="tech-card ' + (item.calc.status.cls === 'b-danger' ? 'danger' : 'warn') + '">'
+        + '<div class="tn">' + esc2(item.row.label) + '</div>'
+        + '<div class="tp">' + esc2(item.row.pos) + ' (' + esc2(item.inst.label) + ') · น้ำมัน ' + esc2(item.row.oil) + '</div>'
+        + numHtml
+        + '<button class="tech-btn" onclick="toggleTechForm(\'' + key + '\')">' + (isForm ? '✕ ยกเลิก' : '✅ ปิดงานเปลี่ยนถ่าย') + '</button>'
+        + '<div class="close-form ' + (isForm?'open':'') + '">'
+        +   '<div class="frow"><label>วันที่เปลี่ยนถ่ายจริง</label><input type="date" id="cd-date-' + key + '" value="' + new Date().toISOString().slice(0,10) + '"></div>'
+        +   '<div class="frow2">'
+        +     '<div class="frow"><label>ปริมาณที่ใช้ (ลิตร)</label><input type="number" min="0" step="0.1" id="cd-qty-' + key + '" placeholder="ลิตร"></div>'
+        +     '<div class="frow"><label>ค่าใช้จ่ายรวม (บาท)</label><input type="number" min="0" id="cd-cost-' + key + '" placeholder="บาท"></div>'
+        +   '</div>'
+        +   '<div class="frow"><label>สาเหตุ/หมายเหตุ (ถ้ามี)</label><textarea id="cd-note-' + key + '" placeholder="เช่น พบเศษโลหะในน้ำมันเก่า, เปลี่ยนตามรอบปกติ ฯลฯ"></textarea></div>'
+        +   '<button class="tech-btn" onclick="submitTechClose(\'' + item.k + '\',\'' + item.inst.key + '\')">💾 บันทึกปิดงาน — สร้าง Work Order อัตโนมัติ</button>'
+        +   '<button class="tech-btn cancel" onclick="toggleTechForm(\'' + key + '\')">ยกเลิก</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  // แสดงงานที่ปิดไปแล้ว "วันนี้" ของเครื่องนี้ — อ่านจาก Work Orders จริง (ประเภท lube_change, สร้างวันนี้)
+  // ไม่เก็บ state แยกต่างหาก กันข้อมูลเพี้ยนถ้ารีเฟรชหน้า/สลับเครื่อง
+  var todayStr = new Date().toISOString().slice(0,10);
+  var doneToday = loadWOs().filter(function(w){
+    return w && w.maintenanceType === 'lube_change' && w._source === 'ob9_lubrication_tech'
+      && w.unit === (WO_MACHINE_LINK[techCurrentMachine]||{}).unit && (w.createdAt||'').slice(0,10) === todayStr;
+  }).reverse();
+  if (doneToday.length > 0) {
+    html += '<div class="sec-note" style="margin-top:16px">✅ ปิดงานแล้ววันนี้ (' + doneToday.length + ')</div>';
+    html += doneToday.map(function(w){
+      return '<div class="done-card">'
+        + '<span class="badge-done">ปิดงานแล้ว</span>'
+        + '<div class="dn">' + esc2(w.part||'') + '</div>'
+        + '<div class="dd">โดย ' + esc2(w.technicianName||'-') + ' · ' + esc2(w.date||'') + (w.tdcMaterials ? (' · ' + fmtNum2(w.tdcMaterials) + ' บาท') : '') + '</div>'
+        + '<div class="dd">→ บันทึกเป็น Work Order เลขที่ ' + esc2(w.id) + ' ประเภท "🛢️ เปลี่ยนถ่าย" แล้ว</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  document.getElementById('techListArea').innerHTML = html;
+}
+
+function switchTechMachine(machId){
+  techCurrentMachine = machId;
+  techOpenKey = null;
+  renderTechContent();
+}
+
+function toggleTechForm(key){
+  techOpenKey = (techOpenKey === key) ? null : key;
+  renderTechContent();
+}
+
+// สร้าง Work Order id ต่อจากรายการที่มีอยู่ — ใช้สูตรเดียวกับ generateWoId() ใน ob9_wo_form.html
+function generateTechWoId(){
+  var list = loadWOs();
+  var n = String(list.length + 1).padStart(4, '0');
+  return 'WO-' + n;
+}
+
+function loadWOs(){ try{ return JSON.parse(localStorage.getItem('ob9_work_orders')||'[]'); }catch(e){ return []; } }
+function saveWOs(list){ localStorage.setItem('ob9_work_orders', JSON.stringify(list)); }
+
+function submitTechClose(k, instKey){
+  var key = k + '::' + instKey;
+  var mach = MACHINES.find(function(m){ return k.indexOf(m.id+'__') === 0; });
+  if (!mach) return;
+  var row = findRowByKeyPrefix(k);
+  var state = loadState();
+  var group = state[k];
+  var inst = group && group.instances.find(function(i){ return i.key === instKey; });
+  if (!inst || !row) return;
+
+  var s = getCurrentSmu(mach.id);
+  if (!s) { alert('ยังไม่มีข้อมูล SMU จริงของเครื่องนี้ในระบบ — รอ sync จาก Production ITD ที่หน้า Dashboard ก่อน แล้วค่อยกดบันทึกปิดงาน'); return; }
+
+  var dateEl = document.getElementById('cd-date-'+key);
+  var qtyEl = document.getElementById('cd-qty-'+key);
+  var costEl = document.getElementById('cd-cost-'+key);
+  var noteEl = document.getElementById('cd-note-'+key);
+  var techName = (document.getElementById('techNameInput').value || '').trim();
+  var date = dateEl ? dateEl.value : '';
+  var qty = qtyEl ? qtyEl.value : '';
+  var cost = costEl ? costEl.value : '';
+  var note = noteEl ? noteEl.value.trim() : '';
+
+  if (!techName) { alert('กรุณากรอกชื่อช่างที่ปฏิบัติงานก่อน'); return; }
+  if (!date) { alert('กรุณาเลือกวันที่เปลี่ยนถ่ายจริงก่อน'); return; }
+
+  // 1) อัปเดตชุดเกียร์นี้จริง — เหมือนกดกรอกในส่วนที่ 6 เอง (SMU จริงตอนนี้ = ชม.สะสม ณ เปลี่ยนล่าสุด รอบใหม่)
+  inst.lastHr = s.smu;
+  inst.lastDate = date;
+  if (qty !== '') inst.qtyLiters = qty;
+  if (cost !== '') inst.cost = cost;
+  saveState(state);
+
+  // 2) สร้าง Work Order ประเภท "เปลี่ยนถ่าย" อัตโนมัติ ให้เข้าเงื่อนไขเดียวกับที่บอกผู้ใช้ไว้ในกล่องลิงก์ด้านบน
+  var link = WO_MACHINE_LINK[mach.id];
+  var record = {
+    id: generateTechWoId(),
+    createdAt: new Date().toISOString(),
+    machine: link.machine, unit: link.unit, unitCode: link.unitCode,
+    section: row.pos, pos: '', part: row.label + (inst.label ? (' — ' + inst.label) : ''),
+    maintenanceType: 'lube_change', priority: 'low', isPlannedMaintenance: true,
+    failureMode: '', failureCause: '', failureEffect: '', detectionMethod: 'scheduled',
+    downtimeStart: null, downtimeEnd: null, downtimeDuration: null, downtimeType: null, shift: null,
+    rpnSeverity: 4, rpnOccurrence: 5, rpnDetection: 5, rpnScore: 100,
+    laborRate: 500, tdcMaterials: cost !== '' ? Number(cost) : 0, tdcLabor: 0,
+    productionImpact: 'none', conditionReadings: null,
+    description: note || ('เปลี่ยนถ่ายน้ำมันเกียร์ตามรอบเวลา' + (qty !== '' ? (' — ' + qty + ' ลิตร') : '')),
+    technicianName: techName, laborHours: null, partsUsed: [],
+    reporter: techName, failedSystem: row.pos, failedPart: row.label, failedPos: '',
+    lessonLearned: '', nextMaintenanceDue: null,
+    status: 'completed', closedAt: new Date().toISOString(),
+    imagesBefore: [], imagesAfter: [], videosBefore: [], videosAfter: [],
+    dept: '', notes: note, spare: '', date: date,
+    _source: 'ob9_lubrication_tech'
+  };
+  var wos = loadWOs();
+  wos.push(record);
+  saveWOs(wos);
+
+  techOpenKey = null;
+  renderAll();
+  _syncGearboxIfConfigured();
+  _syncTechWOsIfConfigured();
+}
+
+// ดึง WO ล่าสุดจาก Sheet มา merge กับของเครื่องนี้ตอนเปิดหน้า (เหมือน pullWOsFromSheetForForm() ใน
+// ob9_wo_form.html) — ให้ "ปิดงานแล้ววันนี้" เห็นงานที่เครื่องอื่น/คนอื่นเพิ่งปิดไปด้วย ไม่ใช่แค่ของเครื่องนี้เอง
+function pullWOsForTechView(cb){
+  var s = getSyncSettings();
+  if (!s.url) { if (cb) cb(); return; }
+  var url = s.url + '?token=' + encodeURIComponent(s.token||'');
+  fetch(url, {mode:'cors'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.ok && d.workOrders) {
+        var local = loadWOs();
+        var byId = {};
+        d.workOrders.forEach(function(w){ if (w && w.id) byId[w.id] = w; });
+        local.forEach(function(w){ if (w && w.id) byId[w.id] = w; });
+        saveWOs(Object.keys(byId).map(function(k){ return byId[k]; }));
+      }
+    })
+    .catch(function(){})
+    .finally(function(){ if (cb) cb(); });
+}
+
+// push WO ใหม่ขึ้น Sheet แบบ merge-then-push (ดึงของคนอื่นมารวมก่อนเขียนทับ กัน WO คนอื่นหาย
+// เหมือนที่ pushWOsToSheetForForm() ใน ob9_wo_form.html ทำ — ห้ามส่ง local ตรงๆ เด็ดขาด)
+function _syncTechWOsIfConfigured(){
+  var s = getSyncSettings();
+  if (!s.url) return;
+  var pullUrl = s.url + '?token=' + encodeURIComponent(s.token||'');
+  fetch(pullUrl, {mode:'cors'})
+    .then(function(r){ return r.json(); })
+    .catch(function(){ return {ok:false, workOrders:[]}; })
+    .then(function(remote){
+      var remoteWOs = (remote && remote.ok && remote.workOrders) ? remote.workOrders : [];
+      var local = loadWOs();
+      var byId = {};
+      remoteWOs.forEach(function(w){ if (w && w.id) byId[w.id] = w; });
+      local.forEach(function(w){ if (w && w.id) byId[w.id] = w; });
+      var merged = Object.keys(byId).map(function(k){ return byId[k]; });
+      saveWOs(merged);
+      return fetch(s.url, { method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({token: s.token||'', workOrders: merged}) });
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.ok) renderTechContent(); })
+    .catch(function(){});
+}
+
+// ── โหมดช่างซ่อมอย่างเดียว (permissions.lubrication, ไม่ใช่ Admin) — ซ่อนทุกส่วนของ Admin
+// เหลือแค่มุมมองช่างซ่อมด้านบน ดู __OB9_TECH_ONLY__ ที่ตั้งไว้ใน Access Gate ต้นไฟล์ ──
+function applyTechOnlyMode(){
+  if (!window.__OB9_TECH_ONLY__) return;
+  ['staticScheduleBlock','dataEntryBlock','budgetBlock','labBlock','roleSectionTitle','roleTabsBlock'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('topnavTitle').textContent = 'บันทึกเปลี่ยนถ่ายน้ำมันเกียร์ (ช่างซ่อม)';
+  document.title = 'OB9 — บันทึกเปลี่ยนถ่ายน้ำมันเกียร์ (ช่างซ่อม)';
+  var bar = document.getElementById('techWhoBar');
+  if (bar) { bar.style.display = 'flex'; document.getElementById('techWhoName').textContent = window.__OB9_TECH_NAME__ || '-'; }
+  var nameInp = document.getElementById('techNameInput');
+  if (nameInp) nameInp.value = window.__OB9_TECH_NAME__ || '';
+  currentRole = 'tech';
+  document.getElementById('role-tech').classList.add('active');
+  renderTechContent();
 }
 
 function onBudgetChange(v){
@@ -1053,8 +1331,19 @@ renderTabs();
 renderLabEquipOptions();
 renderAll();
 // ดึงข้อมูลล่าสุดจาก Sheet กลางมาทับของเครื่องนี้ตอนเปิดหน้า (เหมือน equipmentSmuKwh ของ Dashboard)
-pullGearboxOilLogFromSheet(function(){ renderAll(); });
+pullGearboxOilLogFromSheet(function(){ renderAll(); applyTechOnlyMode(); });
 pullOilAnalysisLogFromSheet(function(){ renderAll(); });
+pullWOsForTechView(function(){ if (currentRole === 'tech') renderTechContent(); });
+
+// เติมชื่อช่างในฟอร์มปิดงานล่วงหน้าจาก session ที่ login ไว้ (ทั้งโหมด Admin ดูตัวอย่าง และโหมดช่างซ่อมจริง)
+(function(){
+  try{
+    var sess = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    var nameInp = document.getElementById('techNameInput');
+    if (sess && sess.name && nameInp) nameInp.value = sess.name;
+  }catch(e){}
+})();
+applyTechOnlyMode();
 </script>
 </body>
 </html>

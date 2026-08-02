@@ -35,7 +35,7 @@
   .panel h2 { font-size:14px; margin:0 0 12px; color:var(--navy-dk); }
 
   /* manual add form */
-  .form-row { display:grid; grid-template-columns: 1.2fr 1fr auto auto auto auto; gap:10px; align-items:end; margin-bottom:10px; }
+  .form-row { display:grid; grid-template-columns: 1.2fr 1fr auto auto auto auto auto; gap:10px; align-items:end; margin-bottom:10px; }
   .form-row label { display:block; font-size:11px; color:var(--text3); margin-bottom:4px; }
   .form-row input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; }
   .chk-col { text-align:center; }
@@ -75,7 +75,7 @@
 
 <div class="wrap">
   <h1>ตั้งค่าสิทธิ์การเข้าใช้งาน (Admin เท่านั้น)</h1>
-  <div class="sub">กำหนดว่าพนักงานคนไหนเข้าใช้โมดูลไหนได้บ้าง — Executive Summary / Work Order / Daily Inspection</div>
+  <div class="sub">กำหนดว่าพนักงานคนไหนเข้าใช้โมดูลไหนได้บ้าง — Executive Summary / Work Order / Daily Inspection / เปลี่ยนถ่ายน้ำมันเกียร์ (ช่างซ่อม)</div>
 
   <div class="msg" id="msgBox"></div>
 
@@ -94,6 +94,7 @@
       <div class="chk-col"><label>Executive</label><input type="checkbox" id="fExec"></div>
       <div class="chk-col"><label>Work Order</label><input type="checkbox" id="fWo"></div>
       <div class="chk-col"><label>Inspection</label><input type="checkbox" id="fInsp"></div>
+      <div class="chk-col"><label>เปลี่ยนถ่ายน้ำมัน</label><input type="checkbox" id="fLube"></div>
       <button class="btn" onclick="addEmployee()">เพิ่ม</button>
     </div>
   </div>
@@ -108,7 +109,7 @@
     </div>
     <div class="hint">
       คอลัมน์ในไฟล์ (แถวแรกเป็นหัวตาราง): <code>ชื่อพนักงาน</code>, <code>รหัสพนักงาน</code>,
-      <code>Executive</code>, <code>WorkOrder</code>, <code>Inspection</code> — ใส่ <code>Y</code> หรือ <code>1</code>
+      <code>Executive</code>, <code>WorkOrder</code>, <code>Inspection</code>, <code>Lubrication</code> — ใส่ <code>Y</code> หรือ <code>1</code>
       ในคอลัมน์สิทธิ์ที่ต้องการอนุญาต (เว้นว่างหรือ N = ไม่อนุญาต) รายชื่อที่อัปโหลดจะเพิ่มเข้าไปในตารางด้านล่าง
       (ถ้ารหัสพนักงานซ้ำของเดิมจะอัปเดตสิทธิ์แทน)
     </div>
@@ -125,6 +126,7 @@
           <th style="text-align:center">Executive</th>
           <th style="text-align:center">Work Order</th>
           <th style="text-align:center">Inspection</th>
+          <th style="text-align:center">เปลี่ยนถ่ายน้ำมัน</th>
           <th></th>
         </tr>
       </thead>
@@ -223,6 +225,7 @@
         <td class="chk"><input type="checkbox" ${e.executive ? 'checked' : ''} onchange="togglePerm(${i},'executive',this.checked)"></td>
         <td class="chk"><input type="checkbox" ${e.workorder ? 'checked' : ''} onchange="togglePerm(${i},'workorder',this.checked)"></td>
         <td class="chk"><input type="checkbox" ${e.inspection ? 'checked' : ''} onchange="togglePerm(${i},'inspection',this.checked)"></td>
+        <td class="chk"><input type="checkbox" ${e.lubrication ? 'checked' : ''} onchange="togglePerm(${i},'lubrication',this.checked)"></td>
         <td><button class="btn danger" onclick="removeEmployee(${i})">ลบ</button></td>
       </tr>
     `).join('');
@@ -258,13 +261,14 @@
     const exec = document.getElementById('fExec').checked;
     const wo = document.getElementById('fWo').checked;
     const insp = document.getElementById('fInsp').checked;
+    const lube = document.getElementById('fLube').checked;
 
     const existingIdx = list.findIndex(e => normId(e.id) === normId(id));
     if (existingIdx >= 0) {
-      list[existingIdx] = { name, id, executive: exec, workorder: wo, inspection: insp };
+      list[existingIdx] = { name, id, executive: exec, workorder: wo, inspection: insp, lubrication: lube };
       showMsg('อัปเดตสิทธิ์ของ "' + name + '" แล้ว', true);
     } else {
-      list.push({ name, id, executive: exec, workorder: wo, inspection: insp });
+      list.push({ name, id, executive: exec, workorder: wo, inspection: insp, lubrication: lube });
       showMsg('เพิ่ม "' + name + '" แล้ว', true);
     }
     saveEmployees(list);
@@ -275,6 +279,7 @@
     document.getElementById('fExec').checked = false;
     document.getElementById('fWo').checked = false;
     document.getElementById('fInsp').checked = false;
+    document.getElementById('fLube').checked = false;
   }
 
   function truthy(v) {
@@ -311,13 +316,14 @@
           const exec = truthy(row['Executive'] ?? row['executive']);
           const wo = truthy(row['WorkOrder'] ?? row['Work Order'] ?? row['workorder']);
           const insp = truthy(row['Inspection'] ?? row['inspection']);
+          const lube = truthy(row['Lubrication'] ?? row['lubrication']);
 
           const idx = list.findIndex(e => normId(e.id) === normId(id));
           if (idx >= 0) {
-            list[idx] = { name, id, executive: exec, workorder: wo, inspection: insp };
+            list[idx] = { name, id, executive: exec, workorder: wo, inspection: insp, lubrication: lube };
             updated++;
           } else {
-            list.push({ name, id, executive: exec, workorder: wo, inspection: insp });
+            list.push({ name, id, executive: exec, workorder: wo, inspection: insp, lubrication: lube });
             added++;
           }
         });
@@ -336,8 +342,8 @@
   function downloadTemplate() {
     if (typeof XLSX === 'undefined') { showMsg('โหลดไลบรารี Excel ไม่สำเร็จ', false); return; }
     const wsData = [
-      ['ชื่อพนักงาน', 'รหัสพนักงาน', 'Executive', 'WorkOrder', 'Inspection'],
-      ['ตัวอย่าง สมชาย ใจดี', '10234', 'Y', 'Y', 'N'],
+      ['ชื่อพนักงาน', 'รหัสพนักงาน', 'Executive', 'WorkOrder', 'Inspection', 'Lubrication'],
+      ['ตัวอย่าง สมชาย ใจดี', '10234', 'Y', 'Y', 'N', 'N'],
     ];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();

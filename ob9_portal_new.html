@@ -322,12 +322,14 @@
     executive: 'ob9_executive.html',
     workorder: 'ob9_wo_form.html',
     inspection: 'ob9_inspect.html',
+    lubrication: 'ob9_lubrication.html',
   };
   const TARGET_LABEL = {
     admin: '🔐 เข้าสู่ระบบด้วยรหัส Admin (เข้าได้ทุกส่วน)',
     executive: '📊 เข้าสู่ระบบเพื่อใช้งาน OB9 Executive Summary',
     workorder: '🔧 เข้าสู่ระบบเพื่อแจ้งซ่อม / Work Order',
     inspection: '✅ เข้าสู่ระบบเพื่อตรวจเช็คประจำวัน / Daily Inspection',
+    lubrication: '🛢️ เข้าสู่ระบบเพื่อบันทึกเปลี่ยนถ่ายน้ำมันเกียร์',
   };
   if (TARGET && TARGET_LABEL[TARGET]) {
     const note = document.getElementById('targetNote');
