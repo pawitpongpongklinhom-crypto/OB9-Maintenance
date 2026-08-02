@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น — ตามรูปแบบเดียวกับ
+// ob9_asset_register.html / ob9_documents.html / ob9_training.html (หน้าอ้างอิง/วางแผนของ Admin) ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — ตารางหยอดน้ำมัน/จาระบี (Lubrication Schedule)</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:16px; line-height:1.6; }
+
+  .linkbox { background:#EEF4FF; border:1px solid #C9DCF5; border-radius:10px; padding:12px 14px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .linkbox .lt { font-size:12.5px; color:var(--navy-dk); line-height:1.6; }
+  .linkbox a.btn { background:var(--navy); color:#fff; text-decoration:none; font-size:12.5px; font-weight:700; padding:9px 16px; border-radius:8px; white-space:nowrap; }
+  .linkbox a.btn:hover { background:#14488a; }
+
+  .legend { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .legend .lg-item { display:flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:11.5px; }
+  .legend .lg-badge { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px; }
+
+  .tabs { display:flex; gap:6px; margin-bottom:14px; border-bottom:2px solid var(--border); }
+  .tab-btn { background:none; border:none; padding:10px 18px; font-size:13px; font-weight:700; color:var(--text3); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; font-family:inherit; }
+  .tab-btn.active { color:var(--navy); border-bottom-color:var(--navy); }
+
+  .searchbar { margin-bottom:14px; }
+  .searchbar input { width:100%; padding:11px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; }
+
+  .table-scroll { background:#fff; border:1px solid var(--border); border-radius:10px; overflow:auto; }
+  table.lube-table { width:100%; border-collapse:collapse; font-size:12px; min-width:1100px; }
+  table.lube-table th { background:#F8FAFC; color:var(--text3); text-align:left; padding:9px 10px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; border-bottom:1px solid var(--border); position:sticky; top:0; white-space:nowrap; }
+  table.lube-table td { padding:8px 10px; border-bottom:1px solid #F0F2F6; vertical-align:top; line-height:1.5; }
+  table.lube-table tbody tr:hover td { background:#FAFBFD; }
+  table.lube-table td.mono { font-family:'Consolas',monospace; color:var(--text3); font-size:11px; white-space:nowrap; }
+  tr.hrow td { background:#EEF4FF; font-weight:700; color:var(--navy-dk); font-size:12.5px; padding:8px 10px; }
+  .tbadge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 5px; border-radius:5px; font-weight:800; font-size:11px; cursor:help; }
+  .empty { text-align:center; color:var(--text3); padding:30px; font-size:12.5px; }
+  .src-note { font-size:10.5px; color:var(--text3); margin-top:10px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>ตารางหยอดน้ำมัน/จาระบี (Lubrication Schedule)</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>ตารางหยอดน้ำมัน/จาระบี — Lubrication Schedule</h1>
+  <div class="sub">
+    ข้อมูลอ้างอิงจริงจากคู่มือผู้ผลิต (thyssenkrupp Industrial Solutions) — จุดหล่อลื่นทุกจุด ชนิดน้ำมัน/จาระบี ปริมาณบรรจุ
+    ปริมาณเติมซ้ำ และรอบเวลาการหยอด/เปลี่ยนถ่าย ของ <b>Spreader (Ars 2400/52+50x19)</b> และ <b>Tripper Car (Ü2200)</b> —
+    ใช้ได้กับทั้งเครื่อง A และ B เนื่องจากเป็นรุ่นเครื่องจักรเดียวกัน
+  </div>
+
+  <div class="linkbox">
+    <div class="lt">🛢️ เมื่อทำการเปลี่ยนถ่ายน้ำมัน/จาระบีจริงตามตารางนี้ ให้บันทึกผ่านหน้าแจ้งซ่อม/Work Order
+      โดยเลือกประเภทงาน <b>"🛢️ เปลี่ยนถ่าย"</b> เพื่อให้ข้อมูลเชื่อมกับระบบเดียวกันทั้งหมด (Maintenance Type, ประวัติ, และรายงาน)</div>
+    <a class="btn" href="ob9_wo_form.html">🔧 ไปหน้าแจ้งซ่อม / บันทึกเปลี่ยนถ่าย</a>
+  </div>
+
+  <div class="legend" id="legendBox"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabSpreader" onclick="switchTab('spreader')">🅰️🅱️ Spreader A/B — Ars 2400</button>
+    <button class="tab-btn" id="tabTripper" onclick="switchTab('tripper')">🅰️🅱️ Tripper Car A/B — Ü2200</button>
+  </div>
+
+  <div class="searchbar">
+    <input type="text" id="searchInp" placeholder="🔍 ค้นหาชิ้นส่วน / ชนิดน้ำมัน-จาระบี เช่น Gearbox, Bearing, Grease...">
+  </div>
+
+  <div class="table-scroll">
+    <div id="tableWrap"></div>
+  </div>
+  <div class="src-note">ที่มา: 5.5 Lubrication list_ARs.xlsx (Spreader), 6.5 Lubricant list TC.xlsx (Tripper Car) — เอกสารต้นฉบับผู้ผลิต thyssenkrupp Industrial Solutions</div>
+</div>
+
+<script>
+const LUBE_DATA = {
+ "spreader": [
+  {"header": true, "depth": 0, "pos": "1", "label": "Central lubrication systems"},
+  {"header": true, "depth": 1, "pos": "1.1", "label": "Lubrication system S1, crawlers"},
+  {"header": false, "depth": 2, "pos": "1.1.1", "label": "Drive tumbler with shaft", "qty": "2", "points": "8", "ltype": "A", "lube": "NLGI 2 KP2K-20(Li)\n55", "vol": "100 liters", "relube": "Central lubircation system is to be adjusted during comissioning. After adjusting note the values here.", "interval": "Check lubricant level in lubricant reservoirs weekly. \nTop up lubricant.", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.2", "label": "Support wheels", "qty": "8", "points": "1", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.3", "label": "Tumbler with tension device", "qty": "2", "points": "2", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.4", "label": "4-wheel bogie", "qty": "4", "points": "2", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.5", "label": "2-wheel bogie complete", "qty": "12", "points": "4", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.6", "label": "Axle for crawler frame", "qty": "2", "points": "6", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.7", "label": "Side axles", "qty": "2", "points": "1", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.8", "label": "Middle axle", "qty": "1", "points": "2", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": true, "depth": 1, "pos": "1.2", "label": "Lubrication system S2, slew bearings and drive pulley"},
+  {"header": false, "depth": 2, "pos": "1.2.1", "label": "Return pulley C1", "qty": "4", "points": "4", "ltype": "A", "lube": "NLGI 2 KP2K-20(Li)\n55", "vol": "100 liters", "relube": "Central lubircation system is to be adjusted during comissioning. After adjusting note the values here.", "interval": "Check lubricant level in lubricant reservoirs weekly. \nTop up lubricant.", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.2.2", "label": "Snub pulley C1", "qty": "2", "points": "2", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.2.3", "label": "Drive pulley C1", "qty": "1", "points": "6", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.2.4", "label": "Ball race superstructure", "qty": "1", "points": "12", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.2.5", "label": "Drive pulley C2", "qty": "1", "points": "6", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.2.6", "label": "Ball race substructure", "qty": "1", "points": "72", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.2.7", "label": "Snub pulley C2", "qty": "3", "points": "2", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.2.9", "label": "Return pulley C2", "qty": "1", "points": "4", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": true, "depth": 1, "pos": "1.3", "label": "Lubrication system S3, lube pinion for tooth rim"},
+  {"header": false, "depth": 2, "pos": "1.3.1", "label": "Lube pinions", "qty": "2", "points": "1", "ltype": "A", "lube": "Ceplattyn KG 10 HMF", "vol": "30 liters", "relube": "Central lubircation system is to be adjusted during comissioning. After adjusting note the values here.", "interval": "Check lubricant level in lubricant reservoirs weekly. \nTop up lubricant.", "remarks": ""},
+  {"header": true, "depth": 0, "pos": "2", "label": "Manual greasing points"},
+  {"header": true, "depth": 1, "pos": "2.1", "label": "Crawler drives"},
+  {"header": true, "depth": 2, "pos": "2.1.1", "label": "Motors (Type: M3BP 355SMB 8)"},
+  {"header": false, "depth": 3, "pos": "2.1.1.1", "label": "Motor bearing DE \n(Type: 6322/C3 C3)", "qty": "2", "points": "1", "ltype": "A", "lube": "Esso Unirex N3", "vol": "-", "relube": "per bearing\napprox. 70 grams", "interval": "Relubrication interval 10700 hours", "remarks": "Grease brand from data sheet"},
+  {"header": false, "depth": 3, "pos": "2.1.1.2", "label": "Motor bearing NDE\n(Type: 6316 C3)", "qty": "2", "points": "1", "ltype": "A", "lube": "Esso Unirex N3", "vol": "-", "relube": "per bearing\napprox. 70 grams", "interval": "Relubrication interval 10700 hours", "remarks": "Grease brand from data sheet"},
+  {"header": true, "depth": 2, "pos": "2.1.2", "label": "Drum brakes (Type: USB3-I)"},
+  {"header": false, "depth": 3, "pos": "2.1.2.1", "label": "Brake thrusters", "qty": "2", "points": "1", "ltype": "C", "lube": "HL 10 DIN51524", "vol": "4.2 l", "relube": "-", "interval": "Only refilling after repair", "remarks": "The \"long-life\" filling is not subject to wear provided the thruster is in perfect condition"},
+  {"header": true, "depth": 2, "pos": "2.1.3", "label": "Gear units (Type: GWP3-1425V-810,5-F-H-2V )"},
+  {"header": false, "depth": 2, "pos": "", "label": "Planetary gear box", "qty": "2", "points": "1", "ltype": "B", "lube": "CLP VG 320", "vol": "200 l", "relube": "", "interval": "First change after 500 operating hours\nFurther changes every 10,000 operating hours", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "", "label": "Worm gear box", "qty": "2", "points": "2", "ltype": "B", "lube": "CLP VG 320", "vol": "219 l", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "", "label": "Labyrinth seals", "qty": "2", "points": "2", "ltype": "A", "lube": "KHC K-30", "vol": "30 g", "relube": "", "interval": "2000h/6 Months", "remarks": ""},
+  {"header": true, "depth": 2, "pos": "2.1.4", "label": "Cardan shaft"},
+  {"header": false, "depth": 3, "pos": "2.1.4.1", "label": "Journal cross asemblies", "qty": "2", "points": "2", "ltype": "A", "lube": "Lithium-complex-grease NLGI-Class 2", "vol": "-", "relube": "Press in grease until fresh grease becomes visible at the grease collar", "interval": "Regrease journals cross assemblies monthly", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.1.4.2", "label": "Length extension", "qty": "2", "points": "2", "ltype": "A", "lube": "Lithium-complex-grease NLGI-Class 2", "vol": "-", "relube": "Press in grease until fresh grease becomes visible at the grease collar", "interval": "Regrease length compensation in the same intervals as the journal cross assemblies", "remarks": ""},
+  {"header": true, "depth": 1, "pos": "2.2", "label": "Slewing drives"},
+  {"header": true, "depth": 2, "pos": "2.2.1", "label": "Motor (Type: M3BP 132SME 4)"},
+  {"header": false, "depth": 3, "pos": "2.2.1.1", "label": "Motor bearing DE \n(Type: 6208-2Z/C3)", "qty": "2", "points": "1", "ltype": "A", "lube": "Esso Unirex N3", "vol": "-", "relube": "per bearing\napprox. 25 grams", "interval": "Relubrication interval 12000 hours", "remarks": "Grease brand from data sheet"},
+  {"header": false, "depth": 3, "pos": "2.2.1.2", "label": "Motor bearing NDE\n(Type: 6208-2Z-C3)", "qty": "2", "points": "1", "ltype": "A", "lube": "Esso Unirex N3", "vol": "-", "relube": "per bearing\napprox. 25 grams", "interval": "Relubrication interval 12000 hours", "remarks": "Grease brand from data sheet"},
+  {"header": true, "depth": 2, "pos": "2.2.2", "label": "Drum brakes (Type: TE200)"},
+  {"header": false, "depth": 3, "pos": "2.2.2.1", "label": "Brake thrusters", "qty": "4", "points": "", "ltype": "", "lube": "Shell Diala Oil DX", "vol": "1.2 l", "relube": "", "interval": "Only refilling after repair", "remarks": ""},
+  {"header": true, "depth": 2, "pos": "2.2.3", "label": "Gear box"},
+  {"header": false, "depth": 3, "pos": "2.2.3.1", "label": "Gearbox", "qty": "2", "points": "", "ltype": "", "lube": "CLP VG 320", "vol": "approx. 26 l", "relube": "-", "interval": "First change after 500 operating hours\nFurther changes every 10,000 operating hours", "remarks": ""},
+  {"header": true, "depth": 1, "pos": "2.3", "label": "Belt drives of the conveyor bridge"},
+  {"header": true, "depth": 2, "pos": "2.3.1", "label": "Motor (Type: AXR 400MF 4)"},
+  {"header": false, "depth": 3, "pos": "2.3.1.1", "label": "Bearing DE EBKL 6324/C3", "qty": "2", "points": "1", "ltype": "A", "lube": "Unirex N2", "vol": "-", "relube": "75", "interval": "5900 duty hours", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.3.1.2", "label": "Bearing NDE EBKL  6319M/C3", "qty": "2", "points": "1", "ltype": "A", "lube": "", "vol": "-", "relube": "45", "interval": "", "remarks": ""},
+  {"header": true, "depth": 2, "pos": "2.3.2", "label": "Disc brakes (Type: USB 3-I EB800-60)"},
+  {"header": false, "depth": 3, "pos": "2.3.2.1", "label": "Brake thrusters", "qty": "2", "points": "", "ltype": "", "lube": "HL 10 DIN51524", "vol": "4.2", "relube": "-", "interval": "Only refilling after repair", "remarks": "The \"long-life\" filling is not subject to wear provided the thruster is in perfect condition"},
+  {"header": true, "depth": 2, "pos": "2.3.3", "label": "Gear units (Type: B3FE)"},
+  {"header": false, "depth": 3, "pos": "2.3.3.1", "label": "Gear box", "qty": "2", "points": "1", "ltype": "B", "lube": "CLP VG 320", "vol": "-", "relube": "per gear box\napprox. 230 l", "interval": "every 10,000 operating hours, at least every 2 years", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.3.3.2", "label": "Labyrinth seals", "qty": "4", "points": "2", "ltype": "A", "lube": "ISO VG 220", "vol": "-", "relube": "Press in grease until fresh grease becomes visible at the grease collar", "interval": "Regrease labyrinth seals every 3,000 operating hours, at least every 6 months", "remarks": ""},
+  {"header": true, "depth": 1, "pos": "2.4", "label": "Belt drives of the discharge conveyor boom"},
+  {"header": true, "depth": 2, "pos": "2.4.1", "label": "Motor (Type: AXR 400MF 4)"},
+  {"header": false, "depth": 3, "pos": "2.3.1.1", "label": "Bearing DE EBKL 6324/C3", "qty": "2", "points": "1", "ltype": "A", "lube": "Unirex N2", "vol": "-", "relube": "75", "interval": "5900 duty hours", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.3.1.2", "label": "Bearing NDE EBKL  6319M/C3", "qty": "2", "points": "1", "ltype": "A", "lube": "", "vol": "-", "relube": "45", "interval": "", "remarks": ""},
+  {"header": true, "depth": 2, "pos": "2.4.2", "label": "Disc brakes (Type: USB 3-I EB800-60)"},
+  {"header": false, "depth": 3, "pos": "2.4.2.1", "label": "Brake thrusters", "qty": "2", "points": "", "ltype": "", "lube": "HL 10 DIN51524", "vol": "4.2", "relube": "-", "interval": "Only refilling after repair", "remarks": "The \"long-life\" filling is not subject to wear provided the thruster is in perfect condition"},
+  {"header": true, "depth": 2, "pos": "2.4.3", "label": "Gear units (Type: B3FE)"},
+  {"header": false, "depth": 3, "pos": "2.4.3.1", "label": "Gear box", "qty": "2", "points": "1", "ltype": "B", "lube": "ISO VG 220", "vol": "-", "relube": "per gear box\napprox. 230 l", "interval": "every 10,000 operating hours, at least every 2 years", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.4.3.2", "label": "Labyrinth seals", "qty": "4", "points": "2", "ltype": "A", "lube": "ISO VG 220", "vol": "-", "relube": "Press in grease until fresh grease becomes visible at the grease collar", "interval": "Regrease labyrinth seals every 3,000 operating hours, at least every 6 months", "remarks": ""},
+  {"header": true, "depth": 1, "pos": "2.6", "label": "Hydraulic system"},
+  {"header": false, "depth": 2, "pos": "2.6.1", "label": "Hydraulic unit", "qty": "1", "points": "", "ltype": "C", "lube": "Fuchs Renolin DO 22HV", "vol": "approx. 2216", "relube": "", "interval": "", "remarks": ""},
+  {"header": true, "depth": 1, "pos": "2.7", "label": "Hoist at service room"},
+  {"header": true, "depth": 2, "pos": "2.7.1", "label": "Hoist"},
+  {"header": false, "depth": 3, "pos": "2.7.1.1", "label": "Load chain", "qty": "1", "points": "", "ltype": "E", "lube": "Fuchs RENOLIN PG 220\nor special chain lubricant", "vol": "", "relube": "0,2", "interval": "M3", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.7.1.2", "label": "Load chain — Pulleys", "qty": "1", "points": "", "ltype": "E", "lube": "Fuchs RENOLIN PG 220", "vol": "", "relube": "acc. to demand", "interval": "M12", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.7.1.3", "label": "Load chain — Load hook bearing", "qty": "1", "points": "", "ltype": "E", "lube": "Fuchs RENOLIN PG 220", "vol": "", "relube": "acc. to demand", "interval": "M12", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.7.2.1", "label": "Hoist gear — Spur gear", "qty": "1", "points": "", "ltype": "E", "lube": "Fuchs RENOLIN PG 220", "vol": "", "relube": "0.45", "interval": "M36", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.7.3.1", "label": "Trolley — Pulleys\nGear rim\nDrive pinion", "qty": "1", "points": "", "ltype": "E", "lube": "Fuchs RENOLIT FEP2", "vol": "", "relube": "0.1", "interval": "M3", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "", "label": "Trolley — Traveling gear", "qty": "1", "points": "", "ltype": "E", "lube": "Shell Tivela S320", "vol": "", "relube": "", "interval": "Lifetime lubrication", "remarks": ""}
+ ],
+ "tripper": [
+  {"header": true, "depth": 0, "pos": "1", "label": "Automatic lubrication systems"},
+  {"header": true, "depth": 1, "pos": "1.1", "label": "Automatic lubrication system S1"},
+  {"header": false, "depth": 2, "pos": "1.1.1", "label": "Tripper car:\nTravel wheel bearings", "qty": "36", "points": "2", "ltype": "A", "lube": "Grease:\nDIN 51502 KP2K-20 / Shell Gadus S2 V220 2 / 55", "vol": "approx. 100 kg", "relube": "Central lubircation system is to be adjusted during comissioning. After adjusting note the values here.", "interval": "Check lubricant level in lubricant reservoirs weekly. \nTop up lubricant.", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.2", "label": "Return pulley", "qty": "1", "points": "4", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.3", "label": "Bend pulley", "qty": "1", "points": "4", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.4", "label": "Take-up pulley", "qty": "1", "points": "4", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.5", "label": "Cable duct:\nSlew bearing", "qty": "1", "points": "4", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.6", "label": "Support car:\nTravel wheel bearings", "qty": "16", "points": "2", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.7", "label": "Support car:\nSlew bearing", "qty": "1", "points": "12", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.8", "label": "Support car:\nBogie bearings", "qty": "2", "points": "1", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 2, "pos": "1.1.9", "label": "Support car:\nBogie wheel bearings", "qty": "2", "points": "2", "ltype": "A", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": true, "depth": 0, "pos": "2", "label": "Manual greasing points"},
+  {"header": true, "depth": 1, "pos": "2.1", "label": "Travel drive"},
+  {"header": false, "depth": 2, "pos": "2.1.1", "label": "Geared motor\n(Type SK9055.1 AZBHK-100 L/6 BRE20 FHL RG RD)", "qty": "42", "points": "", "ltype": "", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.1.1.1", "label": "Gearbox", "qty": "42", "points": "1", "ltype": "B", "lube": "Oil filling:\nCLP VG 220 / Castrol Alpha EP 220 / 24", "vol": "", "relube": "per gearbox\napprox. 23.5 liters", "interval": "Check at least every six months the oil level. For operating temperatures up to 80°C, change oil every 10000 operating hours, at least every two years.", "remarks": "The oil change interval is doubled if filled with synthetic products"},
+  {"header": true, "depth": 1, "pos": "2.2", "label": "Rail clamps (Type CTHV-TS-100-050-LE-037PR2"},
+  {"header": false, "depth": 2, "pos": "2.2.1", "label": "Hydraulic power unit \n(Type HPT08-DCRC)", "qty": "4", "points": "", "ltype": "", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.2.1.1", "label": "Reservoir", "qty": "4", "points": "1", "ltype": "C", "lube": "Oil filling: \nDIN 51524 HLP VG 68 / - / 5", "vol": "", "relube": "per hydraulic unit\napprox. 8 liters", "interval": "Check hydraulic fluid level every 500 cycles or at least after 3 months. Drain hydraulic tank and replace fluid every 2000 cycles or at leaast every 24 months.", "remarks": "The hydraulic power unit of the belt clamp is delivered without first filling."},
+  {"header": false, "depth": 2, "pos": "2.2.2", "label": "Rail clamp", "qty": "4", "points": "", "ltype": "", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.2.2.1", "label": "Springs", "qty": "2", "points": "2", "ltype": "A", "lube": "Grease:\nNLGI EP2 / Texaco / -", "vol": "", "relube": "", "interval": "Regrease monthly", "remarks": "For information about the recommened greases please refer to the original component manuals."},
+  {"header": false, "depth": 3, "pos": "2.2.2.2", "label": "Guide posts", "qty": "4", "points": "4", "ltype": "A", "lube": "Grease:\nNLGI EP2 / Texaco / -", "vol": "", "relube": "", "interval": "Regrease monthly", "remarks": "For information about the recommened greases please refer to the original component manuals."},
+  {"header": false, "depth": 3, "pos": "2.2.2.3", "label": "Float block assembly", "qty": "2", "points": "-", "ltype": "A", "lube": "Grease:\nNLGI EP2 / Texaco / -", "vol": "", "relube": "", "interval": "Regrease monthly", "remarks": "For information about the recommened greases please refer to the original component manuals."},
+  {"header": false, "depth": 3, "pos": "2.2.2.4", "label": "Lever/toggle assembly", "qty": "2", "points": "-", "ltype": "A", "lube": "Grease:\nNLGI EP2 / Texaco / -", "vol": "", "relube": "", "interval": "Regrease every 3 months", "remarks": "For information about the recommened greases please refer to the original component manuals."},
+  {"header": false, "depth": 3, "pos": "2.2.2.5", "label": "Guide wheel assembly", "qty": "2", "points": "-", "ltype": "A", "lube": "Grease:\nNLGI EP2 / Texaco / -", "vol": "", "relube": "", "interval": "Regrease every 24 months", "remarks": "For information about the recommened greases please refer to the original component manuals."},
+  {"header": true, "depth": 1, "pos": "2.3", "label": "Hydraulic take-up station"},
+  {"header": false, "depth": 2, "pos": "2.3.1", "label": "Hydraulic power unit \n(Type ABYAG-1000L/A4VSO71-45KW/TRIPPERCAR)", "qty": "1", "points": "", "ltype": "", "lube": "", "vol": "", "relube": "", "interval": "", "remarks": ""},
+  {"header": false, "depth": 3, "pos": "2.3.1.1", "label": "Reservoir", "qty": "1", "points": "1", "ltype": "C", "lube": "Oil filling: \nDIN 51524 HLP VG 68 / Shell Tellus 68 / 5", "vol": "", "relube": "per reservoir\napprox. 297 liters", "interval": "Check hydraulic fluid level every 8 operating hours. An oil analysis shoul be performed at least once a year. Change oil depending on the results of the oil analysis.", "remarks": ""}
+ ]
+};
+
+const TYPE_LABEL = {
+  A: 'A = จาระบี (Grease lubrication)',
+  B: 'B = น้ำมันหล่อลื่นแบบสาด (Oil splash lubrication)',
+  C: 'C = น้ำมันไฮดรอลิก (Hydraulic fluid)',
+  D: 'D = น้ำมันหล่อลื่นแบบพ่น (Oil spray lubrication)',
+  E: 'E = น้ำมันหล่อลื่น (Oil lubrication)'
+};
+const TYPE_COLOR = { A:'#F4A200', B:'#1A5FA8', C:'#DC2626', D:'#16A34A', E:'#7C3AED' };
+
+let currentTab = 'spreader';
+let searchQ = '';
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+
+function renderLegend(){
+  let html = '';
+  Object.keys(TYPE_LABEL).forEach(k => {
+    html += `<div class="lg-item"><span class="lg-badge" style="background:${TYPE_COLOR[k]}22;color:${TYPE_COLOR[k]}">${k}</span> ${esc(TYPE_LABEL[k])}</div>`;
+  });
+  document.getElementById('legendBox').innerHTML = html;
+}
+
+function matchesSearch(row, q){
+  const hay = [row.label, row.lube, row.remarks, row.pos, row.interval].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+const TABLE_HEAD = '<thead><tr><th>Pos.</th><th>รายการ / Component</th><th>จำนวน</th><th>จุด/ชิ้น</th><th>ประเภท</th><th>น้ำมัน/จาระบี</th><th>ปริมาณบรรจุ</th><th>ปริมาณเติมซ้ำ</th><th>รอบเวลา</th><th>หมายเหตุ</th></tr></thead>';
+
+function typeBadge(t){
+  if(!t) return '';
+  const c = TYPE_COLOR[t] || '#888';
+  return `<span class="tbadge" style="background:${c}22;color:${c}" title="${esc(TYPE_LABEL[t]||'')}">${esc(t)}</span>`;
+}
+function headerRowHtml(r){
+  const pad = 10 + r.depth*18;
+  return `<tr class="hrow"><td colspan="10" style="padding-left:${pad}px">${esc(r.pos)} ${esc(r.label)}</td></tr>`;
+}
+function itemRowHtml(r){
+  const pad = 10 + r.depth*18;
+  return `<tr>
+    <td class="mono">${esc(r.pos)}</td>
+    <td style="padding-left:${pad}px">${nl2br(r.label)}</td>
+    <td>${esc(r.qty)}</td>
+    <td>${esc(r.points)}</td>
+    <td>${typeBadge(r.ltype)}</td>
+    <td>${nl2br(r.lube)}</td>
+    <td>${nl2br(r.vol)}</td>
+    <td>${nl2br(r.relube)}</td>
+    <td>${nl2br(r.interval)}</td>
+    <td>${nl2br(r.remarks)}</td>
+  </tr>`;
+}
+
+function renderTable(){
+  const rows = LUBE_DATA[currentTab];
+  const q = searchQ.trim().toLowerCase();
+  let html;
+  if(q){
+    const filtered = rows.filter(r => !r.header && matchesSearch(r,q));
+    if(filtered.length===0){
+      html = `<div class="empty">ไม่พบรายการที่ตรงกับ "${esc(searchQ)}"</div>`;
+    } else {
+      html = `<table class="lube-table">${TABLE_HEAD}<tbody>` + filtered.map(itemRowHtml).join('') + `</tbody></table>`;
+    }
+  } else {
+    html = `<table class="lube-table">${TABLE_HEAD}<tbody>` +
+      rows.map(r => r.header ? headerRowHtml(r) : itemRowHtml(r)).join('') +
+      `</tbody></table>`;
+  }
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+function switchTab(t){
+  currentTab = t;
+  document.getElementById('tabSpreader').classList.toggle('active', t==='spreader');
+  document.getElementById('tabTripper').classList.toggle('active', t==='tripper');
+  renderTable();
+}
+
+document.getElementById('searchInp').addEventListener('input', function(e){ searchQ = e.target.value; renderTable(); });
+
+renderLegend();
+renderTable();
+</script>
+</body>
+</html>
