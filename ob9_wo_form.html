@@ -41,14 +41,18 @@ select:disabled{opacity:.5;cursor:not-allowed}
 textarea{resize:vertical;min-height:80px}
 
 /* ซ่อนตัวเลขในกล่องปฏิทิน (input[type=date]) ที่โชว์ตามรูปแบบเครื่อง/เบราว์เซอร์ (เช่น MM/DD/YYYY แบบสหรัฐฯ)
-   ซึ่งแก้ให้เป็นไทยตรงๆ ไม่ได้ — เหลือไว้แค่ไอคอนปฏิทินให้กดเลือกวันที่ ส่วนวันที่จริงให้ดูจากข้อความไทยใต้ช่องแทน */
-input[type="date"]::-webkit-datetime-edit,
-input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-input[type="date"]::-webkit-datetime-edit-text,
-input[type="date"]::-webkit-datetime-edit-month-field,
-input[type="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field { color: transparent; }
+   ซึ่งแก้ให้เป็นไทยตรงๆ ไม่ได้ — ซ่อนเฉพาะช่องที่มีข้อความไทยวางทับแทน (.date-native-hidden) กันไม่ให้กล่องดูว่างเปล่า/
+   สีตัวอักษรกับพื้นหลังชนกัน ส่วนช่องอื่นที่ไม่มีข้อความไทยวางทับ ให้แสดงตัวเลขปกติของเบราว์เซอร์ไว้ อ่านออกเสมอ */
+input[type="date"].date-native-hidden::-webkit-datetime-edit,
+input[type="date"].date-native-hidden::-webkit-datetime-edit-fields-wrapper,
+input[type="date"].date-native-hidden::-webkit-datetime-edit-text,
+input[type="date"].date-native-hidden::-webkit-datetime-edit-month-field,
+input[type="date"].date-native-hidden::-webkit-datetime-edit-day-field,
+input[type="date"].date-native-hidden::-webkit-datetime-edit-year-field { color: transparent; }
 input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
+.date-field-wrap{position:relative}
+.date-thai-overlay{position:absolute;left:13px;right:34px;top:0;height:100%;display:flex;align-items:center;
+  font-size:13px;color:var(--text);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* HEADER */
 .header{background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
@@ -179,8 +183,10 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
         </div>
         <div class="form-group">
           <label class="form-label">วันที่แจ้ง</label>
-          <input type="date" id="inp-date" oninput="updateDateThaiPreview('inp-date','inp-date-thai')">
-          <div id="inp-date-thai" style="font-size:11px;color:#6b7280;margin-top:3px"></div>
+          <div class="date-field-wrap">
+            <input type="date" id="inp-date" class="date-native-hidden" oninput="updateDateThaiPreview('inp-date','inp-date-thai')">
+            <div id="inp-date-thai" class="date-thai-overlay"></div>
+          </div>
         </div>
       </div>
       <div class="form-row">

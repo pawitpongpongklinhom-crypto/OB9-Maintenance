@@ -21,14 +21,18 @@
   body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f1923; color: #cdd6e0; font-size: 13px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
   /* ซ่อนตัวเลขในกล่องปฏิทิน (input[type=date]) ที่โชว์ตามรูปแบบเครื่อง/เบราว์เซอร์ (เช่น MM/DD/YYYY แบบสหรัฐฯ)
-     ซึ่งแก้ให้เป็นไทยตรงๆ ไม่ได้ — เหลือไว้แค่ไอคอนปฏิทินให้กดเลือกวันที่ ส่วนวันที่จริงให้ดูจากข้อความไทยใต้ช่องแทน */
-  input[type="date"]::-webkit-datetime-edit,
-  input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-  input[type="date"]::-webkit-datetime-edit-text,
-  input[type="date"]::-webkit-datetime-edit-month-field,
-  input[type="date"]::-webkit-datetime-edit-day-field,
-  input[type="date"]::-webkit-datetime-edit-year-field { color: transparent; }
+     ซึ่งแก้ให้เป็นไทยตรงๆ ไม่ได้ — ซ่อนเฉพาะช่องที่มีข้อความไทยวางทับแทน (.date-native-hidden) กันไม่ให้กล่องดูว่างเปล่า/
+     สีตัวอักษรกับพื้นหลังชนกัน ส่วนช่องอื่นที่ไม่มีข้อความไทยวางทับ ให้แสดงตัวเลขปกติของเบราว์เซอร์ไว้ อ่านออกเสมอ */
+  input[type="date"].date-native-hidden::-webkit-datetime-edit,
+  input[type="date"].date-native-hidden::-webkit-datetime-edit-fields-wrapper,
+  input[type="date"].date-native-hidden::-webkit-datetime-edit-text,
+  input[type="date"].date-native-hidden::-webkit-datetime-edit-month-field,
+  input[type="date"].date-native-hidden::-webkit-datetime-edit-day-field,
+  input[type="date"].date-native-hidden::-webkit-datetime-edit-year-field { color: transparent; }
   input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
+  .date-field-wrap{position:relative}
+  .date-thai-overlay{position:absolute;left:9px;right:28px;top:0;height:100%;display:flex;align-items:center;
+    font-size:11px;color:#c8dde8;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   /* ─── HEADER ─── */
   .header {
@@ -14389,8 +14393,10 @@ function checkCBMThreshold() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div>
           <label style="font-size:10px;color:#4a7090;display:block;margin-bottom:4px">วันที่</label>
-          <input type="date" id="prodDate" oninput="updateDateThaiPreview('prodDate','prodDate-thai')" style="width:100%;background:#061422;border:1px solid #1e3a52;border-radius:6px;color:#c8dde8;padding:7px;font-size:11px;color-scheme:dark">
-          <div id="prodDate-thai" style="font-size:10px;color:#4a7090;margin-top:3px"></div>
+          <div class="date-field-wrap">
+            <input type="date" id="prodDate" class="date-native-hidden" oninput="updateDateThaiPreview('prodDate','prodDate-thai')" style="width:100%;background:#061422;border:1px solid #1e3a52;border-radius:6px;color:#c8dde8;padding:7px;font-size:11px;color-scheme:dark">
+            <div id="prodDate-thai" class="date-thai-overlay"></div>
+          </div>
         </div>
         <div>
           <label style="font-size:10px;color:#4a7090;display:block;margin-bottom:4px">Shift</label>
@@ -14773,8 +14779,10 @@ function checkCBMThreshold() {
       <div class="wo-row">
         <div class="wo-field">
           <label>📅 วันที่ / Date</label>
-          <input type="date" id="woDate" class="wo-input" oninput="updateDateThaiPreview('woDate','woDate-thai')">
-          <div id="woDate-thai" style="font-size:10px;color:#4a7090;margin-top:3px"></div>
+          <div class="date-field-wrap">
+            <input type="date" id="woDate" class="wo-input date-native-hidden" oninput="updateDateThaiPreview('woDate','woDate-thai')">
+            <div id="woDate-thai" class="date-thai-overlay"></div>
+          </div>
         </div>
         <div class="wo-field">
           <label>👤 ผู้รายงาน / Reporter</label>
@@ -15092,8 +15100,10 @@ function checkCBMThreshold() {
         </div>
         <div class="wo-field">
           <label>🗓️ กำหนดซ่อมบำรุงครั้งถัดไป / Next Due</label>
-          <input type="date" id="woNextDue" class="wo-input" oninput="updateDateThaiPreview('woNextDue','woNextDue-thai')">
-          <div id="woNextDue-thai" style="font-size:10px;color:#4a7090;margin-top:3px"></div>
+          <div class="date-field-wrap">
+            <input type="date" id="woNextDue" class="wo-input date-native-hidden" oninput="updateDateThaiPreview('woNextDue','woNextDue-thai')">
+            <div id="woNextDue-thai" class="date-thai-overlay"></div>
+          </div>
         </div>
       </div>
 
