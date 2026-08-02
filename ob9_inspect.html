@@ -162,9 +162,8 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
         <div class="form-group">
           <label class="form-label">กะ *</label>
           <select id="sel-shift">
-            <option value="Day-06">กะเช้า 06:00–14:00</option>
-            <option value="Eve-14">กะบ่าย 14:00–22:00</option>
-            <option value="Night-22">กะดึก 22:00–06:00</option>
+            <option value="Day-07">กะเช้า 07:00–19:00</option>
+            <option value="Night-19">กะดึก 19:00–07:00</option>
           </select>
         </div>
       </div>
@@ -702,9 +701,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Set shift by hour
   const h = now.getHours();
   const shiftEl = document.getElementById('sel-shift');
-  if(h>=6&&h<14) shiftEl.value='Day-06';
-  else if(h>=14&&h<22) shiftEl.value='Eve-14';
-  else shiftEl.value='Night-22';
+  if(h>=7&&h<19) shiftEl.value='Day-07';
+  else shiftEl.value='Night-19';
   // Load inspector name — ใช้ชื่อจริงจาก session ที่ล็อกอินผ่าน Portal ก่อนเสมอ (แม่นยำกว่า เพราะมาจาก
   // รายชื่อพนักงานที่ Admin จัดการไว้) ถ้าไม่มี session (เช่นกรณีทดสอบ) ค่อย fallback เป็นชื่อล่าสุดที่เคยกรอกในเครื่องนี้
   (function(){
@@ -1274,7 +1272,7 @@ function viewInspectionDetail(id){
   const r = hist.find(x=>x.id===id);
   if(!r){ showToast('⚠️ ไม่พบข้อมูลนี้แล้ว'); return; }
   const dt = new Date(r.ts).toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  const shiftLabel = {'Day-06':'กะเช้า 06:00–14:00','Eve-14':'กะบ่าย 14:00–22:00','Night-22':'กะดึก 22:00–06:00'}[r.shift] || r.shift;
+  const shiftLabel = {'Day-07':'กะเช้า 07:00–19:00','Night-19':'กะดึก 19:00–07:00','Day-06':'กะเช้า 06:00–14:00','Eve-14':'กะบ่าย 14:00–22:00','Night-22':'กะดึก 22:00–06:00'}[r.shift] || r.shift;
 
   // สรุปสถิติ
   const statsHtml = `
