@@ -1089,7 +1089,7 @@ function openModal(id){
   const desc=(wo.description||wo.symptom||'').slice(0,80);
   const priLabel={Critical:'🔴 Critical',high:'🟠 High',medium:'🔵 Normal',low:'🟢 Planned'}[wo.priority]||wo.priority;
   const statLabel={pending:'รอดำเนินการ',in_progress:'กำลังดำเนินการ',completed:'เสร็จสิ้น',cancelled:'ยกเลิก'}[wo.status]||wo.status;
-  document.getElementById('modal-title').textContent=wo.id+' — '+wo.machine;
+  document.getElementById('modal-title').textContent=wo.id+' — '+(wo.machine||wo.unit||'ไม่ระบุเครื่องจักร');
   document.getElementById('modal-sub').textContent=`${system} | ${priLabel} | สถานะ: ${statLabel}\n${desc}`;
   document.getElementById('modal-fulldetail').style.display='none';
   document.getElementById('modal-fulldetail').innerHTML='';
@@ -1145,11 +1145,47 @@ function renderWoFullDetailBody(){
       <div style="font-size:9px;color:var(--text2)">ชั่วโมงแรงงาน</div>
     </div>
   </div>`;
-  if(wo.reporter||wo.technicianName){
+  if(wo.reporter){
     html += `<div style="font-size:11px;color:var(--text2);margin-bottom:8px">
-      ${wo.reporter?`ผู้แจ้ง: <b style="color:var(--text)">${wo.reporter}</b>`:''}${wo.technicianName?` · ช่างผู้รับผิดชอบ: <b style="color:var(--text)">${wo.technicianName}</b>`:''}
+      ผู้แจ้ง: <b style="color:var(--text)">${wo.reporter}</b>
     </div>`;
   }
+  // (2 ส.ค. 69) เพิ่มช่องกรอก/แก้ไขข้อมูลการซ่อม ให้ช่างหน้างานกรอกได้เองจากหน้านี้เลย ไม่ต้องออกไปที่ Dashboard
+  // (ผู้ใช้ขอเพิ่มหลังพบว่าหน้านี้แก้ได้แค่สถานะ+รูป ส่วนข้อมูลช่าง/ค่าใช้จ่าย/ชั่วโมงต้องไปกรอกที่ Admin เท่านั้น)
+  const fmOptions = [['','— ไม่ระบุ —'],['wear','สึกหรอ (Wear)'],['leakage','รั่วซึม (Leakage)'],
+    ['vibration','สั่นสะเทือน (Vibration)'],['overheating','ร้อนเกิน (Overheating)'],
+    ['breakage','แตกหัก (Breakage)'],['corrosion','สนิม/กัดกร่อน (Corrosion)'],
+    ['jamming','ติดขัด (Jamming)'],['other','อื่นๆ (Other)']];
+  html += `<div style="padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+    <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:6px">📝 กรอก/แก้ไขข้อมูลการซ่อม</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+      <div>
+        <label style="font-size:9px;color:var(--text2);display:block;margin-bottom:2px">ช่างผู้รับผิดชอบ</label>
+        <input type="text" id="editTechnician" value="${(wo.technicianName||'').replace(/"/g,'&quot;')}" placeholder="ชื่อช่าง" style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text)">
+      </div>
+      <div>
+        <label style="font-size:9px;color:var(--text2);display:block;margin-bottom:2px">สาเหตุที่พบ</label>
+        <select id="editFailureMode" style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text)">
+          ${fmOptions.map(([v,l])=>`<option value="${v}" ${wo.failureMode===v?'selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:9px;color:var(--text2);display:block;margin-bottom:2px">ค่าอะไหล่ (บาท)</label>
+        <input type="number" id="editMaterials" value="${wo.tdcMaterials||''}" min="0" placeholder="0" style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text)">
+      </div>
+      <div>
+        <label style="font-size:9px;color:var(--text2);display:block;margin-bottom:2px">ค่าแรง (บาท)</label>
+        <input type="number" id="editLabor" value="${wo.tdcLabor||''}" min="0" placeholder="0" style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text)">
+      </div>
+      <div>
+        <label style="font-size:9px;color:var(--text2);display:block;margin-bottom:2px">ชั่วโมงที่ใช้ซ่อม</label>
+        <input type="number" id="editLaborHours" value="${wo.laborHours!=null?wo.laborHours:''}" min="0" step="0.5" placeholder="0" style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text)">
+      </div>
+    </div>
+    <label style="font-size:9px;color:var(--text2);display:block;margin-bottom:2px">บทเรียนที่ได้ / วิธีป้องกันไม่ให้เกิดซ้ำ</label>
+    <textarea id="editLessonLearned" rows="2" placeholder="เช่น ควรตรวจสอบทุก 500 SMU..." style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);resize:vertical;margin-bottom:8px">${wo.lessonLearned||''}</textarea>
+    <button type="button" onclick="saveWoExtraDetails()" style="width:100%;padding:8px;font-size:12px;font-weight:700;border:none;border-radius:6px;background:var(--blue-mid,#3b82f6);color:#fff;cursor:pointer">💾 บันทึกข้อมูล</button>
+  </div>`;
   html += `<div style="padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
     <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:5px">📷 รูปก่อนซ่อม (${(wo.imagesBefore||[]).length})</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${_photoThumbs(wo.imagesBefore,'before')}</div>
@@ -1175,6 +1211,29 @@ function renderWoFullDetailBody(){
     </label>
   </div>`;
   box.innerHTML=html;
+}
+// (2 ส.ค. 69) บันทึกช่าง/สาเหตุ/ค่าใช้จ่าย/ชั่วโมงซ่อม/บทเรียน ที่กรอกในหน้านี้ กลับเข้า wo object แล้ว sync
+// ขึ้น Google Sheet ทันที (แบบเดียวกับ updateStatus) เพื่อให้ Admin เห็นข้อมูลอัปเดตจากหน้างานได้เลยไม่ต้องรอ
+function saveWoExtraDetails(){
+  const list=loadWOs();
+  const wo=list.find(w=>w.id===editingWoId);
+  if(!wo){ showToast('❌ ไม่พบข้อมูล WO นี้แล้ว'); return; }
+  const techEl=document.getElementById('editTechnician');
+  const fmEl=document.getElementById('editFailureMode');
+  const matEl=document.getElementById('editMaterials');
+  const labEl=document.getElementById('editLabor');
+  const hrsEl=document.getElementById('editLaborHours');
+  const llEl=document.getElementById('editLessonLearned');
+  if(techEl) wo.technicianName = techEl.value.trim();
+  if(fmEl) wo.failureMode = fmEl.value || null;
+  if(matEl) wo.tdcMaterials = matEl.value!=='' ? Number(matEl.value) : 0;
+  if(labEl) wo.tdcLabor = labEl.value!=='' ? Number(labEl.value) : 0;
+  if(hrsEl) wo.laborHours = hrsEl.value!=='' ? Number(hrsEl.value) : null;
+  if(llEl) wo.lessonLearned = llEl.value.trim();
+  saveWOs(list);
+  showToast('✅ บันทึกข้อมูลการซ่อมแล้ว');
+  renderWoFullDetailBody(); // รีเฟรชกล่องสรุปค่าใช้จ่าย/ชั่วโมงด้านบนให้ตรงกับที่เพิ่งกรอก
+  if(typeof pushWOsToSheetForForm==='function') pushWOsToSheetForForm();
 }
 // (26 ก.ค. 69) บังคับแนบรูปหลังซ่อมก่อนปิดงานเป็น "เสร็จแล้ว" ตามที่ผู้ใช้ขอ — ป้องกันการกดปิดงานลอยๆ
 // โดยไม่มีหลักฐานภาพให้ Admin ตรวจสอบย้อนหลัง (สถานะอื่น open/in_progress/cancelled ยังไม่บังคับ)
