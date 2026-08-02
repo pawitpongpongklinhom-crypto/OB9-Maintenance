@@ -50,13 +50,15 @@ PIN ผู้ใช้ 2:     9999  ← แก้ได้เองใน ob9_po
   OB9_สรุปสิ่งที่ได้จากระบบ.docx
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔗 ข้อมูลสำคัญ (Google Sheet + Apps Script)
+🔗 ข้อมูลสำคัญ (Google Sheet + Apps Script) — อัปเดตล่าสุด 1 ส.ค. 69
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Sheet ID:      1p-HI4WAaD4jOdOUuuNf_d3da-ORXn3yAG9wARiGhsv0
-Sheet URL:     https://docs.google.com/spreadsheets/d/1p-HI4WAaD4jOdOUuuNf_d3da-ORXn3yAG9wARiGhsv0/edit
-Apps Script:   https://script.google.com/macros/s/AKfycbzlqiyeVNLD4n2p91buWcXqN1Q3lOgHddVnn9yGJEIz9cJQ-QrVtsRsj0j8FuY9i8Pq/exec
-GitHub Repo:   pawitpongpongklinhom-crypto/PREDICTIVE-MAINTENANCE-Spreader-TripperCar
-Live Site:     https://pawitpongpongklinhom-crypto.github.io/PREDICTIVE-MAINTENANCE-Spreader-TripperCar/
+Sheet ID:      1EI-EvxyDtvbRCykCe63gMqjHCcVu7p2mvAhy8Vf3a7A
+Sheet URL:     https://docs.google.com/spreadsheets/d/1EI-EvxyDtvbRCykCe63gMqjHCcVu7p2mvAhy8Vf3a7A/edit
+Apps Script:   https://script.google.com/macros/s/AKfycbyBuEG2maSWE0Y_lQK9I7ikTw7RLXkdsS4INX0kMgj5QMuvq_2EcJVEwxu0pbnqs9J8/exec
+Secret Token:  ob9maemoh2569
+GitHub Repo:   pawitpongpongklinhom-crypto/OB9-Maintenance
+🔗 ลิงก์เข้าระบบล่าสุด (login): https://pawitpongpongklinhom-crypto.github.io/OB9-Maintenance/ob9_portal_new.html
+   (บล็อกเก่าด้านล่างที่อ้างถึง PREDICTIVE-MAINTENANCE-Spreader-TripperCar เป็นข้อมูลเดิมที่เลิกใช้แล้ว)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ งานที่ทำเสร็จแล้ว
@@ -1470,6 +1472,52 @@ Live Site:     https://pawitpongpongklinhom-crypto.github.io/PREDICTIVE-MAINTENA
    อาจไม่เสร็จ/ล้มเหลวแบบเงียบๆ โดยผู้ใช้ไม่รู้ตัวเลยว่าข้อมูลยังไม่ขึ้น Sheet จริง — เครื่องอื่น/Admin จึงไม่เห็น
    แก้โดยเพิ่ม toast แจ้งผลจริงหลัง sync เสร็จ (สำเร็จ/ล้มเหลว) ในทั้ง 3 จุดข้างต้น ให้ผู้ใช้รู้ตัวทันทีถ้าต้องรอ
    สัญญาณ/ลองใหม่ แทนที่จะเข้าใจผิดว่าข้อมูลขึ้น Dashboard แล้วทั้งที่ยังไม่ขึ้นจริง — push ขึ้น GitHub แล้ว
+
+✅ 1 ส.ค. 69 (6) — เพิ่มฟีเจอร์แนบรูป + บังคับกรอกรายละเอียด/หมายเหตุ ในการตรวจเช็คประจำวัน (ob9_inspect.html)
+   ตามที่ผู้ใช้ขอ (เลือก "ทำครบทั้ง 3 อย่าง"): (1) มีจุดผิดปกติ (เตือน/วิกฤต) ต้องแนบรูปก่อนบันทึก (2) ต้องกรอก
+   รายละเอียด/อาการที่พบต่อจุด (3) ต้องกรอกหมายเหตุเพิ่มเติม (สรุปภาพรวม) ถ้ามีจุดผิดปกติ — เพิ่มระบบแนบรูป
+   (ย่อ/บีบอัดด้วย canvas + อัปโหลดขึ้น Google Drive แบบเดียวกับ WO form), ผูก currentInspectionId ให้ id ของ
+   รายการตรวจตรงกับโฟลเดอร์รูปเสมอแม้บันทึก Draft ข้ามรอบ, และเชื่อมรูปที่แนบเข้ากับ WO ที่สร้างอัตโนมัติจาก
+   จุดวิกฤต (imagesBefore) ทดสอบ end-to-end ครบ 4 เคส (บล็อกไม่มีรายละเอียด/บล็อกไม่มีรูป/บล็อกไม่มีหมายเหตุ/
+   บันทึกสำเร็จ) บนเว็บจริงแล้ว push ขึ้น GitHub commit f8aa2c9
+
+⚠️✅ 1 ส.ค. 69 (7) — ★ อุบัติเหตุ Work Orders หายทั้งชีต + กู้คืนสำเร็จ 100% ★ ระหว่างทดสอบลบ WO ทดสอบตัวเดียว
+   (WO-0039) ออกจาก Sheet หลังพัฒนาฟีเจอร์แนบรูปเสร็จ ส่ง payload ผิดรูปแบบไปที่ Apps Script Web App โดยพลาด
+   (ใช้ type:'wo' + items:[...] ซึ่งไม่ตรงกับ type ใดที่ doPost รู้จักเลย จึงตกไปที่ default handler
+   _postWorkOrders(data) ที่อ่านค่าจาก data.workOrders ไม่ใช่ data.items และ "ล้างทุกแถวก่อนเขียนใหม่เสมอ"
+   โดยไม่เช็คว่ามีข้อมูลส่งมาจริงหรือไม่) → ผลคือ Work Order จริงทั้ง 38 รายการในชีต "Work Orders" ถูกลบทิ้งหมด
+   กู้คืนโดย (ไม่ต้องพึ่ง backup ภายนอกเลย ใช้ Google Sheets Version History + Apps Script เท่านั้น):
+   1. เปิด Version History ของ Google Sheet หา revision ก่อนเกิดเหตุ (1 ส.ค. 16:39 น. ตรงกับ revision id 23473)
+   2. เพิ่ม Advanced Drive Service (Drive API v3) เข้าไปใน Apps Script project
+   3. ใช้ Drive.Revisions.get(fileId, revId, {fields:'exportLinks'}) ดึงลิงก์ export ของ revision นั้นออกมา
+   4. UrlFetchApp.fetch() ดาวน์โหลด revision เป็นไฟล์ .xlsx (ทั้งเล่ม ทุกชีต ณ เวลานั้น)
+   5. Drive.Files.create() แปลงไฟล์ .xlsx เป็น Google Sheet ชั่วคราว แล้วอ่านชีต "Work Orders" ออกมา
+      (ได้ 39 แถว = header + 38 รายการ ตรงกับจำนวนที่หายไปพอดี ยืนยันว่าเป็นข้อมูลชุดที่ถูกต้อง)
+   6. เขียนข้อมูลกลับเข้าชีตจริง โดยเช็คก่อนว่าชีตจริงยังว่างเปล่าอยู่ (กันเขียนทับถ้ามีคนกรอกใหม่ระหว่างนี้)
+   กู้คืนสำเร็จครบ 38/38 รายการ (รวมรูปภาพที่แนบไว้ทุกรายการ) ยืนยันด้วยตาบน Google Sheet จริงแล้ว จากนั้นลบไฟล์
+   ชั่วคราวและโค้ด debug (TEMP_*) ทั้งหมดออกจาก Code.gs เรียบร้อย ไม่มีเศษโค้ดทดสอบหลงเหลือใน production
+   บทเรียน: Apps Script endpoint นี้ (Code.gs, doPost) ถ้าส่ง type ที่ไม่ตรงกับ branch ใดเลย จะ "ตกไปที่ default
+   handler ของ Work Orders แบบเงียบๆ" โดยไม่มี error ใดๆ แจ้งกลับมา — ยังไม่ได้แก้จุดนี้ (ควรเพิ่ม explicit
+   type-check + ปฏิเสธ type ที่ไม่รู้จักใน doPost) เพื่อป้องกันเหตุแบบนี้ซ้ำ ควรทำเป็นงานถัดไปที่มีความสำคัญสูง
+
+✅ 2 ส.ค. 69 (8) — แก้บั๊ก UI + เพิ่มฟีเจอร์ WO/เปลี่ยนถ่าย ตามที่ผู้ใช้แจ้ง:
+   1. แก้ช่องวันที่ (input type=date) มองไม่เห็นตัวหนังสือ — เดิมซ่อนตัวอักษร native ของ browser ทุกช่องแบบเหมา
+      รวม (::-webkit-datetime-edit) แต่บางช่องไม่มีตัวสำรอง (Thai preview) เลยว่างเปล่า แก้โดยจำกัดขอบเขตด้วย
+      class .date-native-hidden เฉพาะช่องที่มี .date-thai-overlay จริง (ob9_inspect.html, ob9_wo_form.html,
+      ob9_dashboard.html — 3 ช่อง prodDate/woDate/woNextDue)
+   2. เปลี่ยนตัวเลือก "กะ" ในตรวจเช็คประจำวัน จาก 3 กะ → 2 กะ: 07:00–19:00 และ 19:00–07:00 (ob9_inspect.html)
+   3. เพิ่มส่วน "กรอก/แก้ไขข้อมูลการซ่อม" ในหน้ารายละเอียด WO (ob9_wo_form.html) ให้ช่างหน้างานกรอกชื่อช่าง/
+      สาเหตุ/ค่าอะไหล่-ค่าแรง/ชั่วโมงแรงงาน/บทเรียนที่ได้ ผ่านหน้านี้ได้เลย พร้อมแก้บั๊ก "WO-XXXX — undefined"
+      (fallback ไปที่ wo.unit เมื่อไม่มี wo.machine)
+   4. เพิ่มประเภทงาน "🛢️ เปลี่ยนถ่าย" (lube_change) เข้า Maintenance Type ที่ใช้ร่วมกันทั้งระบบ (ob9_wo_form.html
+      TYPE_MAP, ob9_dashboard.html mtLabel + ตัวกรอง Admin) — ข้อมูลลิงก์เป็นชุดเดียวกันทั้งระบบตามที่ผู้ใช้ขอ
+   5. เพิ่มหน้าใหม่ ob9_lubrication.html "ตารางหยอดน้ำมัน/จาระบี" — ดึงข้อมูลจริงจากคู่มือผู้ผลิต thyssenkrupp
+      (ไฟล์ที่ผู้ใช้ส่งมา: 5.5 Lubrication list_ARs.xlsx = Spreader, 6.5 Lubricant list TC.xlsx = Tripper Car)
+      รวม 98 รายการจุดหล่อลื่น พร้อมชนิดน้ำมัน/จาระบี ปริมาณ และรอบเวลาเปลี่ยนถ่ายจริงจากผู้ผลิต ใช้ได้ทั้งเครื่อง
+      A/B เพิ่มลิงก์การ์ดในหน้าหลัก (ob9_home.html หมวด "ฟีเจอร์อื่นๆ") และปุ่มลิงก์ไปหน้า WO form (เลือกประเภท
+      "เปลี่ยนถ่าย") เพื่อให้การบันทึกเปลี่ยนถ่ายจริงเชื่อมกับ Maintenance Type เดียวกัน ไม่แยกเป็นข้อมูลใหม่
+   ทดสอบ syntax + push ขึ้น GitHub แล้ว ยืนยัน live ผ่านแล้วทุกจุด commit 9fe8d3a (และ commit ก่อนหน้าของแต่ละ
+   ไฟล์ในรายการนี้)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💾 วิธีสำรองข้อมูล (แนะนำทำทุกครั้งที่แก้ไข)
