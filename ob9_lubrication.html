@@ -255,18 +255,18 @@
     <button type="button" id="labAdvToggleBtn" onclick="toggleLabAdvanced()" style="grid-column:1/-1;background:#fff;color:var(--navy);border:1px dashed var(--navy)">+ พารามิเตอร์เพิ่มเติม (TBN / Viscosity Index / โลหะสึกหรอ / Particle Count)</button>
   </div>
   <div class="labform" id="labAdvFields" style="display:none">
-    <div><label>TBN — ค่าด่างสำรอง (mgKOH/g)</label><input type="number" step="0.1" id="lab-tbn" placeholder="mgKOH/g"></div>
-    <div><label>Viscosity Index (VI)</label><input type="number" step="1" id="lab-vi" placeholder="VI"></div>
-    <div><label>ทองแดง Cu (ppm)</label><input type="number" step="1" id="lab-cu" placeholder="ppm"></div>
-    <div><label>โครเมียม Cr (ppm)</label><input type="number" step="1" id="lab-cr" placeholder="ppm"></div>
-    <div><label>ตะกั่ว Pb (ppm)</label><input type="number" step="1" id="lab-pb" placeholder="ppm"></div>
-    <div><label>ดีบุก Sn (ppm)</label><input type="number" step="1" id="lab-sn" placeholder="ppm"></div>
-    <div><label>Particle Count / ISO Code</label><input type="text" id="lab-iso" placeholder="เช่น 18/16/13"></div>
+    <div><label>TBN — ค่าด่างสำรอง (mgKOH/g)</label><input type="number" step="0.1" id="lab-tbn" placeholder="เฝ้าระวัง <1.0"></div>
+    <div><label>Viscosity Index (VI)</label><input type="number" step="1" id="lab-vi" placeholder="VI (ข้อมูลอ้างอิง)"></div>
+    <div><label>ทองแดง Cu (ppm)</label><input type="number" step="1" id="lab-cu" placeholder="เฝ้าระวัง >55"></div>
+    <div><label>โครเมียม Cr (ppm)</label><input type="number" step="1" id="lab-cr" placeholder="เฝ้าระวัง >20"></div>
+    <div><label>ตะกั่ว Pb (ppm)</label><input type="number" step="1" id="lab-pb" placeholder="เฝ้าระวัง >55"></div>
+    <div><label>ดีบุก Sn (ppm)</label><input type="number" step="1" id="lab-sn" placeholder="เฝ้าระวัง >20"></div>
+    <div><label>Particle Count / ISO Code</label><input type="text" id="lab-iso" placeholder="เป้าหมาย 19/17/14"></div>
   </div>
   <div class="labform" style="padding:8px 12px">
     <button type="button" onclick="addLabEntry()" style="grid-column:1/-1">+ บันทึกผลแล็บ</button>
   </div>
-  <div class="sec-note" style="margin-top:-6px">⚠️ พารามิเตอร์เพิ่มเติม (TBN/VI/โลหะสึกหรอ/Particle Count) บันทึก+แสดงผลได้ แต่ยังไม่มีเกณฑ์ตัดสิน "ปกติ/เฝ้าระวัง/อันตราย" กำกับ เพราะยังไม่มีค่ามาตรฐานที่ยืนยันจากผู้ใช้ — สถานะยังคำนวณจาก 4 ค่าเดิม (ความหนืด/น้ำ/AN/Fe) ตามเกณฑ์ Flender เท่านั้น</div>
+  <div class="sec-note" style="margin-top:-6px">⚠️ เกณฑ์ TBN/Cu/Cr/Pb/Sn/ISO Code ด้านบนเป็น "เกณฑ์ทั่วไปตามมาตรฐานอุตสาหกรรม" (ไม่ใช่สเปคเฉพาะของ Flender หรือน้ำมันชุดนี้ เพราะยังไม่มีค่ายืนยันจากผู้ผลิต/แล็บจริง) ใช้เป็นจุดเริ่มต้นไปก่อน ถ้ามีผลแล็บ/สเปค OEM ที่แม่นยำกว่านี้ แจ้งปรับได้ทุกเมื่อ — ส่วน Viscosity Index (VI) เป็นคุณสมบัติของสูตรน้ำมัน ไม่ได้ลดลงตามการใช้งาน จึงไม่นำมาคิดในสถานะ ใช้ดูอ้างอิง/ตรวจสอบว่าเติมผิดเกรดหรือไม่เท่านั้น</div>
 
   <div class="table-scroll">
     <table>
@@ -847,6 +847,26 @@ function deleteLabEntry(id){
   _syncLabIfConfigured();
 }
 
+// (3 ส.ค. 69) เกณฑ์เพิ่มเติมสำหรับ TBN/โลหะสึกหรอ/ISO Particle Code — ผู้ใช้ยืนยันให้ใช้ "เกณฑ์ทั่วไปตาม
+// มาตรฐานอุตสาหกรรม" (ไม่ใช่สเปคเฉพาะของ Flender/น้ำมันชุดนี้ เพราะยังไม่มีค่ายืนยันจากผู้ผลิต/แล็บจริง) อ้างอิง
+// แนวทางทั่วไปที่ใช้กันในวงการ oil analysis อุตสาหกรรม:
+//  - TBN: เปลี่ยนถ่ายเมื่อ TBN เหลือต่ำกว่าครึ่งหนึ่งของน้ำมันใหม่ — ระบบนี้ยังไม่ได้เก็บค่า TBN น้ำมันใหม่ไว้
+//    เทียบ จึงใช้ค่าประมาณทั่วไปแทน (TBN < 1.0 mgKOH/g = ค่าต่ำที่น่ากังวลสำหรับน้ำมันเกียร์/หมุนเวียนอุตสาหกรรม
+//    ทั่วไป) — ถ้ามีค่า TBN น้ำมันใหม่จริง แนะนำให้เทียบเป็น % แทนในอนาคต
+//  - โลหะสึกหรอ Cu/Pb (ppm): อ้างอิงแนวทาง gearbox ทั่วไป (เช่น bronze/brass bearing) นิยมเฝ้าระวังเมื่อเกิน
+//    ~50-55 ppm · Cr/Sn (ppm) ทั่วไปมีอัตราการเกิดต่ำกว่ามาก จึงเฝ้าระวังไวกว่าที่ ~20 ppm
+//  - Particle Count/ISO 4406 Code: เทียบกับเป้าหมายทั่วไปของ industrial gearbox (~19/17/14) หากตัวเลขใดหลุด
+//    เป้าหมายไป ถือว่าเข้าเกณฑ์ 1 ปัญหา
+//  - Viscosity Index (VI) ไม่นำมาคิดสถานะ เพราะเป็นคุณสมบัติของสูตรน้ำมัน (ไม่ได้ลดลงจากการใช้งานเหมือนพารามิเตอร์
+//    อื่น) ใช้ดูเทียบสเปคน้ำมัน/ตรวจสอบว่าเติมน้ำมันผิดเกรดหรือไม่เท่านั้น
+function checkIsoCodeExceeds(isoCode){
+  if (!isoCode) return false;
+  var m = /^\s*(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(isoCode);
+  if (!m) return false;
+  var target = [19, 17, 14];
+  for (var i=0;i<3;i++){ if (Number(m[i+1]) > target[i]) return true; }
+  return false;
+}
 function calcLabStatus(entry){
   var row = findRowByKeyPrefix(entry.k);
   var nominalVG = row ? parseNominalVG(row.oil) : null;
@@ -856,10 +876,21 @@ function calcLabStatus(entry){
   var water = entry.water !== '' ? Number(entry.water) : null;
   var an = entry.an !== '' ? Number(entry.an) : null;
   var fe = entry.fe !== '' ? Number(entry.fe) : null;
+  var tbn = entry.tbn ? Number(entry.tbn) : null;
+  var cu = entry.cu ? Number(entry.cu) : null;
+  var cr = entry.cr ? Number(entry.cr) : null;
+  var pb = entry.pb ? Number(entry.pb) : null;
+  var sn = entry.sn ? Number(entry.sn) : null;
   if (nominalVG && visc !== null) { if (Math.abs(visc - nominalVG) / nominalVG > 0.1) issues++; }
   if (water !== null && water > waterLimit) issues++;
   if (an !== null && an > 1.0) issues++;
   if (fe !== null && fe > 100) issues++;
+  if (tbn !== null && tbn < 1.0) issues++;
+  if (cu !== null && cu > 55) issues++;
+  if (pb !== null && pb > 55) issues++;
+  if (cr !== null && cr > 20) issues++;
+  if (sn !== null && sn > 20) issues++;
+  if (checkIsoCodeExceeds(entry.isoCode)) issues++;
   if (issues === 0) return { text:'ปกติ', cls:'b-ok' };
   if (issues === 1) return { text:'เฝ้าระวัง', cls:'b-warn' };
   return { text:'อันตราย', cls:'b-danger' };
