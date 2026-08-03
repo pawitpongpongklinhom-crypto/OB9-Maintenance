@@ -124,6 +124,16 @@
   .tech-card.warn .th-num { color:var(--amber); }
   .tech-btn { width:100%; background:var(--navy); color:#fff; border:none; border-radius:8px; padding:10px; font-size:12.5px; font-weight:700; cursor:pointer; }
   .tech-btn.cancel { background:#fff; color:var(--text3); border:1px solid var(--border); margin-top:6px; }
+  /* (3 ส.ค. 69) ระบุตัวชุดเกียร์ (รุ่น/Serial) + แนบรูป Nameplate/Gear&Motor — ผูกกับ "ชุด" ถาวร ไม่ใช่แค่ตอนปิดงาน */
+  .ident-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; max-width:420px; }
+  .ident-inp { width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:7px; font-size:11.5px; font-family:inherit; background:#fff; }
+  .tech-photo-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; max-width:420px; }
+  .idp-slot { border:1px dashed var(--border); border-radius:9px; padding:6px; text-align:center; background:#fff; }
+  .idp-label { font-size:9.5px; font-weight:700; color:var(--text3); margin-bottom:4px; }
+  .idp-box { background:#F8FAFC; border-radius:7px; overflow:hidden; height:74px; display:flex; align-items:center; justify-content:center; margin-bottom:4px; }
+  .idp-box img { max-width:100%; max-height:100%; object-fit:cover; }
+  .idp-box.idp-empty { color:var(--text3); font-size:20px; }
+  .idp-btn { display:block; width:100%; background:#fff; border:1px solid var(--border); border-radius:6px; padding:4px; font-size:10px; font-weight:700; color:var(--navy); cursor:pointer; }
   .tech-empty { text-align:center; color:var(--text3); font-size:12px; padding:20px; background:#fff; border:1px solid var(--border); border-radius:12px; }
 
   /* ── มุมมองช่างซ่อม แยกตามเครื่องจักร + ปิดงานเปลี่ยนถ่าย (2 ส.ค. 69) ── */
@@ -937,6 +947,90 @@ var WO_MACHINE_LINK = {
 
 function techKeyOf(item){ return item.k + '::' + item.inst.key; }
 
+// ── (3 ส.ค. 69) รูป Nameplate / Gear&Motor + รุ่น/Serial ผูกกับ "ชุด" อุปกรณ์ถาวร ────────────────
+// ผู้ใช้ขอเพิ่มช่องใส่รูป Nameplate กับ Gear&Motor ในฟอร์มปิดงาน (ดู preview ob9_photo_upload_PREVIEW.html
+// ที่อนุมัติแล้ว) — ใช้กลไกอัปโหลดรูปเดียวกับ ob9_wo_form.html (ย่อขนาด + อัปโหลดขึ้น Google Drive ผ่าน
+// Apps Script type=uploadPhoto ตัวเดียวกัน ไม่ต้องแก้ backend) ถ้าอัปโหลดไม่สำเร็จ fallback เป็น base64
+// เก็บในเครื่องนี้ก่อน ต่างจาก imagesAfter ของ WO (ผูกกับงานครั้งนั้นๆ) ตรงที่รูปพวกนี้ผูกกับ "ชุดเกียร์" เอง
+// ถาวร เห็นซ้ำได้ทุกครั้งที่เปิดฟอร์ม ไม่ต้องถ่ายใหม่ทุกรอบเปลี่ยนถ่าย — ณ ตอนปิดงาน จะคัดลอกรูป/รุ่น/Serial
+// ที่มีตอนนั้นแนบไปกับ WO ที่สร้างด้วย (ดู submitTechClose) เป็นสำเนาสำหรับงานครั้งนั้นโดยเฉพาะ
+var LUBE_PHOTO_MAX_DIM = 900, LUBE_PHOTO_QUALITY = 0.65;
+function _resizeLubePhoto(file){
+  return new Promise(function(resolve,reject){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        if (w > LUBE_PHOTO_MAX_DIM || h > LUBE_PHOTO_MAX_DIM) {
+          if (w >= h) { h = Math.round(h*LUBE_PHOTO_MAX_DIM/w); w = LUBE_PHOTO_MAX_DIM; }
+          else { w = Math.round(w*LUBE_PHOTO_MAX_DIM/h); h = LUBE_PHOTO_MAX_DIM; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', LUBE_PHOTO_QUALITY));
+      };
+      img.onerror = function(){ reject(new Error('image load failed')); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ reject(new Error('file read failed')); };
+    reader.readAsDataURL(file);
+  });
+}
+async function _uploadLubePhotoToDrive(dataUrl, folderKey, which){
+  var s = getSyncSettings();
+  if (!s.url || !folderKey) return null;
+  try {
+    var filename = folderKey + '_' + which + '_' + Date.now() + '.jpg';
+    var r = await fetch(s.url, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ token:s.token||'', type:'uploadPhoto', woId:folderKey, which:which, filename:filename, mimeType:'image/jpeg', dataBase64:dataUrl })
+    });
+    var j = await r.json();
+    return (j && j.ok && j.url) ? j.url : null;
+  } catch(e) { return null; }
+}
+async function handleIdentPhotoSelect(evt, k, instKey, which){
+  var files = Array.from(evt.target.files||[]);
+  evt.target.value = '';
+  if (!files.length) return;
+  var state = loadState();
+  var group = state[k];
+  var inst = group && group.instances.find(function(i){ return i.key === instKey; });
+  if (!inst) return;
+  var dataUrl;
+  try { dataUrl = await _resizeLubePhoto(files[0]); } catch(e){ alert('โหลดรูปไม่สำเร็จ — ไฟล์อาจเสียหรือไม่ใช่รูปภาพ'); return; }
+  var folderKey = k + '_' + instKey;
+  var uploadedUrl = await _uploadLubePhotoToDrive(dataUrl, folderKey, which);
+  var finalUrl = uploadedUrl || dataUrl;
+  if (which === 'nameplate') inst.namePlateImg = finalUrl; else inst.gearMotorImg = finalUrl;
+  saveState(state);
+  renderAll();
+  _syncGearboxIfConfigured();
+}
+function onIdentField(k, instKey, field, value){
+  var state = loadState();
+  var group = state[k];
+  var inst = group && group.instances.find(function(i){ return i.key === instKey; });
+  if (!inst) return;
+  inst[field] = value;
+  saveState(state);
+  _syncGearboxIfConfigured();
+}
+function identPhotoSlot(k, instKey, which, label, url){
+  var uid = 'idp_' + which + '_' + instKey;
+  var box = url
+    ? '<div class="idp-box"><img src="' + url + '" alt=""></div>'
+    : '<div class="idp-box idp-empty">📷</div>';
+  return '<div class="idp-slot">'
+    + '<div class="idp-label">' + label + '</div>'
+    + box
+    + '<label class="idp-btn" for="' + uid + '">' + (url?'🔄 เปลี่ยนรูป':'+ แนบรูป') + '</label>'
+    + '<input type="file" id="' + uid + '" accept="image/*" capture="environment" style="display:none" onchange="handleIdentPhotoSelect(event,\'' + k + '\',\'' + instKey + '\',\'' + which + '\')">'
+    + '</div>';
+}
+
 function renderTechContent(){
   var all = collectAllInstances();
   var tabsEl = document.getElementById('techMachTabs');
@@ -970,6 +1064,14 @@ function renderTechContent(){
         + '<div class="tn">' + esc2(item.row.label) + '</div>'
         + '<div class="tp">' + esc2(item.row.pos) + ' (' + esc2(item.inst.label) + ') · น้ำมัน ' + esc2(item.row.oil) + '</div>'
         + numHtml
+        + '<div class="ident-row">'
+        +   '<input type="text" class="ident-inp" placeholder="รุ่น/ยี่ห้อ (ถ้ามี)" value="' + esc2(item.inst.model||'') + '" onchange="onIdentField(\'' + item.k + '\',\'' + item.inst.key + '\',\'model\',this.value)">'
+        +   '<input type="text" class="ident-inp" placeholder="Serial Number (ถ้ามี)" value="' + esc2(item.inst.serial||'') + '" onchange="onIdentField(\'' + item.k + '\',\'' + item.inst.key + '\',\'serial\',this.value)">'
+        + '</div>'
+        + '<div class="tech-photo-row">'
+        +   identPhotoSlot(item.k, item.inst.key, 'nameplate', '📋 Nameplate', item.inst.namePlateImg)
+        +   identPhotoSlot(item.k, item.inst.key, 'gearmotor', '🔧 Gear & Motor', item.inst.gearMotorImg)
+        + '</div>'
         + '<button class="tech-btn" onclick="toggleTechForm(\'' + key + '\')">' + (isForm ? '✕ ยกเลิก' : '✅ ปิดงานเปลี่ยนถ่าย') + '</button>'
         + '<div class="close-form ' + (isForm?'open':'') + '">'
         +   '<div class="frow"><label>วันที่เปลี่ยนถ่ายจริง</label><input type="date" id="cd-date-' + key + '" value="' + new Date().toISOString().slice(0,10) + '"></div>'
@@ -1079,10 +1181,13 @@ function submitTechClose(k, instKey){
     reporter: techName, failedSystem: row.pos, failedPart: row.label, failedPos: '',
     lessonLearned: '', nextMaintenanceDue: null,
     status: 'completed', closedAt: new Date().toISOString(),
-    imagesBefore: [], imagesAfter: [], videosBefore: [], videosAfter: [],
+    imagesBefore: [], imagesAfter: [inst.namePlateImg, inst.gearMotorImg].filter(Boolean), videosBefore: [], videosAfter: [],
     dept: '', notes: note, spare: '', date: date,
     _source: 'ob9_lubrication_tech'
   };
+  if (inst.model || inst.serial) {
+    record.description += ' (รุ่น: ' + (inst.model||'-') + ', Serial: ' + (inst.serial||'-') + ')';
+  }
   var wos = loadWOs();
   wos.push(record);
   saveWOs(wos);
@@ -1215,6 +1320,8 @@ function flattenGearboxItems(){
           topUpDate: inst.topUpDate||'',
           topUpQty: (inst.topUpQty!==undefined && inst.topUpQty!==null) ? inst.topUpQty : '',
           cost: (inst.cost!==undefined && inst.cost!==null) ? inst.cost : '',
+          model: inst.model||'', serial: inst.serial||'',
+          namePlateImg: inst.namePlateImg||'', gearMotorImg: inst.gearMotorImg||'',
           updatedAt: new Date().toISOString()
         });
       });
@@ -1224,10 +1331,24 @@ function flattenGearboxItems(){
 }
 
 function applyRemoteGearboxItems(items){
+  // (3 ส.ค. 69) เก็บ model/serial/namePlateImg/gearMotorImg ของเครื่องนี้ไว้ก่อนเขียนทับ — เผื่อ Apps
+  // Script/Sheet ฝั่ง gearboxOilLog ยังไม่มีคอลัมน์พวกนี้ (deploy ก่อนหน้าฟีเจอร์นี้) จะได้ไม่โดนลบทิ้งทุกครั้ง
+  // ที่หน้าโหลดแล้วดึงจาก Sheet มาเขียนทับ state เดิม (บทเรียนเดียวกับ WO merge-then-push)
+  var prevLocal = {};
+  try {
+    var prevState = JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
+    Object.keys(prevState).forEach(function(k){
+      (prevState[k].instances||[]).forEach(function(inst){
+        prevLocal[k+'::'+inst.key] = { model:inst.model, serial:inst.serial, namePlateImg:inst.namePlateImg, gearMotorImg:inst.gearMotorImg };
+      });
+    });
+  } catch(e){}
+
   var state = {};
   (items||[]).forEach(function(it){
     var k = stateKey(it.machineId, it.rowId);
     if (!state[k]) state[k] = { instances: [] };
+    var prev = prevLocal[k+'::'+it.instKey] || {};
     state[k].instances.push({
       key: it.instKey, label: it.label||'', oilType: it.oilType||'',
       lastHr: (it.lastHr!==''&&it.lastHr!=null) ? it.lastHr : undefined,
@@ -1236,6 +1357,10 @@ function applyRemoteGearboxItems(items){
       topUpDate: it.topUpDate||undefined,
       topUpQty: (it.topUpQty!==''&&it.topUpQty!=null) ? it.topUpQty : undefined,
       cost: (it.cost!==''&&it.cost!=null) ? it.cost : undefined,
+      model: it.model || prev.model || undefined,
+      serial: it.serial || prev.serial || undefined,
+      namePlateImg: it.namePlateImg || prev.namePlateImg || undefined,
+      gearMotorImg: it.gearMotorImg || prev.gearMotorImg || undefined,
       updatedAt: it.updatedAt
     });
   });
