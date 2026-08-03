@@ -250,12 +250,27 @@
     <div><label>ปริมาณน้ำ (ppm)</label><input type="number" step="1" id="lab-water" placeholder="ppm"></div>
     <div><label>ค่าความเป็นกรด AN</label><input type="number" step="0.01" id="lab-an" placeholder="mgKOH/g"></div>
     <div><label>เศษเหล็ก Fe (ppm)</label><input type="number" step="1" id="lab-fe" placeholder="ppm"></div>
-    <button type="button" onclick="addLabEntry()">+ บันทึกผลแล็บ</button>
   </div>
+  <div class="labform" id="labAdvToggleRow" style="margin-bottom:6px;padding:8px 12px">
+    <button type="button" id="labAdvToggleBtn" onclick="toggleLabAdvanced()" style="grid-column:1/-1;background:#fff;color:var(--navy);border:1px dashed var(--navy)">+ พารามิเตอร์เพิ่มเติม (TBN / Viscosity Index / โลหะสึกหรอ / Particle Count)</button>
+  </div>
+  <div class="labform" id="labAdvFields" style="display:none">
+    <div><label>TBN — ค่าด่างสำรอง (mgKOH/g)</label><input type="number" step="0.1" id="lab-tbn" placeholder="mgKOH/g"></div>
+    <div><label>Viscosity Index (VI)</label><input type="number" step="1" id="lab-vi" placeholder="VI"></div>
+    <div><label>ทองแดง Cu (ppm)</label><input type="number" step="1" id="lab-cu" placeholder="ppm"></div>
+    <div><label>โครเมียม Cr (ppm)</label><input type="number" step="1" id="lab-cr" placeholder="ppm"></div>
+    <div><label>ตะกั่ว Pb (ppm)</label><input type="number" step="1" id="lab-pb" placeholder="ppm"></div>
+    <div><label>ดีบุก Sn (ppm)</label><input type="number" step="1" id="lab-sn" placeholder="ppm"></div>
+    <div><label>Particle Count / ISO Code</label><input type="text" id="lab-iso" placeholder="เช่น 18/16/13"></div>
+  </div>
+  <div class="labform" style="padding:8px 12px">
+    <button type="button" onclick="addLabEntry()" style="grid-column:1/-1">+ บันทึกผลแล็บ</button>
+  </div>
+  <div class="sec-note" style="margin-top:-6px">⚠️ พารามิเตอร์เพิ่มเติม (TBN/VI/โลหะสึกหรอ/Particle Count) บันทึก+แสดงผลได้ แต่ยังไม่มีเกณฑ์ตัดสิน "ปกติ/เฝ้าระวัง/อันตราย" กำกับ เพราะยังไม่มีค่ามาตรฐานที่ยืนยันจากผู้ใช้ — สถานะยังคำนวณจาก 4 ค่าเดิม (ความหนืด/น้ำ/AN/Fe) ตามเกณฑ์ Flender เท่านั้น</div>
 
   <div class="table-scroll">
     <table>
-      <thead><tr><th>วันที่</th><th>เครื่องจักร</th><th>ตำแหน่งอุปกรณ์</th><th>ความหนืด @40°C</th><th>ปริมาณน้ำ</th><th>AN</th><th>Fe</th><th>สถานะ</th><th></th></tr></thead>
+      <thead><tr><th>วันที่</th><th>เครื่องจักร</th><th>ตำแหน่งอุปกรณ์</th><th>ความหนืด @40°C</th><th>ปริมาณน้ำ</th><th>AN</th><th>Fe</th><th>พารามิเตอร์เพิ่มเติม</th><th>สถานะ</th><th></th></tr></thead>
       <tbody id="tbl-lab"></tbody>
     </table>
   </div>
@@ -779,6 +794,17 @@ function findRowByKeyPrefix(k){
   return ROWS.find(function(r){ return r.id === rowId; });
 }
 
+// (3 ส.ค. 69) พารามิเตอร์แล็บเพิ่มเติมตามที่ผู้ใช้ขอ — ซ่อนไว้เป็นค่าเสริม ไม่บังคับกรอก เพื่อไม่ให้ฟอร์ม
+// รกเกินไปสำหรับคนที่มีผลแล็บพื้นฐาน 4 ค่าเดิมเท่านั้น กดปุ่มเพื่อขยายดู
+function toggleLabAdvanced(){
+  var el = document.getElementById('labAdvFields');
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'grid';
+  document.getElementById('labAdvToggleBtn').textContent = open
+    ? '+ พารามิเตอร์เพิ่มเติม (TBN / Viscosity Index / โลหะสึกหรอ / Particle Count)'
+    : '− ซ่อนพารามิเตอร์เพิ่มเติม';
+}
+
 function addLabEntry(){
   var equipVal = document.getElementById('lab-equip').value;
   var date = document.getElementById('lab-date').value;
@@ -786,16 +812,31 @@ function addLabEntry(){
   var water = document.getElementById('lab-water').value;
   var an = document.getElementById('lab-an').value;
   var fe = document.getElementById('lab-fe').value;
+  var tbn = document.getElementById('lab-tbn').value;
+  var vi = document.getElementById('lab-vi').value;
+  var cu = document.getElementById('lab-cu').value;
+  var cr = document.getElementById('lab-cr').value;
+  var pb = document.getElementById('lab-pb').value;
+  var sn = document.getElementById('lab-sn').value;
+  var isoCode = document.getElementById('lab-iso').value.trim();
   if (!equipVal || !date) { alert('กรุณาเลือกจุดที่ตรวจและวันที่ก่อนบันทึก'); return; }
   var parts = equipVal.split('::');
   var k = parts[0], instKey = parts[1];
   var list = loadLab();
-  list.push({ id:'lab_'+Date.now(), k:k, instKey:instKey, date:date, visc:visc, water:water, an:an, fe:fe, createdAt:new Date().toISOString() });
+  list.push({ id:'lab_'+Date.now(), k:k, instKey:instKey, date:date, visc:visc, water:water, an:an, fe:fe,
+    tbn:tbn, vi:vi, cu:cu, cr:cr, pb:pb, sn:sn, isoCode:isoCode, createdAt:new Date().toISOString() });
   saveLab(list);
   document.getElementById('lab-visc').value = '';
   document.getElementById('lab-water').value = '';
   document.getElementById('lab-an').value = '';
   document.getElementById('lab-fe').value = '';
+  document.getElementById('lab-tbn').value = '';
+  document.getElementById('lab-vi').value = '';
+  document.getElementById('lab-cu').value = '';
+  document.getElementById('lab-cr').value = '';
+  document.getElementById('lab-pb').value = '';
+  document.getElementById('lab-sn').value = '';
+  document.getElementById('lab-iso').value = '';
   renderAll();
   _syncLabIfConfigured();
 }
@@ -824,11 +865,23 @@ function calcLabStatus(entry){
   return { text:'อันตราย', cls:'b-danger' };
 }
 
+function labAdvSummary(entry){
+  var parts = [];
+  if (entry.tbn) parts.push('TBN ' + entry.tbn);
+  if (entry.vi) parts.push('VI ' + entry.vi);
+  if (entry.cu) parts.push('Cu ' + entry.cu + 'ppm');
+  if (entry.cr) parts.push('Cr ' + entry.cr + 'ppm');
+  if (entry.pb) parts.push('Pb ' + entry.pb + 'ppm');
+  if (entry.sn) parts.push('Sn ' + entry.sn + 'ppm');
+  if (entry.isoCode) parts.push('ISO ' + entry.isoCode);
+  return parts.length ? esc2(parts.join(' · ')) : '<span style="color:var(--text3)">-</span>';
+}
+
 function renderLab(){
   var list = loadLab().slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
   var tbody = document.getElementById('tbl-lab');
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">ยังไม่มีผลแล็บที่บันทึกไว้</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3)">ยังไม่มีผลแล็บที่บันทึกไว้</td></tr>';
     return;
   }
   tbody.innerHTML = list.map(function(entry){
@@ -846,6 +899,7 @@ function renderLab(){
       + '<td>' + (entry.water !== '' ? entry.water+' ppm' : '-') + '</td>'
       + '<td>' + (entry.an !== '' ? entry.an : '-') + '</td>'
       + '<td>' + (entry.fe !== '' ? entry.fe+' ppm' : '-') + '</td>'
+      + '<td style="font-size:10.5px">' + labAdvSummary(entry) + '</td>'
       + '<td><span class="badge ' + status.cls + '">' + status.text + '</span></td>'
       + '<td><button type="button" onclick="deleteLabEntry(\'' + entry.id + '\')" style="border:1px solid var(--border);background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--red);font-size:12px">✕</button></td>'
       + '</tr>';
@@ -1413,12 +1467,29 @@ function pullGearboxOilLogFromSheet(cb){
 
 function flattenLabItems(){
   return loadLab().map(function(e){
-    return { id:e.id, k:e.k, instKey:e.instKey, date:e.date, visc:e.visc, water:e.water, an:e.an, fe:e.fe, createdAt: e.createdAt || new Date().toISOString() };
+    return { id:e.id, k:e.k, instKey:e.instKey, date:e.date, visc:e.visc, water:e.water, an:e.an, fe:e.fe,
+      tbn:e.tbn||'', vi:e.vi||'', cu:e.cu||'', cr:e.cr||'', pb:e.pb||'', sn:e.sn||'', isoCode:e.isoCode||'',
+      createdAt: e.createdAt || new Date().toISOString() };
   });
 }
 function applyRemoteLabItems(items){
   if (!items) return;
-  var list = items.map(function(it){ return { id:it.id, k:it.k, instKey:it.instKey, date:it.date, visc:it.visc, water:it.water, an:it.an, fe:it.fe, createdAt:it.createdAt }; });
+  // (3 ส.ค. 69) เก็บพารามิเตอร์เพิ่มเติม (TBN/VI/โลหะสึกหรอ/Particle Count) ของเดิมไว้ก่อนเขียนทับ — เผื่อ
+  // Apps Script/Sheet ฝั่ง oilAnalysisLog ยังไม่มีคอลัมน์พวกนี้ จะได้ไม่โดนลบทิ้งทุกครั้งที่ pull จาก Sheet มาแทน
+  // ของเดิม (บทเรียนเดียวกับ gearboxOilLog/WO merge-then-push)
+  var prevById = {};
+  try {
+    JSON.parse(localStorage.getItem(LAB_KEY)||'[]').forEach(function(e){
+      prevById[e.id] = { tbn:e.tbn, vi:e.vi, cu:e.cu, cr:e.cr, pb:e.pb, sn:e.sn, isoCode:e.isoCode };
+    });
+  } catch(e){}
+  var list = items.map(function(it){
+    var prev = prevById[it.id] || {};
+    return { id:it.id, k:it.k, instKey:it.instKey, date:it.date, visc:it.visc, water:it.water, an:it.an, fe:it.fe,
+      tbn: it.tbn || prev.tbn || '', vi: it.vi || prev.vi || '', cu: it.cu || prev.cu || '',
+      cr: it.cr || prev.cr || '', pb: it.pb || prev.pb || '', sn: it.sn || prev.sn || '',
+      isoCode: it.isoCode || prev.isoCode || '', createdAt:it.createdAt };
+  });
   saveLab(list);
 }
 var _labSyncDebounce = null;
