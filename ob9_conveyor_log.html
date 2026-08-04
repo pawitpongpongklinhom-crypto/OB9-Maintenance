@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น — หน้าอ้างอิง/รายงานเหมือน
+// ob9_asset_register.html / ob9_documents.html ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — บันทึกงานแผนกสายพาน (Conveyor Log)</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1300px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:16px; line-height:1.6; }
+
+  .src-note { font-size:11px; background:#EEF4FF; border:1px solid #C9DCF5; color:var(--navy-dk); border-radius:8px; padding:9px 12px; margin-bottom:16px; line-height:1.7; }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .sbox { flex:1; min-width:140px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .toolbar input[type=text], .toolbar input[type=date], .toolbar select {
+    padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-size:12.5px; font-family:inherit; background:#fff;
+  }
+  .toolbar input[type=text] { flex:1; min-width:180px; }
+  .toolbar select { min-width:140px; }
+  .toolbar .btn { background:var(--navy); color:#fff; border:none; border-radius:8px; padding:9px 14px; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .toolbar .btn:hover { background:#14488a; }
+  .toolbar .btn.secondary { background:#fff; color:var(--navy); border:1.5px solid var(--navy); }
+
+  .status-note { font-size:11px; color:var(--text3); margin-bottom:10px; }
+  .status-note.err { color:var(--red); }
+
+  .table-scroll { background:#fff; border:1px solid var(--border); border-radius:10px; overflow:auto; }
+  table.clog-table { width:100%; border-collapse:collapse; font-size:12px; min-width:1200px; }
+  table.clog-table th { background:#F8FAFC; color:var(--text3); text-align:left; padding:9px 10px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; border-bottom:1px solid var(--border); position:sticky; top:0; white-space:nowrap; cursor:pointer; user-select:none; }
+  table.clog-table th:hover { color:var(--navy); }
+  table.clog-table td { padding:8px 10px; border-bottom:1px solid #F0F2F6; vertical-align:top; line-height:1.5; }
+  table.clog-table tbody tr:hover td { background:#FAFBFD; }
+  table.clog-table td.mono { font-family:'Consolas',monospace; color:var(--text3); font-size:11px; white-space:nowrap; }
+  table.clog-table td.num { text-align:right; white-space:nowrap; }
+  .wg-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:700; background:#EEF4FF; color:var(--navy); white-space:nowrap; }
+  .photo-link { color:var(--navy); font-weight:700; text-decoration:none; margin-right:6px; font-size:11px; }
+  .empty { text-align:center; color:var(--text3); padding:30px; font-size:12.5px; }
+
+  .pager { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:14px; font-size:12px; color:var(--text3); }
+  .pager button { background:#fff; border:1px solid var(--border); border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .pager button:disabled { opacity:.4; cursor:default; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>บันทึกงานแผนกสายพาน (Conveyor Log)</span>
+  </div>
+  <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+</nav>
+
+<div class="wrap">
+  <h1>บันทึกงานแผนกสายพาน / Conveyor Department Work Log</h1>
+  <div class="sub">ประวัติงานซ่อมบำรุง/ตรวจเช็คของแผนกสายพาน (Spreader, Tripper, Line Shift ฯลฯ) — ดึงมาจากระบบ production-itd.ith.co.th โดยอัตโนมัติทุกวัน (อ่านอย่างเดียว ไม่กระทบข้อมูลต้นทาง)</div>
+
+  <div class="src-note">
+    ℹ️ ข้อมูลนี้ดึงมาจากเว็บระบบ production-itd.ith.co.th (แผนกสายพาน) แบบอ่านอย่างเดียวเท่านั้น — ไม่มีการแก้ไข/บันทึกย้อนกลับไปที่ระบบต้นทางแต่อย่างใด ข้อมูลย้อนหลังเริ่มต้น 30 วัน และจะซิงค์งานใหม่เพิ่มให้อัตโนมัติทุกวัน
+  </div>
+
+  <div class="summary" id="summaryBox"></div>
+
+  <div class="toolbar">
+    <input type="text" id="searchBox" placeholder="ค้นหา: งานที่ทำ, รายละเอียด, ผู้บันทึก, เครื่องจักร, ตำแหน่ง...">
+    <select id="wgFilter"><option value="">กลุ่มงานทั้งหมด</option></select>
+    <select id="machFilter"><option value="">เครื่องจักรทั้งหมด</option></select>
+    <input type="date" id="dateFrom" title="ตั้งแต่วันที่">
+    <input type="date" id="dateTo" title="ถึงวันที่">
+    <button class="btn secondary" onclick="clearFilters()">ล้างตัวกรอง</button>
+    <button class="btn" id="refreshBtn" onclick="loadConveyorLog(true)">🔄 ดึงข้อมูลล่าสุด</button>
+  </div>
+
+  <div class="status-note" id="statusNote">กำลังโหลดข้อมูล...</div>
+
+  <div class="table-scroll">
+    <table class="clog-table">
+      <thead>
+        <tr>
+          <th onclick="setSort('recordDate')">วันที่ทำงาน</th>
+          <th onclick="setSort('workGroup')">กลุ่มงาน</th>
+          <th onclick="setSort('reporter')">ผู้บันทึก</th>
+          <th onclick="setSort('location')">ตำแหน่ง</th>
+          <th onclick="setSort('machine')">เครื่องจักร</th>
+          <th onclick="setSort('epCode')">รหัส EP</th>
+          <th onclick="setSort('smu')">SMU</th>
+          <th>งานที่ทำ</th>
+          <th>รายละเอียด</th>
+          <th onclick="setSort('total')">มูลค่ารวม</th>
+          <th>รูปภาพ</th>
+        </tr>
+      </thead>
+      <tbody id="tblBody">
+        <tr><td colspan="11" class="empty">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager" id="pager" style="display:none">
+    <button id="prevPageBtn" onclick="gotoPage(pageIndex-1)">‹ ก่อนหน้า</button>
+    <span id="pageInfo">หน้า 1</span>
+    <button id="nextPageBtn" onclick="gotoPage(pageIndex+1)">ถัดไป ›</button>
+  </div>
+</div>
+
+<script>
+  // ── ตั้งค่า Web App เฉพาะของ Conveyor Log (แยกจาก Web App หลักของ OB9 โดยสิ้นเชิง —
+  // Google Sheet และ Apps Script คนละตัวกับระบบหลัก เพื่อไม่ให้กระทบข้อมูล WO/SMU/ฯลฯ เดิม) ──
+  var CLOG_URL = 'https://script.google.com/macros/s/AKfycbxD_NnBiqALHnxkIJEsjMBFQ1EKlhKkccl8LS-OdiS1NmyF3sybhWy3pMaYkCJFRDrU/exec';
+  var CLOG_TOKEN = ['ob9','conveyor','2569'].join('');
+  var CACHE_KEY = 'ob9_conveyor_log_cache';
+
+  var ALL_ITEMS = [];
+  var FILTERED = [];
+  var sortField = 'recordDate';
+  var sortDir = -1;
+  var pageIndex = 0;
+  var PAGE_SIZE = 100;
+
+  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try { var d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10); return d.toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'}); }
+    catch(e) { return String(iso).slice(0,10); }
+  }
+  function fmtMoney(n) {
+    var v = Number(n);
+    if (!v) return '—';
+    return v.toLocaleString('th-TH', {maximumFractionDigits:0});
+  }
+
+  function loadConveyorLog(forceRefresh){
+    var statusEl = document.getElementById('statusNote');
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch(e){}
+    if (cached && cached.items && !forceRefresh) {
+      ALL_ITEMS = cached.items;
+      statusEl.textContent = 'แสดงข้อมูลจากแคชล่าสุด (' + new Date(cached.fetchedAt).toLocaleString('th-TH') + ') — กำลังตรวจสอบข้อมูลใหม่...';
+      applyFiltersAndRender();
+    } else {
+      statusEl.textContent = 'กำลังโหลดข้อมูล...';
+    }
+
+    var url = CLOG_URL + '?token=' + encodeURIComponent(CLOG_TOKEN) + '&type=list';
+    fetch(url, {mode:'cors'})
+      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(d){
+        if (!d || !d.items) throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
+        ALL_ITEMS = d.items;
+        localStorage.setItem(CACHE_KEY, JSON.stringify({items: ALL_ITEMS, fetchedAt: new Date().toISOString()}));
+        statusEl.textContent = 'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH') + ' — ' + ALL_ITEMS.length.toLocaleString('th-TH') + ' รายการ';
+        statusEl.className = 'status-note';
+        populateFilterOptions();
+        applyFiltersAndRender();
+      })
+      .catch(function(err){
+        if (ALL_ITEMS.length) {
+          statusEl.textContent = 'ดึงข้อมูลใหม่ไม่สำเร็จ (' + err.message + ') — แสดงข้อมูลแคชล่าสุดแทน';
+          statusEl.className = 'status-note err';
+        } else {
+          statusEl.textContent = 'ดึงข้อมูลไม่สำเร็จ: ' + err.message + ' — ลองกดปุ่ม "ดึงข้อมูลล่าสุด" อีกครั้ง (ระบบใหม่บางครั้งใช้เวลาสักครู่กว่าจะพร้อม)';
+          statusEl.className = 'status-note err';
+          document.getElementById('tblBody').innerHTML = '<tr><td colspan="11" class="empty">ไม่สามารถโหลดข้อมูลได้ในขณะนี้</td></tr>';
+        }
+      });
+  }
+
+  function populateFilterOptions(){
+    var wgSel = document.getElementById('wgFilter');
+    var machSel = document.getElementById('machFilter');
+    var curWg = wgSel.value, curMach = machSel.value;
+    var wgs = Array.from(new Set(ALL_ITEMS.map(function(it){ return it.workGroup; }).filter(Boolean))).sort();
+    var machs = Array.from(new Set(ALL_ITEMS.map(function(it){ return it.machine; }).filter(Boolean))).sort();
+    wgSel.innerHTML = '<option value="">กลุ่มงานทั้งหมด</option>' + wgs.map(function(w){ return '<option value="'+escHtml(w)+'">'+escHtml(w)+'</option>'; }).join('');
+    machSel.innerHTML = '<option value="">เครื่องจักรทั้งหมด</option>' + machs.map(function(m){ return '<option value="'+escHtml(m)+'">'+escHtml(m)+'</option>'; }).join('');
+    wgSel.value = curWg; machSel.value = curMach;
+  }
+
+  function computeSummary(items){
+    var now = new Date();
+    var weekAgo = new Date(now.getTime() - 7*24*60*60*1000);
+    var last7 = items.filter(function(it){ var d = new Date(it.recordDate); return !isNaN(d) && d >= weekAgo; }).length;
+    var machines = new Set(items.map(function(it){ return it.machine; }).filter(Boolean));
+    var wgCounts = {};
+    items.forEach(function(it){ if (it.workGroup) wgCounts[it.workGroup] = (wgCounts[it.workGroup]||0) + 1; });
+    var topWg = Object.keys(wgCounts).sort(function(a,b){ return wgCounts[b]-wgCounts[a]; })[0] || '—';
+    var lastSync = items.reduce(function(max, it){ return (it.syncedAt && it.syncedAt > max) ? it.syncedAt : max; }, '');
+    document.getElementById('summaryBox').innerHTML =
+      '<div class="sbox"><div class="sn" style="color:var(--navy)">' + items.length.toLocaleString('th-TH') + '</div><div class="sl">รายการทั้งหมด (30 วันล่าสุด)</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--green)">' + last7.toLocaleString('th-TH') + '</div><div class="sl">7 วันล่าสุด</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--navy-dk)">' + machines.size + '</div><div class="sl">เครื่องจักรที่มีการบันทึก</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--amber);font-size:13px">' + escHtml(topWg) + '</div><div class="sl">กลุ่มงานที่บันทึกมากสุด</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--text3);font-size:12px">' + (lastSync ? new Date(lastSync).toLocaleString('th-TH') : '—') + '</div><div class="sl">ซิงค์ล่าสุด</div></div>';
+  }
+
+  function setSort(field){
+    if (sortField === field) sortDir = -sortDir; else { sortField = field; sortDir = -1; }
+    applyFiltersAndRender();
+  }
+
+  function clearFilters(){
+    document.getElementById('searchBox').value = '';
+    document.getElementById('wgFilter').value = '';
+    document.getElementById('machFilter').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    applyFiltersAndRender();
+  }
+
+  function applyFiltersAndRender(){
+    var q = document.getElementById('searchBox').value.trim().toLowerCase();
+    var wg = document.getElementById('wgFilter').value;
+    var mach = document.getElementById('machFilter').value;
+    var from = document.getElementById('dateFrom').value;
+    var to = document.getElementById('dateTo').value;
+
+    FILTERED = ALL_ITEMS.filter(function(it){
+      if (wg && it.workGroup !== wg) return false;
+      if (mach && it.machine !== mach) return false;
+      if (from) { var d1 = (it.recordDate||'').slice(0,10); if (d1 < from) return false; }
+      if (to) { var d2 = (it.recordDate||'').slice(0,10); if (d2 > to) return false; }
+      if (q) {
+        var hay = [it.jobName, it.details, it.reporter, it.machine, it.location, it.epCode, it.workGroup].join(' ').toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    FILTERED.sort(function(a,b){
+      var av = a[sortField], bv = b[sortField];
+      if (sortField === 'smu' || sortField === 'total') { av = Number(av)||0; bv = Number(bv)||0; }
+      if (av == null) av = ''; if (bv == null) bv = '';
+      if (av < bv) return -1*sortDir; if (av > bv) return 1*sortDir; return 0;
+    });
+
+    computeSummary(ALL_ITEMS);
+    pageIndex = 0;
+    renderPage();
+  }
+
+  function renderPage(){
+    var start = pageIndex * PAGE_SIZE;
+    var pageItems = FILTERED.slice(start, start + PAGE_SIZE);
+    var body = document.getElementById('tblBody');
+    if (!pageItems.length) {
+      body.innerHTML = '<tr><td colspan="11" class="empty">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+    } else {
+      body.innerHTML = pageItems.map(function(it){
+        var photos = [];
+        if (it.image1) photos.push('<a class="photo-link" href="'+escHtml(it.image1)+'" target="_blank" rel="noopener">รูป 1</a>');
+        if (it.image2) photos.push('<a class="photo-link" href="'+escHtml(it.image2)+'" target="_blank" rel="noopener">รูป 2</a>');
+        return '<tr>' +
+          '<td class="mono">' + fmtDate(it.recordDate) + '</td>' +
+          '<td><span class="wg-badge">' + escHtml(it.workGroup) + '</span></td>' +
+          '<td>' + escHtml(it.reporter) + '</td>' +
+          '<td>' + escHtml(it.location) + '</td>' +
+          '<td>' + escHtml(it.machine) + '</td>' +
+          '<td class="mono">' + escHtml(it.epCode) + '</td>' +
+          '<td class="num">' + (it.smu ? Number(it.smu).toLocaleString('th-TH') : '—') + '</td>' +
+          '<td>' + escHtml(it.jobName) + '</td>' +
+          '<td>' + escHtml(it.details) + '</td>' +
+          '<td class="num">' + fmtMoney(it.total) + '</td>' +
+          '<td>' + (photos.length ? photos.join(' ') : '—') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+    var pager = document.getElementById('pager');
+    var totalPages = Math.max(1, Math.ceil(FILTERED.length / PAGE_SIZE));
+    if (totalPages > 1) {
+      pager.style.display = 'flex';
+      document.getElementById('pageInfo').textContent = 'หน้า ' + (pageIndex+1) + ' / ' + totalPages + ' (' + FILTERED.length.toLocaleString('th-TH') + ' รายการ)';
+      document.getElementById('prevPageBtn').disabled = pageIndex === 0;
+      document.getElementById('nextPageBtn').disabled = pageIndex >= totalPages - 1;
+    } else {
+      pager.style.display = 'none';
+    }
+  }
+
+  function gotoPage(idx){
+    var totalPages = Math.max(1, Math.ceil(FILTERED.length / PAGE_SIZE));
+    if (idx < 0 || idx >= totalPages) return;
+    pageIndex = idx;
+    renderPage();
+    window.scrollTo({top: document.querySelector('.toolbar').offsetTop - 60, behavior:'smooth'});
+  }
+
+  document.getElementById('searchBox').addEventListener('input', debounce(applyFiltersAndRender, 200));
+  document.getElementById('wgFilter').addEventListener('change', applyFiltersAndRender);
+  document.getElementById('machFilter').addEventListener('change', applyFiltersAndRender);
+  document.getElementById('dateFrom').addEventListener('change', applyFiltersAndRender);
+  document.getElementById('dateTo').addEventListener('change', applyFiltersAndRender);
+
+  function debounce(fn, ms){
+    var t = null;
+    return function(){
+      var args = arguments;
+      clearTimeout(t);
+      t = setTimeout(function(){ fn.apply(null, args); }, ms);
+    };
+  }
+
+  loadConveyorLog(false);
+</script>
+</body>
+</html>
