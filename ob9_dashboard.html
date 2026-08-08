@@ -58,6 +58,7 @@
   .header-title p { font-size: 11px; color: #6ca0c2; margin-top: 2px; }
   .header-right { display: flex; align-items: center; gap: 14px; font-size: 11.5px; color: #8aaabb; }
   .header-right span b { color: #c8dde8; }
+  .hdr-more-toggle { display: none; }
   .btn-live {
     background: #0a7a3c;
     color: #5fffaa;
@@ -1194,6 +1195,26 @@
       -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
     .mip-tabs::-webkit-scrollbar { display: none; }
+    /* ══ เมนูรวม ⋮ (8 ส.ค. 69) — ปุ่ม header-right + ob9-toolbar ทั้งหมดถูกย้ายมาไว้ใน
+       #mobMenuPanel ผ่าน JS (ob9InitMobMenu) แล้ว ที่เดิม (.header-right/.ob9-toolbar)
+       จึงไม่มีปุ่มเหลืออยู่บนจอเล็ก ไม่ต้องมี overflow-x scroll อีกต่อไป ══ */
+    .hdr-more-toggle {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #0a2a3a; color: #7ec8f0; border: 1px solid #2a6a90; border-radius: 6px;
+      padding: 4px 10px; font-size: 16px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+    }
+    .header-right > button:not(.btn-live):not(.btn-refresh):not(.hdr-more-toggle),
+    .header-right > input[type=file] { display: none; }
+    .ob9-toolbar > .tb-btn, .ob9-toolbar > .tb-sep { display: none; }
+    .mob-menu-panel {
+      display: none; position: fixed; top: 54px; right: 8px; left: 8px; z-index: 250;
+      background: #0c1f33; border: 1px solid #1e3a52; border-radius: 10px;
+      padding: 10px; max-height: 75vh; overflow-y: auto;
+      flex-direction: column; gap: 6px; box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+    }
+    .mob-menu-panel.open { display: flex; }
+    .mob-menu-panel button { width: 100%; text-align: left; white-space: normal; }
+    .mob-menu-panel input[type=file] { display: none; }
     body { font-size: 12px; }
     thead th { padding: 6px 7px !important; font-size: 10.5px; }
     tbody td { padding: 5px 7px !important; font-size: 11.5px; }
@@ -1336,6 +1357,7 @@
     <button class="btn-refresh">⟳ Refresh</button>
     <span id="syncBadge" class="sync-badge" style="display:none"></span>
     <span id="smuStaleBadge" class="sync-badge" style="display:none;background:#4a1f0a;color:#fb923c;border:1px solid #9a5a2a;cursor:help" title=""></span>
+    <button class="hdr-more-toggle" id="hdrMoreToggle" onclick="toggleMobMenu()" title="เมนู">⋮</button>
     <!-- TIER NAV -->
     <button onclick="window.open('ob9_executive.html','_blank')" style="background:#0a2a3a;color:#38bdf8;border:1px solid #2a6a90;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="เปิด Executive Dashboard">📊 Exec</button>
     <button onclick="window.open('ob9_inspect.html','_blank')" style="background:#0a2a1a;color:#4ade80;border:1px solid #2a6a3a;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="เปิดฟอร์มตรวจเช็ค">✅ Inspect</button>
@@ -1350,6 +1372,10 @@
     <button onclick="location.href='ob9_portal_new.html'" style="background:#1a1a2a;color:#94a3b8;border:1px solid #374151;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="กลับหน้า Portal / Login">🏠 Portal</button>
   </div>
 </div>
+
+<!-- MOBILE: เมนูรวม (8 ส.ค. 69) — บนจอเล็กปุ่มต่างๆ ใน header-right + ob9-toolbar จะถูกย้าย
+     (ผ่าน JS, ไม่ clone) มาไว้ในนี้แทน กดปุ่ม ⋮ เพื่อเปิด/ปิด ไม่กระทบ id/onclick เดิมเลย -->
+<div class="mob-menu-panel" id="mobMenuPanel"></div>
 
 <!-- TOOLBAR -->
 <div class="ob9-toolbar" id="ob9Toolbar">
@@ -15229,6 +15255,38 @@ function checkCBMThreshold() {
     </div>
   </div>
 </div>
+
+<script>
+  // ══ MOBILE: รวมปุ่มเมนู header-right + ob9-toolbar เป็นเมนูเดียว (⋮) บนจอเล็ก (8 ส.ค. 69) ══
+  // ย้าย element จริง (ไม่ clone) เข้า #mobMenuPanel เพื่อไม่ให้ id/onclick/badge (เช่น #predictBadge)
+  // ซ้ำกัน 2 ที่ — ทำครั้งเดียวตอนโหลดหน้า ถ้าจอกว้าง (desktop/tablet) จะไม่ย้ายอะไรเลย ปุ่มอยู่ที่เดิม
+  function ob9InitMobMenu() {
+    if (window.innerWidth > 768) return;
+    var panel = document.getElementById('mobMenuPanel');
+    var hdrRight = document.querySelector('.header-right');
+    var toolbar = document.getElementById('ob9Toolbar');
+    if (!panel || panel.dataset.built === '1') return;
+    if (hdrRight) {
+      Array.prototype.slice.call(hdrRight.querySelectorAll('button')).forEach(function (b) {
+        if (b.id === 'hdrMoreToggle' || b.classList.contains('btn-live') || b.classList.contains('btn-refresh')) return;
+        panel.appendChild(b);
+      });
+    }
+    if (toolbar) {
+      Array.prototype.slice.call(toolbar.children).forEach(function (el) {
+        if (el.id === 'smuBox') return; // smu-box ซ่อนอยู่แล้วบนมือถือ ไม่ต้องย้าย
+        panel.appendChild(el);
+      });
+    }
+    panel.dataset.built = '1';
+  }
+  function toggleMobMenu() {
+    var panel = document.getElementById('mobMenuPanel');
+    if (!panel) return;
+    panel.classList.toggle('open');
+  }
+  document.addEventListener('DOMContentLoaded', ob9InitMobMenu);
+</script>
 
 </body>
 </html>
