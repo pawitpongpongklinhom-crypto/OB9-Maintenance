@@ -1194,6 +1194,45 @@
     tbody td { padding: 5px 7px !important; font-size: 11.5px; }
   }
 
+  /* ══ PM Checklist (รายงานการตรวจเช็คเครื่องจักร) — เปลี่ยนเป็นการ์ดบนมือถือ (8 ส.ค. 69) ══ */
+  /* ผู้ใช้แจ้งว่าตารางเดิมบนมือถือต้อง scroll แนวนอนเพื่อดูให้ครบ (คอลัมน์ #/เครื่อง/ส่วน
+     หลุดจอไปทางซ้าย ดูไม่ครบ/ดูยาก) — เปลี่ยนเฉพาะตารางนี้ (#pmTable) เป็นการ์ดแนวตั้งแบบแอป
+     มือถือทั่วไป ไม่กระทบตารางอื่น (Spare Parts/WO/ฯลฯ) ยังเป็นตารางปกติ+scroll เหมือนเดิม —
+     ทำด้วย CSS ล้วน (flexbox reorder ตาม nth-child) ไม่แตะ JS ที่ query .td-machine/.td-desc/ฯลฯ
+     อยู่เดิม (filter/sync/action button ทำงานเหมือนเดิมทุกอย่าง) */
+  @media (max-width: 768px) {
+    #pmTable { min-width: 0 !important; width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+    #pmTable thead { display: none; }
+    #pmTable tbody, #pmTable tr, #pmTable td { display: block; }
+    #pmTable tbody tr {
+      display: flex; flex-wrap: wrap; align-items: flex-start;
+      background: #0c1f33; border: 1px solid #1e3a52; border-radius: 10px;
+      padding: 10px 12px; margin-bottom: 10px;
+    }
+    #pmTable tbody td { border: none !important; padding: 3px 4px !important; box-sizing: border-box; }
+
+    #pmTable td.td-num { order: 1; width: auto; font-size: 10px; color: #4a7090; }
+    #pmTable td:nth-child(11) { order: 2; width: auto; margin-left: auto; } /* STATUS badge */
+    #pmTable td.td-machine { order: 3; width: 100%; font-size: 13.5px; font-weight: 700; color: #c8dde8; margin-top: 2px; }
+    #pmTable td:nth-child(5) { order: 4; width: auto; display: inline-block !important; } /* dots สี */
+    #pmTable td:nth-child(6) { order: 5; width: auto; display: inline-block !important; margin-left: 6px; } /* ประเภท badge */
+    #pmTable td.td-desc { order: 6; width: 100%; font-size: 12px; color: #9fc3d8; margin-top: 6px; line-height: 1.4; }
+    #pmTable td.td-part, #pmTable td.td-sys { order: 7; width: 50%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
+    #pmTable td.td-part::before { content: "ส่วน: "; color: #3a6080; }
+    #pmTable td.td-sys::before { content: "ระบบ: "; color: #3a6080; }
+    #pmTable td:nth-child(8) { order: 8; width: 50%; margin-top: 4px; } /* INTERVAL */
+    #pmTable td.td-date, #pmTable td.td-next { order: 9; width: 50%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
+    #pmTable td.td-date::before { content: "ตรวจล่าสุด: "; color: #3a6080; }
+    #pmTable td.td-next::before { content: "ครบกำหนด: "; color: #3a6080; }
+    #pmTable td.assignee { order: 10; width: 50%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
+    #pmTable td.assignee::before { content: "ผู้รับผิดชอบ: "; color: #3a6080; }
+    #pmTable td.remark { order: 11; width: 100%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
+    #pmTable td.remark::before { content: "หมายเหตุ: "; color: #3a6080; }
+    #pmTable td:nth-child(14) { order: 12; width: 100%; margin-top: 8px; } /* ปุ่ม action */
+    #pmTable .insp-action-grp { flex-wrap: wrap; }
+    #pmTable .insp-action-grp button { flex: 1 1 auto; font-size: 10.5px; padding: 6px 4px; }
+  }
+
   /* ══ SMALL MOBILE (<480px) ══ */
   @media (max-width: 480px) {
     .header-title { display: none; }
@@ -1721,7 +1760,7 @@
 
     <!-- TABLE -->
     <div class="table-wrap">
-      <table>
+      <table id="pmTable">
         <thead>
           <tr>
             <th>#</th>
