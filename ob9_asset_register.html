@@ -66,6 +66,19 @@
   .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
   .msg.ok { background:#DCFCE7; color:var(--green); }
   .empty { text-align:center; color:var(--text3); padding:10px; font-size:11.5px; }
+  /* ══ MOBILE (8 ส.ค. 69) ══ */
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+    .grid-fields { grid-template-columns: repeat(2, 1fr); }
+    .oh-add-row { flex-wrap: wrap; }
+    .oh-add-row input[type=date] { width: 100%; }
+  }
+  @media (max-width: 480px) {
+    .grid-fields { grid-template-columns: 1fr; }
+  }
+
 </style>
 </head>
 <body>
@@ -221,7 +234,7 @@
           <label style="display:block;font-size:10.5px;color:var(--text3);margin-bottom:3px">หมายเหตุ</label>
           <textarea class="notes" id="notes-${a.id}">${escHtml(a.notes)}</textarea>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" onclick="saveAssetRow('${a.id}')">💾 บันทึก</button>
           <button class="btn secondary" onclick="deleteAsset('${a.id}')">🗑 ลบทรัพย์สินนี้</button>
         </div>

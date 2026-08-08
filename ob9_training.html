@@ -66,6 +66,17 @@
   .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
   .msg.ok { background:#DCFCE7; color:var(--green); }
   .empty { text-align:center; color:var(--text3); padding:10px; font-size:11.5px; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ══ MOBILE (8 ส.ค. 69) ══ */
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+    .form-row, .form-row[style] { grid-template-columns: 1fr !important; }
+    table { min-width: 520px; }
+  }
+
 </style>
 </head>
 <body>
@@ -221,7 +232,7 @@
           </div>
           <button class="btn danger" onclick="deleteTech('${t.id}')">🗑 ลบช่าง</button>
         </div>
-        <table>
+        <div class="table-scroll"><table>
           <thead><tr><th>ใบรับรอง/หลักสูตร</th><th>วันที่ออก</th><th>วันหมดอายุ</th><th>ผู้ออกใบรับรอง</th><th>สถานะ</th><th></th></tr></thead>
           <tbody>
             ${(t.certifications && t.certifications.length > 0)
@@ -238,7 +249,7 @@
                 }).join('')
               : `<tr><td colspan="6" class="empty">ยังไม่มีใบรับรอง</td></tr>`}
           </tbody>
-        </table>
+        </table></div>
         <div class="cert-add-row">
           <input type="text" id="cert-name-${t.id}" placeholder="ชื่อใบรับรอง/หลักสูตร เช่น Rigging & Lifting">
           <input type="date" id="cert-issue-${t.id}" title="วันที่ออก">

@@ -64,6 +64,16 @@
   .hint { font-size:11px; color:var(--text3); margin-top:10px; line-height:1.6; }
   .empty { text-align:center; color:var(--text3); padding:16px; font-size:12.5px; }
   .rev-note { font-size:11.5px; color:var(--text3); }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ══ MOBILE (8 ส.ค. 69) ══ */
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+    table { min-width: 560px; }
+  }
+
 </style>
 </head>
 <body>
@@ -110,12 +120,12 @@
 
   <div class="panel">
     <h2>📊 งบประมาณ vs ค่าใช้จ่ายจริง รายเดือน</h2>
-    <table>
+    <div class="table-scroll"><table>
       <thead><tr>
         <th>เดือน</th><th>งบประมาณ (บาท)</th><th>ใช้จริง (บาท)</th><th>ผลต่าง</th><th style="width:160px">สัดส่วนใช้จริง</th>
       </tr></thead>
       <tbody id="budgetTbody"></tbody>
-    </table>
+    </table></div>
     <div class="hint">
       ค่าใช้จ่ายจริงคำนวณจากผลรวม <code>วัสดุ + ค่าแรง</code> ของ Work Order ทุกใบที่มีวันที่สร้างอยู่ในเดือน/ปีนั้น (อ่านจากข้อมูลเดียวกับที่กรอกในหน้า Dashboard → แจ้งซ่อม/Work Order) — กดปุ่ม "บันทึกงบ" หลังแก้ตัวเลขงบประมาณแต่ละเดือนเพื่อบันทึกไว้
     </div>
@@ -125,12 +135,12 @@
   <div class="panel">
     <h2>🕘 ประวัติการแก้ไขงบประมาณ (ปีที่เลือก)</h2>
     <div class="hint" style="margin-top:0;margin-bottom:12px">บันทึกอัตโนมัติทุกครั้งที่กด "บันทึกงบประมาณ" แล้วมีการเปลี่ยนแปลงค่าใดๆ — ใช้ติดตามว่างบถูก review/แก้ไขไปกี่ครั้ง ใครแก้ เมื่อไหร่ เพราะอะไร</div>
-    <table>
+    <div class="table-scroll"><table>
       <thead><tr>
         <th style="width:150px">วันที่/เวลา</th><th style="width:110px">แก้โดย</th><th>การเปลี่ยนแปลง</th><th>หมายเหตุ</th>
       </tr></thead>
       <tbody id="revisionTbody"></tbody>
-    </table>
+    </table></div>
   </div>
 </div>
 

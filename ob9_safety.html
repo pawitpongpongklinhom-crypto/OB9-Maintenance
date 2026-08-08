@@ -69,6 +69,19 @@
   .b-released { background:#DCFCE7; color:var(--green); }
   .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
   .msg.ok { background:#DCFCE7; color:var(--green); }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ══ MOBILE (8 ส.ค. 69) ══ */
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+    .tabs { flex-wrap: wrap; }
+    .tab-btn { padding: 8px 12px; font-size: 12px; }
+    .form-row, .form-row.wide { grid-template-columns: 1fr; }
+    table { min-width: 560px; }
+  }
+
 </style>
 </head>
 <body>
@@ -135,10 +148,10 @@
     </div>
     <div class="panel">
       <h2>📋 รายการที่บันทึกไว้</h2>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th>วันที่</th><th>ประเภท</th><th>เครื่องจักร/พื้นที่</th><th>ความรุนแรง</th><th>รายละเอียด</th><th>ผู้รายงาน</th><th>สถานะ</th><th></th></tr></thead>
         <tbody id="incidentTbody"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 
@@ -162,10 +175,10 @@
     </div>
     <div class="panel">
       <h2>📋 รายการ JSA ที่บันทึกไว้</h2>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th>วันที่</th><th>เครื่องจักร/พื้นที่</th><th>ลักษณะงาน</th><th>อันตราย</th><th>มาตรการควบคุม</th><th>ผู้อนุมัติ</th><th></th></tr></thead>
         <tbody id="jsaTbody"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 
@@ -194,10 +207,10 @@
     </div>
     <div class="panel">
       <h2>📋 รายการ LOTO ที่บันทึกไว้</h2>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th>วันที่ล็อก</th><th>เครื่องจักร</th><th>เหตุผล</th><th>ผู้ล็อก</th><th>สถานะ</th><th>ผู้ปลดล็อก</th><th></th></tr></thead>
         <tbody id="lotoTbody"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 </div>

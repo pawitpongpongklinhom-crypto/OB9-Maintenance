@@ -61,6 +61,20 @@
   select.status-select { padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; }
   .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
   .msg.ok { background:#DCFCE7; color:var(--green); }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ══ MOBILE (8 ส.ค. 69) ══ */
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+    .form-row { grid-template-columns: 1fr 1fr; }
+    table { min-width: 560px; }
+  }
+  @media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+  }
+
 </style>
 </head>
 <body>
@@ -89,13 +103,13 @@
       กดที่ป้าย MEMO/RO/RFS เพื่อเปลี่ยนสถานะได้จากหน้านี้เลย ข้อมูลจะซิงก์กับหน้า Dashboard อัตโนมัติ
       (ถ้าต้องการเริ่มสั่งซื้ออะไหล่ตัวใหม่ที่ยังไม่มีในลิสต์นี้ ให้ไปเริ่มที่หน้า Dashboard → Spare Parts ก่อน)
     </div>
-    <table>
+    <div class="table-scroll"><table>
       <thead><tr>
         <th>เครื่องจักร</th><th>ระบบ / Position</th><th>ชิ้นส่วน</th><th>Stock คงเหลือ</th>
         <th>MEMO</th><th>RO</th><th>RFS</th>
       </tr></thead>
       <tbody id="procureTbody"></tbody>
-    </table>
+    </table></div>
   </div>
 
   <!-- SECTION B: Custom purchase orders -->
@@ -139,12 +153,12 @@
         <input type="text" id="fNotes" placeholder="เช่น เลขที่ใบสั่งซื้อ, เหตุผลที่ต้องซื้อ">
       </div>
     </div>
-    <table style="margin-top:14px">
+    <div class="table-scroll"><table style="margin-top:14px">
       <thead><tr>
         <th>รายการ</th><th>จำนวน</th><th>ราคารวม</th><th>ผู้จำหน่าย</th><th>สถานะ</th><th>หมายเหตุ</th><th></th>
       </tr></thead>
       <tbody id="customTbody"></tbody>
-    </table>
+    </table></div>
   </div>
 </div>
 

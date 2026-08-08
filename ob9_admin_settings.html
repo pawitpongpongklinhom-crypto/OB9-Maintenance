@@ -61,6 +61,17 @@
   .msg { display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
   .msg.ok { background:#DCFCE7; color:var(--green); }
   .msg.err { background:#FEE2E2; color:var(--red); }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ══ MOBILE (8 ส.ค. 69) ══ */
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+    .form-row { grid-template-columns: 1fr; }
+    table { min-width: 620px; }
+  }
+
 </style>
 </head>
 <body>
@@ -118,7 +129,7 @@
   <!-- TABLE -->
   <div class="panel">
     <h2>📋 รายชื่อพนักงานที่มีสิทธิ์เข้าระบบ (<span id="empCount">0</span> คน)</h2>
-    <table>
+    <div class="table-scroll"><table>
       <thead>
         <tr>
           <th>ชื่อพนักงาน</th>
@@ -131,7 +142,7 @@
         </tr>
       </thead>
       <tbody id="empTableBody"></tbody>
-    </table>
+    </table></div>
     <div class="empty" id="emptyState" style="display:none">ยังไม่มีรายชื่อพนักงาน — เพิ่มด้วยฟอร์มด้านบน หรืออัปโหลด Excel</div>
   </div>
 </div>
