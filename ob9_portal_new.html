@@ -398,8 +398,15 @@
   }
 
   function destinationAfterLogin() {
-    if (TARGET && TARGET_URL[TARGET]) return TARGET_URL[TARGET];
-    return REDIRECT_AFTER_LOGIN;
+    return (TARGET && TARGET_URL[TARGET]) ? TARGET_URL[TARGET] : REDIRECT_AFTER_LOGIN;
+  }
+
+  // (12 ส.ค. 69) ก่อนไปหน้าจริง ให้แวะหน้า "รายการรอดำเนินการ" (ob9_pending.html) ก่อนเสมอ —
+  // เก็บปลายทางจริงไว้ใน sessionStorage แล้วให้หน้านั้นพาไปต่อเองตอนกด "เข้าสู่ Dashboard"
+  function destinationViaPending() {
+    var real = destinationAfterLogin();
+    try { sessionStorage.setItem('ob9_pending_next', real); } catch (e) {}
+    return 'ob9_pending.html';
   }
 
   // (26 ก.ค. 69) เทียบรหัสพนักงานแบบไม่สนใจขีด "-" ตามที่ผู้ใช้ขอ — พิมพ์ "4WO21427" หรือ "4WO-21427"
@@ -454,7 +461,7 @@
       addToNameHistory(adminUser.name);
       errEl.style.display = 'none';
       document.getElementById('successFlash').style.display = 'block';
-      setTimeout(() => { window.location.href = destinationAfterLogin(); }, 700);
+      setTimeout(() => { window.location.href = destinationViaPending(); }, 700);
       return;
     }
 
@@ -505,7 +512,7 @@
       addToNameHistory(emp.name);
       errEl.style.display = 'none';
       document.getElementById('successFlash').style.display = 'block';
-      setTimeout(() => { window.location.href = destinationAfterLogin(); }, 700);
+      setTimeout(() => { window.location.href = destinationViaPending(); }, 700);
       return;
     }
 
@@ -543,10 +550,10 @@
       try {
         const d = JSON.parse(s);
         if (d && (Date.now() - d.loginTime) < 8 * 3600 * 1000) {
-          if (!TARGET) { window.location.href = REDIRECT_AFTER_LOGIN; return; }
-          if (d.isSuperAdmin) { window.location.href = destinationAfterLogin(); return; }
+          if (!TARGET) { window.location.href = destinationViaPending(); return; }
+          if (d.isSuperAdmin) { window.location.href = destinationViaPending(); return; }
           if (d.type === 'field' && d.permissions && d.permissions[permKeyFor(TARGET)]) {
-            window.location.href = destinationAfterLogin(); return;
+            window.location.href = destinationViaPending(); return;
           }
           // login ค้างอยู่แต่ไม่มีสิทธิ์เข้า target นี้ — ให้ล็อกอินใหม่ด้วยบัญชีอื่นได้ที่หน้านี้
         }

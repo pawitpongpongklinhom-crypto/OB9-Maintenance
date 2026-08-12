@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>OB9 — รายการรอดำเนินการ</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-skip{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:6px 14px;background:transparent;color:#fff;cursor:pointer;font-size:12.5px;font-weight:700;text-decoration:none}
+
+  .wrap { max-width:820px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:19px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:18px; line-height:1.6; }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .sbox { flex:1; min-width:130px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .sbox .sn { font-size:22px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+  .sbox.crit .sn { color:var(--red); }
+  .sbox.high .sn { color:var(--amber); }
+  .sbox.total .sn { color:var(--navy); }
+
+  .loading { text-align:center; color:var(--text3); padding:40px; font-size:13px; }
+  .empty { text-align:center; color:var(--text3); padding:40px; font-size:13.5px; background:#fff; border:1px solid var(--border); border-radius:10px; }
+  .empty .big { font-size:32px; margin-bottom:8px; }
+
+  .wo-card { background:#fff; border:1px solid var(--border); border-left:4px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
+  .wo-card.critical { border-left-color:var(--red); }
+  .wo-card.high { border-left-color:var(--amber); }
+  .wo-card.medium { border-left-color:#3b82f6; }
+  .wo-card.low { border-left-color:var(--text3); }
+  .wo-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .wo-unit { font-weight:700; font-size:14px; color:var(--navy-dk); }
+  .wo-badges { display:flex; gap:6px; flex-wrap:wrap; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; white-space:nowrap; }
+  .badge.critical { background:#FEE2E2; color:var(--red); }
+  .badge.high { background:#FEF3C7; color:var(--amber); }
+  .badge.medium { background:#DBEAFE; color:#2563eb; }
+  .badge.low { background:#F0F2F6; color:var(--text3); }
+  .badge.st-pending { background:#F0F2F6; color:var(--text3); }
+  .badge.st-in_progress { background:#EEF4FF; color:var(--navy); }
+  .wo-desc { font-size:12.5px; color:var(--text1); line-height:1.6; margin-bottom:8px; }
+  .wo-meta { font-size:11px; color:var(--text3); display:flex; gap:14px; flex-wrap:wrap; }
+
+  .foot-actions { margin-top:24px; text-align:center; }
+  .btn-continue {
+    background:var(--navy); color:#fff; border:none; border-radius:10px; padding:14px 32px;
+    font-size:14.5px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(26,95,168,.3);
+  }
+  .btn-continue:hover { background:#14488a; }
+  .foot-note { font-size:11px; color:var(--text3); margin-top:10px; }
+
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>รายการรอดำเนินการ</span>
+  </div>
+  <a class="tn-skip" href="#" id="skipLink">ข้ามไป Dashboard →</a>
+</nav>
+
+<div class="wrap">
+  <h1>รายการรอดำเนินการ</h1>
+  <div class="sub">สรุปใบแจ้งซ่อม (Work Order) ที่ยังไม่ปิดงาน ณ ตอนนี้ — ดูให้ครบก่อนเข้าใช้งานระบบตามปกติ</div>
+
+  <div class="summary" id="summaryBox" style="display:none">
+    <div class="sbox total"><div class="sn" id="snTotal">0</div><div class="sl">ยังไม่ปิดงานทั้งหมด</div></div>
+    <div class="sbox crit"><div class="sn" id="snCrit">0</div><div class="sl">🔴 Critical</div></div>
+    <div class="sbox high"><div class="sn" id="snHigh">0</div><div class="sl">🟠 High</div></div>
+  </div>
+
+  <div id="listArea"><div class="loading">⟳ กำลังโหลดรายการ...</div></div>
+
+  <div class="foot-actions">
+    <button class="btn-continue" id="continueBtn">เข้าสู่ Dashboard →</button>
+    <div class="foot-note">หน้านี้แสดงทุกครั้งหลัง Login เพื่อให้เห็นงานค้างก่อนเริ่มใช้งาน</div>
+  </div>
+</div>
+
+<script>
+  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyBuEG2maSWE0Y_lQK9I7ikTw7RLXkdsS4INX0kMgj5QMuvq_2EcJVEwxu0pbnqs9J8/exec';
+  var SECRET_TOKEN = 'ob9maemoh2569';
+
+  // ปลายทางจริงหลังกดข้าม/ดำเนินการต่อ — อ่านจาก sessionStorage ที่ ob9_portal_new.html เซ็ตไว้ก่อน
+  // redirect มาหน้านี้ ถ้าไม่มี (เช่น เข้าหน้านี้ตรงๆ) fallback ไป ob9_home.html
+  function destinationAfterPending() {
+    try {
+      var dest = sessionStorage.getItem('ob9_pending_next');
+      if (dest) return dest;
+    } catch (e) {}
+    return 'ob9_home.html';
+  }
+
+  function goContinue() {
+    window.location.href = destinationAfterPending();
+  }
+  document.getElementById('continueBtn').addEventListener('click', goContinue);
+  document.getElementById('skipLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    goContinue();
+  });
+
+  function priorityRank(p) {
+    return { critical: 0, high: 1, medium: 2, low: 3 }[p] != null ? { critical: 0, high: 1, medium: 2, low: 3 }[p] : 4;
+  }
+  function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return String(iso);
+      return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) { return String(iso); }
+  }
+  var PRIORITY_LABEL = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' };
+  var STATUS_LABEL = { pending: 'รอดำเนินการ', in_progress: 'กำลังซ่อม' };
+
+  function render(wos) {
+    var open = wos.filter(function (w) { return w && w.status !== 'completed'; });
+    open.sort(function (a, b) {
+      var pr = priorityRank(a.priority) - priorityRank(b.priority);
+      if (pr !== 0) return pr;
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+
+    var critCount = open.filter(function (w) { return w.priority === 'critical'; }).length;
+    var highCount = open.filter(function (w) { return w.priority === 'high'; }).length;
+    document.getElementById('snTotal').textContent = open.length;
+    document.getElementById('snCrit').textContent = critCount;
+    document.getElementById('snHigh').textContent = highCount;
+    document.getElementById('summaryBox').style.display = 'flex';
+
+    var listArea = document.getElementById('listArea');
+    if (open.length === 0) {
+      listArea.innerHTML = '<div class="empty"><div class="big">✅</div>ไม่มีใบแจ้งซ่อมค้างอยู่ในตอนนี้</div>';
+      return;
+    }
+    listArea.innerHTML = open.map(function (w) {
+      var pr = w.priority || 'low';
+      var st = w.status || 'pending';
+      return '<div class="wo-card ' + pr + '">' +
+        '<div class="wo-head">' +
+          '<div class="wo-unit">' + escHtml(w.unit || w.unitCode || '-') + (w.machine ? ' <span style="font-weight:400;color:var(--text3);font-size:11.5px">· ' + escHtml(w.machine) + '</span>' : '') + '</div>' +
+          '<div class="wo-badges">' +
+            '<span class="badge ' + pr + '">' + (PRIORITY_LABEL[pr] || pr) + '</span>' +
+            '<span class="badge st-' + st + '">' + (STATUS_LABEL[st] || st) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="wo-desc">' + escHtml(w.description || '(ไม่มีรายละเอียด)') + '</div>' +
+        '<div class="wo-meta">' +
+          '<span>📅 แจ้งเมื่อ ' + fmtDate(w.createdAt) + '</span>' +
+          (w.reporter ? '<span>👤 ' + escHtml(w.reporter) + '</span>' : '') +
+          (w.technicianName ? '<span>🔧 ช่าง: ' + escHtml(w.technicianName) + '</span>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function loadPending() {
+    var url = WEB_APP_URL + '?token=' + encodeURIComponent(SECRET_TOKEN);
+    fetch(url, { mode: 'cors' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.ok && d.workOrders) {
+          render(d.workOrders);
+        } else {
+          document.getElementById('listArea').innerHTML =
+            '<div class="empty">⚠️ ดึงข้อมูลไม่สำเร็จ — <a href="#" onclick="loadPending();return false;">ลองใหม่</a></div>';
+        }
+      })
+      .catch(function () {
+        document.getElementById('listArea').innerHTML =
+          '<div class="empty">⚠️ เชื่อมต่อไม่สำเร็จ (ตรวจสอบอินเทอร์เน็ต) — <a href="#" onclick="loadPending();return false;">ลองใหม่</a></div>';
+      });
+  }
+
+  loadPending();
+</script>
+</body>
+</html>

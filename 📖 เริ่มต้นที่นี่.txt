@@ -1675,6 +1675,48 @@ GitHub Repo:   pawitpongpongklinhom-crypto/OB9-Maintenance
    พิจารณาแก้ในลักษณะเดียวกันถ้าเจอปัญหา WO หายอีกในอนาคต
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 มือถือ: แก้ layout ทั้งระบบ + เพิ่มหน้ารอดำเนินการ + แจ้งเตือน LINE (12 ส.ค. 69)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1) แก้บั๊กมือถือ (ob9_dashboard.html):
+   - viewport meta เพิ่ม maximum-scale=5.0 + user-scalable=yes (pinch-zoom ได้)
+   - root cause ตัวจริงที่ทำให้ทุกหน้าจอมือถือพังทั้งระบบ: .mip-tabs (แถบแท็บภาพรวม/รายงานตรวจเช็ค/ฯลฯ)
+     เป็น flex row ไม่มี wrap/scroll ทำให้ browser ดัน viewport กว้างเกิน 768px จน media query มือถือ
+     "ทั้งหน้า" ไม่ทำงานเลยสักอัน (ไม่ใช่แค่แท็บ) → เพิ่ม overflow-x:auto + flex-wrap:nowrap ให้ .mip-tabs
+   - ตาราง PM Checklist กลายเป็นการ์ดบนมือถือได้จริงหลังแก้ root cause ข้างบน
+   - รวมปุ่ม header-right + ob9-toolbar (~22 ปุ่ม) เป็นเมนูเดียว (⋮) บนมือถือ ย้าย DOM node จริง
+     (ไม่ clone) กันปัญหา id ซ้ำ (#predictBadge ถูกอ้างอิงที่อื่นด้วย)
+2) เพิ่ม mobile CSS ให้ครบทุกหน้าที่เหลือ (14 หน้า): index, ob9_portal_new, ob9_lubrication,
+   ob9_conveyor_log, ob9_admin_settings, ob9_annual_plan, ob9_asset_register, ob9_budget,
+   ob9_documents, ob9_purchase_order, ob9_safety, ob9_shift_handover, ob9_training, ob9_vendor
+   — topnav wrap, form-row ยุบเป็น 1-2 คอลัมน์บนจอเล็ก, ห่อทุกตารางด้วย .table-scroll กันล้นจอ
+3) หน้ารายการรอดำเนินการหลัง Login (ob9_pending.html — ไฟล์ใหม่):
+   - แสดงใบแจ้งซ่อม (Work Order) ที่ยังไม่ปิด (status ≠ completed) เรียงตาม priority แล้วตามวันที่
+   - ob9_portal_new.html แก้ทุกเส้นทาง login (admin/employee/auto-redirect) ให้แวะหน้านี้ก่อนเสมอ
+     ผ่าน destinationViaPending() → เก็บปลายทางจริงไว้ใน sessionStorage['ob9_pending_next']
+     แล้ว ob9_pending.html อ่านค่านั้นพาไปต่อตอนกด "เข้าสู่ Dashboard →" (ไม่มีค่า fallback ไป ob9_home.html)
+4) แจ้งเตือนเข้ามือถือผ่าน LINE (Code.gs — แก้ผ่าน Apps Script Editor โดยตรง ไม่ได้อยู่ในโฟลเดอร์นี้):
+   - LINE Notify ถูกยกเลิกไปแล้ว (1 เม.ย. 2568) เปลี่ยนมาใช้ LINE Messaging API + LINE Official Account
+     แทน (สร้างผ่าน LINE Official Account Manager แล้ว "เปิดใช้งาน" Messaging API ย้อนหลัง)
+   - _sendLineBroadcast(message): ยิง broadcast ไปหาทุกคนที่เพิ่ม OA เป็นเพื่อน อ่าน token จาก
+     PropertiesService (Script Property ชื่อ LINE_CHANNEL_ACCESS_TOKEN) — ไม่โผล่ใน client code เด็ดขาด
+     เพราะ GitHub Pages เป็นเว็บ static เปิด view-source ดูได้
+   - _postWorkOrders แก้เพิ่ม: อ่าน id เดิมก่อน clear แล้วเทียบกับของใหม่ ถ้ามี WO ใหม่ (id ไม่เคยเจอมาก่อน)
+     จะยิง LINE แจ้งทันที (หมายเลข WO/unit/priority/รายละเอียด)
+   - _sendDailyLineSummary() + _setupDailyLineTrigger(): สรุปทุกเช้า 7:00 (เวลาไทย) WO ค้าง + เครื่องจักร
+     ที่ยังไม่มีผลตรวจใน 30 วัน (ประมาณ เพราะ config รอบตรวจจริงอยู่ฝั่ง client เท่านั้น เข้าถึงจาก
+     Apps Script ไม่ได้) — ตั้ง trigger แบบลบของเก่าก่อนสร้างใหม่เสมอ กันรันซ้ำ
+   - ตั้งค่า LINE_CHANNEL_ACCESS_TOKEN ผ่านฟังก์ชันชั่วคราว _tempSetLineToken() (รันครั้งเดียวแล้วลบทิ้ง)
+     เพราะหน้า Project Settings ของ Apps Script คลิก "เพิ่มพร็อพเพอร์ตี้" แล้ว UI ไม่เปิดฟอร์มให้กรอก
+     (บั๊กของ Google เอง ณ ตอนที่แก้) — ใช้วิธีนี้แทนได้ผลชัวร์กว่า
+   - Deploy เป็น Apps Script เวอร์ชัน 22 (12 ส.ค. 2026 11:27) URL เดิม (AKfycbyBuEG2maSWE0Y...) ไม่เปลี่ยน
+   - ทดสอบ: รัน _sendDailyLineSummary() ด้วยมือ 1 ครั้ง ไม่ error (แปลว่าโค้ด/token ใช้ได้จริง) แต่ยังไม่มี
+     ข้อความเด้งเข้ามือถือเพราะ "ยังไม่ได้เพิ่มบัญชี OA เป็นเพื่อนในแอป LINE" — ต้องเพิ่มเพื่อนก่อนถึงจะ
+     เริ่มได้รับแจ้งเตือนจริง (ทั้งตอนมี WO ใหม่ และสรุปตอนเช้า 7 โมง)
+   ⚠️ หมายเหตุ: _postWorkOrders ยังคง clear-ทั้งชีต-แล้วเขียนใหม่ทุก sync เหมือนเดิม (บั๊กเดิมที่ยังไม่แก้
+   ตามที่บันทึกไว้ในรายการก่อนหน้า) — ที่เพิ่มมาคือ "ตรวจจับ id ใหม่ก่อน clear" เพื่อรู้ว่าอันไหนควรแจ้ง
+   LINE เท่านั้น ไม่ได้แก้ปัญหาความเสี่ยงข้อมูลหายที่ต้นเหตุ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💾 วิธีสำรองข้อมูล (แนะนำทำทุกครั้งที่แก้ไข)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 1. คลิกขวาโฟลเดอร์นี้ → "Compress to ZIP"
