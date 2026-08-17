@@ -32,7 +32,9 @@
   .empty { text-align:center; color:var(--text3); padding:40px; font-size:13.5px; background:#fff; border:1px solid var(--border); border-radius:10px; }
   .empty .big { font-size:32px; margin-bottom:8px; }
 
-  .wo-card { background:#fff; border:1px solid var(--border); border-left:4px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
+  .wo-card { background:#fff; border:1px solid var(--border); border-left:4px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:box-shadow .15s,border-color .15s; }
+  .wo-card:hover { box-shadow:0 2px 10px rgba(20,33,61,.1); border-color:#c7cedb; }
+  .wo-click-hint { font-size:10.5px; color:var(--text3); margin-top:6px; }
   .wo-card.critical { border-left-color:var(--red); }
   .wo-card.high { border-left-color:var(--amber); }
   .wo-card.medium { border-left-color:#3b82f6; }
@@ -156,7 +158,7 @@
     listArea.innerHTML = open.map(function (w) {
       var pr = w.priority || 'low';
       var st = w.status || 'pending';
-      return '<div class="wo-card ' + pr + '">' +
+      return '<div class="wo-card ' + pr + '" data-wo-id="' + escHtml(w.id || '') + '">' +
         '<div class="wo-head">' +
           '<div class="wo-unit">' + escHtml(w.unit || w.unitCode || '-') + (w.machine ? ' <span style="font-weight:400;color:var(--text3);font-size:11.5px">· ' + escHtml(w.machine) + '</span>' : '') + '</div>' +
           '<div class="wo-badges">' +
@@ -170,8 +172,19 @@
           (w.reporter ? '<span>👤 ' + escHtml(w.reporter) + '</span>' : '') +
           (w.technicianName ? '<span>🔧 ช่าง: ' + escHtml(w.technicianName) + '</span>' : '') +
         '</div>' +
+        '<div class="wo-click-hint">กดเพื่อเปิดแก้ไข/ปิดงานนี้ →</div>' +
       '</div>';
     }).join('');
+
+    // กดที่การ์ดไหนก็ได้ (ยกเว้นลิงก์/ปุ่มด้านในถ้ามีในอนาคต) → เข้า Dashboard พร้อมเปิด modal
+    // แก้ไข/ปิดงานของ WO ใบนั้นโดยตรง ผ่าน query param ?editWO=<id> ที่ ob9_dashboard.html รองรับ
+    listArea.querySelectorAll('.wo-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        var id = card.getAttribute('data-wo-id');
+        if (!id) return;
+        window.location.href = 'ob9_dashboard.html?editWO=' + encodeURIComponent(id);
+      });
+    });
   }
 
   function loadPending() {

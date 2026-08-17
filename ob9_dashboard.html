@@ -14420,9 +14420,31 @@ function checkCBMThreshold() {
       var _deepMachine = _qs.get('machine');
       var _deepPanel = _qs.get('panel');   // 'pm' | 'spare' — เปิด Tab เฉพาะหลังเลือกเครื่อง
       var _deepAction = _qs.get('action'); // 'smu' | 'power' | 'predict' | 'export' — เปิด Modal/ไฮไลต์ทันที ไม่ต้องเลือกเครื่อง
+      var _deepEditWO = _qs.get('editWO'); // WO id — เปิด modal แก้ไข/ปิดงานของใบนั้นโดยตรง (มาจาก ob9_pending.html กดการ์ดใบแจ้งซ่อม)
       if (_deepMachine && typeof MACHINES !== 'undefined' && MACHINES[_deepMachine] &&
           typeof selectMachineFromImage === 'function') {
         selectMachineFromImage(_deepMachine);
+      }
+      // ── Deep-link เปิด WO เพื่อแก้ไข/ปิดงานโดยตรง จาก ob9_pending.html ──
+      // ข้อมูล WO เข้า localStorage หลัง syncAllWOs() อัตโนมัติตอนโหลดหน้า (setTimeout 1600ms)
+      // จึง poll รอจนกว่าจะเจอ id นี้ใน loadWOs() แทนที่จะเดา delay ตายตัว (กันกรณีเน็ตช้า)
+      if (_deepEditWO && typeof editWO === 'function' && typeof loadWOs === 'function') {
+        (function () {
+          var _tries = 0;
+          var _maxTries = 30; // 30 x 400ms = 12 วินาที
+          var _poll = setInterval(function () {
+            _tries++;
+            var _found = loadWOs().some(function (w) { return w && w.id === _deepEditWO; });
+            if (_found || _tries >= _maxTries) {
+              clearInterval(_poll);
+              if (_found) {
+                editWO(_deepEditWO);
+              } else if (typeof showToast === 'function') {
+                showToast('ไม่พบใบแจ้งซ่อม ' + _deepEditWO + ' — อาจถูกปิด/ลบไปแล้ว', '⚠');
+              }
+            }
+          }, 400);
+        })();
       }
       // ── Deep-link จากการ์ดในหน้า ob9_home.html: ไปหาเนื้อหาของหัวข้อนั้นๆ โดยตรง ──
       if (_deepPanel === 'pm' || _deepPanel === 'spare') {
