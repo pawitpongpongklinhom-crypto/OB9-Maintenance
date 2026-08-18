@@ -1127,7 +1127,7 @@ function identPhotoSlot(k, instKey, which, label, url){
     + '<div class="idp-label">' + label + '</div>'
     + box
     + '<label class="idp-btn" for="' + uid + '">' + (url?'🔄 เปลี่ยนรูป':'+ แนบรูป') + '</label>'
-    + '<input type="file" id="' + uid + '" accept="image/*" capture="environment" style="display:none" onchange="handleIdentPhotoSelect(event,\'' + k + '\',\'' + instKey + '\',\'' + which + '\')">'
+    + '<input type="file" id="' + uid + '" accept="image/*" style="display:none" onchange="handleIdentPhotoSelect(event,\'' + k + '\',\'' + instKey + '\',\'' + which + '\')">'
     + '</div>';
 }
 
