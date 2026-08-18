@@ -5539,6 +5539,25 @@ function _getConfig() {
     document.getElementById('woPos').value = pos;
     document.getElementById('woPart').value = part;
     document.getElementById('woModalSub').textContent = machine + ' › ' + section + ' › ' + part;
+    // ── (17 ส.ค. 69) แก้บั๊ก: openWOModal() รับ machine/section/pos/part เข้ามาแล้ว แต่เดิมเซ็ตแค่ hidden
+    // field (woMachine/woSection/woPos/woPart) กับข้อความสรุปเท่านั้น ไม่เคยเติมลง select ที่ผู้ใช้เห็นจริง
+    // (woFailedSystem/woFailedPart/woFailedPos ในกล่อง "ชิ้นส่วน / Designation — Spare Data Link")
+    // เลย — ทำให้เปิดฟอร์มมาแล้วต้องเลือกซ้ำเองทั้งที่ระบบรู้ข้อมูลอยู่แล้ว (เช่น มาจากคลิกตาราง FMEA
+    // หรือมาจากการตรวจเช็คที่ระบุเครื่อง/ระบบ/ตำแหน่งไว้แล้ว) — เติมให้ตรงนี้เหมือนที่ editWO() ทำกับ WO เดิม
+    if (typeof populateFailedSystems === 'function') populateFailedSystems();
+    var _wfSysEl = document.getElementById('woFailedSystem');
+    if (_wfSysEl && section) {
+      _wfSysEl.value = section;
+      if (typeof populateFailedParts === 'function') populateFailedParts();
+      var _wfPartEl = document.getElementById('woFailedPart');
+      if (_wfPartEl && part) {
+        _wfPartEl.value = part;
+        if (typeof onFailedPartChange === 'function') onFailedPartChange();
+      }
+    }
+    var _wfPosEl = document.getElementById('woFailedPos');
+    if (_wfPosEl) _wfPosEl.value = pos || '';
+    if (typeof updateWOSpareImage === 'function') updateWOSpareImage();
     document.getElementById('woDate').value = new Date().toISOString().slice(0,10);
     updateDateThaiPreview('woDate','woDate-thai');
     document.getElementById('woDesc').value = '';
@@ -5587,11 +5606,21 @@ function _getConfig() {
     var _elEl = document.getElementById('woEquipList'); if (_elEl) _elEl.innerHTML = '';
     if (typeof populateWOEquipNameList === 'function') populateWOEquipNameList();
     if (typeof addLaborRow === 'function') addLaborRow();
-    _woSelectedUnit = '';
-    _woUnitCode = '';
+    document.querySelectorAll('.wo-unit-chip').forEach(c => c.classList.remove('sel'));
+    // (17 ส.ค. 69) ถ้า machine ที่ส่งเข้ามาตรงกับ unit chip ตัวไหนพอดี (เช่น "A1.1", "Spreader.A") ให้เลือก
+    // ให้อัตโนมัติเลย แทนที่จะเคลียร์ทิ้งเฉยๆ ทั้งที่รู้อยู่แล้วว่าเป็นเครื่องไหน — ถ้าไม่ตรง (เช่น key แบบ
+    // 'spreader-a' จากปุ่ม "+ แจ้งซ่อมใหม่" ทั่วไปที่ไม่ระบุเครื่อง) จะไม่มี chip ไหนถูกเลือก เหมือนพฤติกรรมเดิม
+    var _matchChip = machine ? document.querySelector('.wo-unit-chip[data-unit="' + machine.replace(/"/g,'\\"') + '"]') : null;
+    if (_matchChip) {
+      _matchChip.classList.add('sel');
+      _woSelectedUnit = _matchChip.dataset.unit || machine;
+      _woUnitCode = _matchChip.dataset.code || UNIT_CODES[machine] || '';
+    } else {
+      _woSelectedUnit = '';
+      _woUnitCode = '';
+    }
     document.getElementById('woSmuReported').value = '';
     document.getElementById('woSmuCompleted').value = '';
-    document.querySelectorAll('.wo-unit-chip').forEach(c => c.classList.remove('sel'));
     _woModalEl.classList.add('open');
     _woModalEl.style.display = 'flex'; // fallback กัน CSS specificity/ลำดับ stylesheet บังคับ display:none ทับ .open
     // Show existing WO count hint for this part
@@ -5947,6 +5976,10 @@ function _getConfig() {
         if (typeof updateWOSpareImage === 'function') updateWOSpareImage();
       }
     }
+    // (17 ส.ค. 69) เติม "ตำแหน่ง / Position" (woFailedPos) ด้วย — เดิมจุดนี้ยังไม่เคยเติมเลยแม้แต่ตอนแก้บั๊ก
+    // ครั้งก่อน (comment ด้านบน) ทั้งที่ w.failedPos/w.pos มีอยู่จริงเช่นกัน
+    var _wfPosEl2 = document.getElementById('woFailedPos');
+    if (_wfPosEl2) _wfPosEl2.value = w.failedPos || w.pos || '';
     var _woModalEl2 = document.getElementById('woModal');
     if (_woModalEl2) {
       if (_woModalEl2.parentElement !== document.body) document.body.appendChild(_woModalEl2);
