@@ -51,8 +51,11 @@ input[type="date"].date-native-hidden::-webkit-datetime-edit-day-field,
 input[type="date"].date-native-hidden::-webkit-datetime-edit-year-field { color: transparent; }
 input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
 .date-field-wrap{position:relative}
-.date-thai-overlay{position:absolute;left:13px;right:34px;top:0;height:100%;display:flex;align-items:center;
-  font-size:13px;color:var(--text);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* (17 ส.ค. 69) แก้บั๊ก: บางเบราว์เซอร์/WebView บนมือถือไม่รองรับ ::-webkit-datetime-edit color:transparent
+   ด้านบน ทำให้ตัวเลขวันที่จริงของเบราว์เซอร์ยังโผล่ออกมาซ้อนทับกับข้อความไทยที่ลอยทับอยู่ (อ่านไม่ออก) —
+   เพิ่มพื้นหลังทึบให้ overlay กันเป็นชั้นที่สอง (ใช้ var(--card) ให้ตรงกับพื้นหลัง input ทั้ง Light/Dark Mode) */
+.date-thai-overlay{position:absolute;left:13px;right:34px;top:1px;bottom:1px;display:flex;align-items:center;
+  font-size:13px;color:var(--text);background:var(--card);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* HEADER */
 .header{background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
