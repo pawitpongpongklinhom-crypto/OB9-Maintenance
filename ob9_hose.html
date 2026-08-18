@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script>
+// ── OB9 Access Gate: เฉพาะ Admin (super-admin) เท่านั้น — หน้าอ้างอิง/รายงานเหมือน
+// ob9_asset_register.html / ob9_conveyor_log.html ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html'); }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 — ทะเบียนสาย Hose ไฮดรอลิก (Hose Register)</title>
+<style>
+  :root {
+    --accent:#F4A200; --navy:#1A5FA8; --navy-dk:#14213D; --bg:#F4F6FA;
+    --text1:#14213D; --text3:#8A93A3; --border:#E2E6ED; --green:#16A34A; --red:#DC2626; --amber:#D97706;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--text1); }
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:10}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-back{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap { max-width:1300px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:17px; margin:0 0 4px; color:var(--navy-dk); }
+  .sub { font-size:12.5px; color:var(--text3); margin-bottom:16px; line-height:1.6; }
+
+  .src-note { font-size:11px; background:#EEF4FF; border:1px solid #C9DCF5; color:var(--navy-dk); border-radius:8px; padding:9px 12px; margin-bottom:16px; line-height:1.7; }
+
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .sbox { flex:1; min-width:140px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .sbox .sn { font-size:19px; font-weight:800; }
+  .sbox .sl { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .status-note { font-size:11px; color:var(--text3); margin-bottom:10px; }
+  .status-note.err { color:var(--red); }
+
+  .mach-title { font-size:14px; font-weight:700; color:var(--navy-dk); margin:24px 0 10px; display:flex; align-items:center; gap:8px; }
+  .mach-title .cnt { font-size:11px; font-weight:600; color:var(--text3); background:#EEF4FF; border-radius:6px; padding:2px 8px; }
+
+  .table-scroll { background:#fff; border:1px solid var(--border); border-radius:10px; overflow:auto; }
+  table.hose-table { width:100%; border-collapse:collapse; font-size:12px; min-width:1200px; }
+  table.hose-table th { background:#F8FAFC; color:var(--text3); text-align:left; padding:9px 10px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; border-bottom:1px solid var(--border); position:sticky; top:0; white-space:nowrap; }
+  table.hose-table td { padding:8px 10px; border-bottom:1px solid #F0F2F6; vertical-align:top; line-height:1.5; }
+  table.hose-table tbody tr:hover td { background:#FAFBFD; }
+  table.hose-table td.mono { font-family:'Consolas',monospace; color:var(--text3); font-size:11px; white-space:nowrap; }
+  table.hose-table input[type=date], table.hose-table input[type=number], table.hose-table input[type=text], table.hose-table select {
+    width:100%; min-width:88px; padding:5px 6px; border:1px solid var(--border); border-radius:6px; font-size:11.5px; font-family:inherit; background:#fff;
+  }
+  .pos-tag { display:inline-block; font-weight:700; font-size:11px; padding:2px 7px; border-radius:5px; background:#EEF4FF; color:var(--navy); }
+  .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:700; white-space:nowrap; }
+  .b-ok { background:#DCFCE7; color:var(--green); }
+  .b-warn { background:#FEF3C7; color:var(--amber); }
+  .b-danger { background:#FEE2E2; color:var(--red); }
+  .b-muted { background:#F1F3F6; color:var(--text3); }
+  .empty { text-align:center; color:var(--text3); padding:30px; font-size:12.5px; }
+
+  /* ══ MOBILE ══ */
+  @media (max-width: 768px) {
+    .topnav { flex-wrap: wrap; height: auto; min-height: 50px; padding: 8px 12px; gap: 6px; }
+    .tn-brand { font-size: 12.5px; }
+    .wrap { padding: 16px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="tn-brand">
+    <div class="tn-logo">OB9</div>
+    <span>ทะเบียนสาย Hose ไฮดรอลิก (Hose Register)</span>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="tn-back" href="ob9_home.html">← กลับหน้าหลัก</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1>ทะเบียนสาย Hose ไฮดรอลิก / Hydraulic Hose Register</h1>
+  <div class="sub">รายการสาย Hose ของชุด Hydraulic Power Unit — Spreader และ Tripper car พร้อมบันทึกวันที่เปลี่ยนล่าสุด/รอบอายุใช้งาน เพื่อแจ้งเตือนก่อนถึงกำหนดเปลี่ยน</div>
+
+  <div class="src-note">
+    ℹ️ ข้อมูล Part No./สเปค/ตำแหน่งติดตั้ง อ้างอิงจากเอกสาร Parts-list และ Circuit diagram ของ Bosch Rexroth (Hydraulic Power Unit) — ส่วนวันที่เปลี่ยนล่าสุด/รอบอายุใช้งาน/สถานะ ให้ Admin กรอกและปรับปรุงเอง ระบบจะคำนวณสถานะแจ้งเตือนให้อัตโนมัติจาก 2 ค่านี้
+  </div>
+
+  <div class="summary" id="summaryBox"></div>
+  <div class="status-note" id="statusNote">กำลังโหลดข้อมูล...</div>
+
+  <div id="machineSections"></div>
+</div>
+
+<script>
+  // ── ใช้ Web App หลักของ OB9 ร่วมกับ Lubrication/Equipment SMU (key 'ob9_sync_settings') ──
+  var SYNC_KEY = 'ob9_sync_settings';
+  var DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyBuEG2maSWE0Y_lQK9I7ikTw7RLXkdsS4INX0kMgj5QMuvq_2EcJVEwxu0pbnqs9J8/exec';
+  var DEFAULT_SYNC_TOKEN = 'ob9maemoh2569';
+  var STORE_KEY = 'ob9_hose_register_state';
+
+  function getSyncSettings(){
+    try{
+      var s = JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');
+      if (!s.url) { s = {url:DEFAULT_SYNC_URL, token:DEFAULT_SYNC_TOKEN}; localStorage.setItem(SYNC_KEY, JSON.stringify(s)); }
+      return s;
+    }catch(e){ return {url:DEFAULT_SYNC_URL, token:DEFAULT_SYNC_TOKEN}; }
+  }
+
+  // ── ข้อมูลอ้างอิงคงที่ (Part No./สเปค/ตำแหน่งติดตั้ง) จาก Parts-list + Circuit diagram ──
+  var HOSE_DATA = [
+    { id:'SPD-50', machine:'Spreader', pos:'50.0', partNo:'R987487059', type:'2SC-25/N90-28N00-28', dn:'DN25', lengthMm:500,  position:'กลุ่มพอร์ตปั๊ม A4VSO180 (Pos.25) — จุดต่อแน่ชัดในแบบไม่ชัดเจน', standard:'DCCS11002-1' },
+    { id:'SPD-51', machine:'Spreader', pos:'51.0', partNo:'R901467180', type:'2SC-08/N90-10N00-10', dn:'DN8',  lengthMm:800,  position:'สายนำร่อง (pilot) จากเส้น X ผ่านวาล์ว 28.0 (200 bar) เข้าปั๊ม', standard:'DCCS11002-1' },
+    { id:'SPD-52', machine:'Spreader', pos:'52.0', partNo:'R901441276', type:'2SC-25/N90-28N00-28', dn:'DN25', lengthMm:450,  position:'สายนำร่อง (pilot) ขนานกับ 51.0 เข้าปั๊ม A4VSO180', standard:'DCCS11002-1' },
+    { id:'SPD-53', machine:'Spreader', pos:'53.0', partNo:'R987487060', type:'4SH-31/S90-32P00-38', dn:'DN32', lengthMm:1700, position:'ท่อระบาย/เคสเดรน จากพอร์ต B1 ปั๊ม ผ่านเช็ควาล์ว 26.0 (0.5 bar)', standard:'DCCS11002-1' },
+    { id:'TRI-26', machine:'Tripper car', pos:'26.0', partNo:'R987488102', type:'4SH-25/S90-25P00-30', dn:'DN25', lengthMm:1060, position:'พอร์ต B (จ่ายแรงดัน) ปั๊ม A4VSO71 → กรองไลน์ Pos.27', standard:'DCCS11002-1' },
+    { id:'TRI-36', machine:'Tripper car', pos:'36.0', partNo:'R987488103', type:'2SC-08/N90-10N00-10', dn:'DN8',  lengthMm:550,  position:'สายเล็กใกล้วาล์วนิรภัย 35.0 (160 bar) / ฝั่งฮีตเตอร์', standard:'DCCS11002-1' },
+    { id:'TRI-37', machine:'Tripper car', pos:'37.0', partNo:'R901468730', type:'2SC-25/N00-28N00-28', dn:'DN20', lengthMm:800,  position:'พอร์ต K2 (นำร่อง) ปั๊ม A4VSO71 → เส้นถังพัก', standard:'DCCS11002-1' },
+    { id:'TRI-38', machine:'Tripper car', pos:'38.0', partNo:'R987467676', type:'2SC-25/N45-28N00-28', dn:'DN20', lengthMm:500,  position:'พอร์ต R(L) (เคสเดรน) ปั๊ม A4VSO71 → เส้นถังพัก', standard:'DCCS11002-1' }
+  ];
+  var MACHINE_ORDER = ['Spreader', 'Tripper car'];
+
+  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function loadState(){
+    try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'{}'); }catch(e){ return {}; }
+  }
+  function saveState(state){
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  }
+
+  function computeStatus(op){
+    if (!op || !op.lastReplaceDate || !op.intervalMonths) return {label:'ยังไม่ได้บันทึก', cls:'b-muted'};
+    var last = new Date(op.lastReplaceDate);
+    if (isNaN(last)) return {label:'ยังไม่ได้บันทึก', cls:'b-muted'};
+    var due = new Date(last);
+    due.setMonth(due.getMonth() + Number(op.intervalMonths));
+    var now = new Date();
+    var daysLeft = Math.round((due - now) / 86400000);
+    if (daysLeft < 0) return {label:'เกินกำหนด ' + Math.abs(daysLeft) + ' วัน', cls:'b-danger'};
+    if (daysLeft <= 30) return {label:'ใกล้ครบกำหนด (' + daysLeft + ' วัน)', cls:'b-warn'};
+    return {label:'ปกติ (เหลือ ' + daysLeft + ' วัน)', cls:'b-ok'};
+  }
+
+  function renderAll(){
+    var state = loadState();
+    var container = document.getElementById('machineSections');
+    var html = '';
+    var counts = {ok:0, warn:0, danger:0, muted:0};
+
+    MACHINE_ORDER.forEach(function(mach){
+      var rows = HOSE_DATA.filter(function(h){ return h.machine === mach; });
+      if (!rows.length) return;
+      html += '<div class="mach-title">' + escHtml(mach) + ' <span class="cnt">' + rows.length + ' เส้น</span></div>';
+      html += '<div class="table-scroll"><table class="hose-table"><thead><tr>' +
+        '<th>Pos.</th><th>Part No.</th><th>Type/สเปค</th><th>DN</th><th>ยาว (มม.)</th>' +
+        '<th style="min-width:220px">ตำแหน่งติดตั้ง/ใช้งาน</th><th>มาตรฐาน</th>' +
+        '<th style="min-width:130px">วันที่เปลี่ยนล่าสุด</th><th style="min-width:110px">รอบอายุใช้งาน (เดือน)</th>' +
+        '<th style="min-width:150px">สถานะ</th><th style="min-width:140px">หมายเหตุ</th>' +
+        '</tr></thead><tbody>';
+      rows.forEach(function(h){
+        var op = state[h.id] || {};
+        var st = computeStatus(op);
+        if (st.cls === 'b-ok') counts.ok++; else if (st.cls === 'b-warn') counts.warn++; else if (st.cls === 'b-danger') counts.danger++; else counts.muted++;
+        html += '<tr data-id="' + escHtml(h.id) + '">' +
+          '<td><span class="pos-tag">' + escHtml(h.pos) + '</span></td>' +
+          '<td class="mono">' + escHtml(h.partNo) + '</td>' +
+          '<td class="mono">' + escHtml(h.type) + '</td>' +
+          '<td>' + escHtml(h.dn) + '</td>' +
+          '<td>' + escHtml(h.lengthMm) + '</td>' +
+          '<td>' + escHtml(h.position) + '</td>' +
+          '<td class="mono">' + escHtml(h.standard) + '</td>' +
+          '<td><input type="date" class="f-date" value="' + escHtml(op.lastReplaceDate||'') + '"></td>' +
+          '<td><input type="number" class="f-interval" min="0" step="1" value="' + escHtml(op.intervalMonths||'') + '"></td>' +
+          '<td><span class="badge ' + st.cls + '">' + escHtml(st.label) + '</span></td>' +
+          '<td><input type="text" class="f-note" value="' + escHtml(op.note||'') + '" placeholder="หมายเหตุ"></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+    });
+
+    container.innerHTML = html;
+
+    document.getElementById('summaryBox').innerHTML =
+      '<div class="sbox"><div class="sn" style="color:var(--navy-dk)">' + HOSE_DATA.length + '</div><div class="sl">สาย Hose ทั้งหมด</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--green)">' + counts.ok + '</div><div class="sl">ปกติ</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--amber)">' + counts.warn + '</div><div class="sl">ใกล้ครบกำหนด</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--red)">' + counts.danger + '</div><div class="sl">เกินกำหนด</div></div>' +
+      '<div class="sbox"><div class="sn" style="color:var(--text3)">' + counts.muted + '</div><div class="sl">ยังไม่ได้บันทึก</div></div>';
+
+    container.querySelectorAll('tr[data-id]').forEach(function(tr){
+      var id = tr.getAttribute('data-id');
+      var dateEl = tr.querySelector('.f-date');
+      var intervalEl = tr.querySelector('.f-interval');
+      var noteEl = tr.querySelector('.f-note');
+      function onEdit(){
+        var st = loadState();
+        st[id] = {
+          lastReplaceDate: dateEl.value || '',
+          intervalMonths: intervalEl.value || '',
+          note: noteEl.value || '',
+          updatedAt: new Date().toISOString()
+        };
+        saveState(st);
+        renderAll();
+        _syncHoseIfConfigured();
+      }
+      dateEl.addEventListener('change', onEdit);
+      intervalEl.addEventListener('change', onEdit);
+      noteEl.addEventListener('change', onEdit);
+    });
+  }
+
+  // ── Sync ขึ้น Google Sheet กลาง (type: hoseRegister) ──
+  function flattenHoseItems(){
+    var state = loadState();
+    return HOSE_DATA.map(function(h){
+      var op = state[h.id] || {};
+      return {
+        id: h.id, machine: h.machine, pos: h.pos, partNo: h.partNo, type: h.type, dn: h.dn,
+        lengthMm: h.lengthMm, position: h.position, standard: h.standard,
+        lastReplaceDate: op.lastReplaceDate || '', intervalMonths: op.intervalMonths || '',
+        note: op.note || '', updatedAt: op.updatedAt || new Date().toISOString()
+      };
+    });
+  }
+
+  function applyRemoteHoseItems(items){
+    if (!items || !items.length) return;
+    var state = loadState();
+    items.forEach(function(it){
+      if (!it.id) return;
+      // เก็บเฉพาะ 3 ฟิลด์ที่แก้ไขได้ (วันที่/รอบอายุ/หมายเหตุ) — ข้อมูลอ้างอิง (part no./สเปค) ยึดจาก HOSE_DATA ในหน้าเสมอ
+      if (it.lastReplaceDate || it.intervalMonths || it.note) {
+        state[it.id] = {
+          lastReplaceDate: it.lastReplaceDate || '',
+          intervalMonths: it.intervalMonths || '',
+          note: it.note || '',
+          updatedAt: it.updatedAt || new Date().toISOString()
+        };
+      }
+    });
+    saveState(state);
+  }
+
+  var _hoseSyncDebounce = null;
+  function _syncHoseIfConfigured(){
+    try{
+      var s = getSyncSettings();
+      if (s.url) { if (_hoseSyncDebounce) clearTimeout(_hoseSyncDebounce); _hoseSyncDebounce = setTimeout(pushHoseRegister, 800); }
+    }catch(e){}
+  }
+  function pushHoseRegister(){
+    var s = getSyncSettings();
+    if (!s.url) return;
+    var items = flattenHoseItems();
+    fetch(s.url, { method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({token:s.token||'', type:'hoseRegister', items:items}) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var note = document.getElementById('statusNote');
+        if (d && d.ok) { localStorage.setItem('ob9_last_hose_sync', new Date().toISOString()); if (note) { note.textContent = 'ซิงค์ขึ้น Google Sheet ล่าสุด: ' + new Date().toLocaleString('th-TH'); note.className='status-note'; } }
+        else if (note) { note.textContent = 'ซิงค์ไม่สำเร็จ: ' + ((d && d.msg) || 'ไม่ทราบสาเหตุ'); note.className='status-note err'; }
+      })
+      .catch(function(err){
+        var note = document.getElementById('statusNote');
+        if (note) { note.textContent = 'ซิงค์ไม่สำเร็จ: ' + err.message; note.className='status-note err'; }
+      });
+  }
+  function pullHoseRegisterFromSheet(cb){
+    var s = getSyncSettings();
+    if (!s.url) { if (cb) cb(); return; }
+    var url = s.url + '?token=' + encodeURIComponent(s.token||'') + '&type=hoseRegister';
+    fetch(url, {mode:'cors'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (d && d.ok && d.hoseRegister) applyRemoteHoseItems(d.hoseRegister); })
+      .catch(function(){})
+      .finally(function(){ if (cb) cb(); });
+  }
+
+  renderAll();
+  var statusEl = document.getElementById('statusNote');
+  pullHoseRegisterFromSheet(function(){
+    renderAll();
+    if (statusEl) statusEl.textContent = 'โหลดข้อมูลล่าสุดจาก Google Sheet เรียบร้อย';
+  });
+</script>
+</body>
+</html>
