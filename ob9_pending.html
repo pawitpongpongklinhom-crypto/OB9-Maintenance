@@ -109,6 +109,21 @@
     return 'ob9_home.html';
   }
 
+  // Admin เข้าหน้า Dashboard เต็มได้ตรงๆ (มี modal แก้ไข/ปิดงาน editWO() อยู่ในนั้น) แต่พนักงานทั่วไป
+  // (type: 'field') ไม่มีสิทธิ์เข้าหน้านั้น ต้องเปิดผ่าน ob9_wo_form.html แทน (มี modal ของตัวเอง
+  // openModal()/updateStatus() — หน้านั้นมีการ์ดเช็คสิทธิ์ permissions.workorder อยู่แล้วในตัว)
+  function isAdminSession() {
+    try {
+      var s = JSON.parse(sessionStorage.getItem('ob9_session') || 'null');
+      return !!(s && s.isSuperAdmin);
+    } catch (e) { return false; }
+  }
+  function woEditUrl(id) {
+    return isAdminSession()
+      ? 'ob9_dashboard.html?editWO=' + encodeURIComponent(id)
+      : 'ob9_wo_form.html?openWO=' + encodeURIComponent(id);
+  }
+
   function goContinue() {
     window.location.href = destinationAfterPending();
   }
@@ -182,7 +197,7 @@
       card.addEventListener('click', function () {
         var id = card.getAttribute('data-wo-id');
         if (!id) return;
-        window.location.href = 'ob9_dashboard.html?editWO=' + encodeURIComponent(id);
+        window.location.href = woEditUrl(id);
       });
     });
   }

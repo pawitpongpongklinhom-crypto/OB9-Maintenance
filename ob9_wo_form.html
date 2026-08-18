@@ -725,11 +725,23 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     if(p.get('note')) document.getElementById('inp-symptom').value=p.get('note');
   }
+  // Deep-link จากหน้ารายการรอดำเนินการ (ob9_pending.html) — พนักงานกดการ์ด WO ใบไหน จะพามาที่นี่พร้อม
+  // ?openWO=<id> เพื่อเปิด modal ดู/เปลี่ยนสถานะของใบนั้นให้อัตโนมัติทันที (คู่กับ ?editWO= ฝั่ง Dashboard
+  // ที่ใช้กับ Admin — พนักงานทั่วไปไม่มีสิทธิ์เข้าหน้า Dashboard เต็ม จึงต้องเปิดผ่านหน้านี้แทน)
+  const _openWO = p.get('openWO');
   renderWoList();
   // ดึงข้อมูลล่าสุดจาก Sheet มา merge ก่อน แล้วอัปเดต WO ID ให้ไม่ชนกับที่คนอื่นเพิ่งแจ้งซ่อมจากเครื่องอื่น
   pullWOsFromSheetForForm(function(){
     renderWoList();
     document.getElementById('inp-wo-id').value = generateWoId();
+    if(_openWO){
+      const _found = loadWOs().some(w => w && w.id === _openWO);
+      if(_found && typeof openModal === 'function'){
+        openModal(_openWO);
+      } else if(typeof showToast === 'function'){
+        showToast('⚠️ ไม่พบใบแจ้งซ่อม ' + _openWO + ' — อาจถูกปิด/ลบไปแล้ว');
+      }
+    }
   });
 });
 
