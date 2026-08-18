@@ -352,7 +352,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
         <div id="preview-before" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
       </div>
       <div class="form-group">
-        <label class="form-label">🎬 วิดีโอหน้างาน (ก่อนซ่อม — ถ้ามี, ไม่บังคับ, ไม่เกิน 30 วิ/คลิป)</label>
+        <label class="form-label">🎬 วิดีโอหน้างาน (ก่อนซ่อม — ถ้ามี, ไม่บังคับ, ไม่เกิน 1 นาที/คลิป)</label>
         <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--blue,#1e40af);background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:9px 12px;cursor:pointer">
           <span>📎 เลือก/ถ่ายวิดีโอ</span>
           <input type="file" accept="video/*" capture="environment" multiple style="display:none" onchange="handleVideoSelect(event,'pending-before')">
@@ -495,10 +495,10 @@ async function _uploadPhotoToDrive(dataUrl, folderKey, which){
 
 // ── VIDEO ATTACHMENTS (before/after) ─────────────────────────────────────────
 // (28 ก.ค. 69) แนบวิดีโอได้เพิ่มจากรูปตามที่ผู้ใช้ขอ — เป็นทางเลือกเสริม ไม่บังคับก่อนปิดงาน (รูปหลังซ่อม
-// ยังคงบังคับเหมือนเดิม) จำกัดไม่เกิน 30 วินาที/คลิป เพราะไฟล์วิดีโอใหญ่กว่ารูปมาก อัปโหลดช้า/ล้มเหลวได้ถ้า
+// ยังคงบังคับเหมือนเดิม) จำกัดไม่เกิน 1 นาที/คลิป (60 วินาที) เพราะไฟล์วิดีโอใหญ่กว่ารูปมาก อัปโหลดช้า/ล้มเหลวได้ถ้า
 // เน็ตหน้างานไม่ดี — ใช้ Apps Script endpoint เดียวกับรูป (type=uploadPhoto รองรับไฟล์ทุกชนิดอยู่แล้ว ไม่ต้อง
 // แก้ฝั่ง Sheet/Drive เพิ่ม) เก็บ URL ไว้ใน wo.videosBefore/wo.videosAfter แยกจาก imagesBefore/imagesAfter
-const VIDEO_MAX_SEC = 30;
+const VIDEO_MAX_SEC = 60; // (17 ส.ค. 69) ขยายจาก 30 วิ เป็น 1 นาที ตามที่ผู้ใช้ขอ
 function _checkVideoDuration(file){
   return new Promise((resolve)=>{
     let done = false;
@@ -553,7 +553,7 @@ async function handleVideoSelect(evt, mode){
   for (const file of files){
     const dur = await _checkVideoDuration(file);
     if (dur != null && dur > VIDEO_MAX_SEC + 0.5){
-      showToast('⚠️ วิดีโอ "'+file.name+'" ยาว '+Math.round(dur)+' วิ เกิน 30 วิ — ข้ามคลิปนี้ กรุณาตัดให้สั้นลง');
+      showToast('⚠️ วิดีโอ "'+file.name+'" ยาว '+Math.round(dur)+' วิ เกิน 1 นาที — ข้ามคลิปนี้ กรุณาตัดให้สั้นลง');
       continue;
     }
     showToast('🎬 กำลังอัปโหลดวิดีโอ...');
@@ -1205,7 +1205,7 @@ function renderWoFullDetailBody(){
     <label style="display:inline-block;font-size:11px;font-weight:700;color:var(--blue,#1e40af);cursor:pointer">+ เพิ่มรูปก่อนซ่อม
       <input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotoSelect(event,'wo-before')">
     </label>
-    <div style="font-size:10px;font-weight:700;color:var(--text2);margin:8px 0 5px">🎬 วิดีโอก่อนซ่อม (${(wo.videosBefore||[]).length}) <span style="font-weight:400;color:var(--text3)">— ไม่บังคับ, ≤30 วิ/คลิป</span></div>
+    <div style="font-size:10px;font-weight:700;color:var(--text2);margin:8px 0 5px">🎬 วิดีโอก่อนซ่อม (${(wo.videosBefore||[]).length}) <span style="font-weight:400;color:var(--text3)">— ไม่บังคับ, ≤1 นาที/คลิป</span></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${_videoThumbs(wo.videosBefore,'before')}</div>
     <label style="display:inline-block;font-size:11px;font-weight:700;color:var(--blue,#1e40af);cursor:pointer">+ เพิ่มวิดีโอก่อนซ่อม
       <input type="file" accept="video/*" capture="environment" multiple style="display:none" onchange="handleVideoSelect(event,'wo-before')">
@@ -1217,7 +1217,7 @@ function renderWoFullDetailBody(){
     <label style="display:inline-block;font-size:11px;font-weight:700;color:var(--blue,#1e40af);cursor:pointer">+ เพิ่มรูปหลังซ่อม
       <input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotoSelect(event,'wo-after')">
     </label>
-    <div style="font-size:10px;font-weight:700;color:var(--text2);margin:8px 0 5px">🎬 วิดีโอหลังซ่อม (${(wo.videosAfter||[]).length}) <span style="font-weight:400;color:var(--text3)">— ไม่บังคับ, ≤30 วิ/คลิป</span></div>
+    <div style="font-size:10px;font-weight:700;color:var(--text2);margin:8px 0 5px">🎬 วิดีโอหลังซ่อม (${(wo.videosAfter||[]).length}) <span style="font-weight:400;color:var(--text3)">— ไม่บังคับ, ≤1 นาที/คลิป</span></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${_videoThumbs(wo.videosAfter,'after')}</div>
     <label style="display:inline-block;font-size:11px;font-weight:700;color:var(--blue,#1e40af);cursor:pointer">+ เพิ่มวิดีโอหลังซ่อม
       <input type="file" accept="video/*" capture="environment" multiple style="display:none" onchange="handleVideoSelect(event,'wo-after')">

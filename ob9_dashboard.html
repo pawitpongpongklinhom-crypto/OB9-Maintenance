@@ -6953,8 +6953,8 @@ function calcRPN() {
   }
 
   // ── After-repair VIDEOS (28 ก.ค. 69) ── มิเรอร์ของ addAfterImages/handleAfterImages แต่เป็นวิดีโอ
-  // เป็นทางเลือกเสริม ไม่บังคับ จำกัดไม่เกิน 30 วิ/คลิป ใช้ endpoint type=uploadPhoto เดิม (รองรับทุก mimeType)
-  var VIDEO_MAX_SEC_DASH = 30;
+  // เป็นทางเลือกเสริม ไม่บังคับ จำกัดไม่เกิน 1 นาที/คลิป (60 วินาที) ใช้ endpoint type=uploadPhoto เดิม (รองรับทุก mimeType)
+  var VIDEO_MAX_SEC_DASH = 60; // (17 ส.ค. 69) ขยายจาก 30 วิ เป็น 1 นาที ตามที่ผู้ใช้ขอ
   function addAfterVideos(id) {
     var inp = document.getElementById('afterVideo_' + id);
     if (inp) inp.click();
@@ -7007,7 +7007,7 @@ function calcRPN() {
       var file = files[i];
       var dur = await _checkVideoDurationDash(file);
       if (dur != null && dur > VIDEO_MAX_SEC_DASH + 0.5) {
-        if (typeof showToast === 'function') showToast('⚠️ วิดีโอยาวเกิน 30 วิ ('+Math.round(dur)+' วิ) — ข้ามคลิปนี้','⚠');
+        if (typeof showToast === 'function') showToast('⚠️ วิดีโอยาวเกิน 1 นาที ('+Math.round(dur)+' วิ) — ข้ามคลิปนี้','⚠');
         continue;
       }
       var dataUrl = await _fileToDataUrlDash(file);
