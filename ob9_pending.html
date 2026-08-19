@@ -148,10 +148,17 @@
     } catch (e) { return String(iso); }
   }
   var PRIORITY_LABEL = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' };
-  var STATUS_LABEL = { pending: 'รอดำเนินการ', in_progress: 'กำลังซ่อม' };
+  // (18 ส.ค. 69) เพิ่ม 'cancelled'/'completed' ให้ครบ กันข้อความสถานะดิบ (ภาษาอังกฤษ) โผล่ในหน้าจอ
+  // ถ้ามีสถานะอื่นที่ไม่รู้จักในอนาคต — เดิมมีแค่ pending/in_progress ทำให้ WO ที่ถูกยกเลิก (cancelled)
+  // โผล่ป้าย "cancelled" ดิบๆ แทนที่จะเป็นภาษาไทย
+  var STATUS_LABEL = { pending: 'รอดำเนินการ', in_progress: 'กำลังซ่อม', completed: 'เสร็จแล้ว', cancelled: 'ยกเลิก' };
 
   function render(wos) {
-    var open = wos.filter(function (w) { return w && w.status !== 'completed'; });
+    // (18 ส.ค. 69) แก้บั๊ก: เดิมกรองออกเฉพาะ status==='completed' ทำให้ WO ที่ถูกยกเลิก (cancelled — เช่น
+    // WO ซ้ำที่แจ้งจากการตรวจเช็คซ้ำวันติดกัน) ยังค้างโชว์ในรายการ "รอดำเนินการ" อยู่ ทั้งที่ไม่ต้องทำอะไร
+    // ต่อแล้ว ผู้ใช้แจ้งว่า "ปิดงานแล้วไม่เจอสถานะเสร็จแล้วในระบบ" — สาเหตุจริงคือ WO ที่ถูกกดยกเลิก
+    // (ซึ่งถูกต้องแล้วเพราะเป็นรายการซ้ำ) ไม่ถูกเอาออกจากรายการรอดำเนินการ ต้องกรอง cancelled ออกด้วย
+    var open = wos.filter(function (w) { return w && w.status !== 'completed' && w.status !== 'cancelled'; });
     open.sort(function (a, b) {
       var pr = priorityRank(a.priority) - priorityRank(b.priority);
       if (pr !== 0) return pr;
