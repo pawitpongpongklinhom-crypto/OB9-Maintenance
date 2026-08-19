@@ -384,12 +384,18 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
     <p id="modal-sub">เลือกสถานะใหม่สำหรับ WO นี้</p>
     <button id="modal-detail-toggle" onclick="toggleWoFullDetail()" style="width:100%;text-align:left;font-size:12px;font-weight:600;color:var(--blue,#1e40af);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:10px;cursor:pointer">🔍 ดูรายละเอียดเต็ม</button>
     <div id="modal-fulldetail" style="display:none;margin-bottom:12px"></div>
-    <div class="status-options">
+    <!-- (19 ส.ค. 69) แก้ตามที่ผู้ใช้ขอ: WO ที่ปิดงาน (completed/cancelled) แล้ว เปิดขึ้นมาอีกที (เช่นผ่าน
+         ?openWO= จากลิงก์เก่า) ไม่ควรเห็นปุ่มเปลี่ยนสถานะทั้ง 4 ปุ่มพร้อมกดซ้ำได้อีก — คนที่ไม่รู้บริบทอาจ
+         กดบันทึกซ้ำโดยไม่ตั้งใจ เปลี่ยนเป็นโชว์ป้าย "ปิดงานแล้ว" แทน ไม่มีปุ่มให้กดจนกว่าจะกดปุ่มด้านล่างขอ
+         เปิดงานใหม่อย่างชัดเจนก่อน -->
+    <div id="modal-closed-banner" style="display:none;background:#ecfdf5;border:1px solid #86efac;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;color:#166534"></div>
+    <div class="status-options" id="modal-status-options">
       <button class="status-opt-btn" onclick="updateStatus('open')">📋 Open</button>
       <button class="status-opt-btn" onclick="updateStatus('in_progress')">🔧 In Progress</button>
       <button class="status-opt-btn" onclick="updateStatus('done')">✅ Done</button>
       <button class="status-opt-btn" onclick="updateStatus('cancelled')">❌ Cancelled</button>
     </div>
+    <button id="modal-reopen-btn" onclick="reopenClosedWo()" style="display:none;width:100%;background:#fff7ed;border:1px solid #fdba74;color:#c2410c;border-radius:8px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;margin-bottom:8px">🔓 งานนี้ปิดผิด ต้องการเปิดใหม่/แก้ไขสถานะ</button>
     <button class="modal-close" onclick="closeModal()">ปิด</button>
   </div>
 </div>
@@ -1115,7 +1121,32 @@ function openModal(id){
   document.getElementById('modal-fulldetail').style.display='none';
   document.getElementById('modal-fulldetail').innerHTML='';
   document.getElementById('modal-detail-toggle').textContent='🔍 ดูรายละเอียดเต็ม';
+  // (19 ส.ค. 69) WO ที่ปิดแล้ว (completed/cancelled) — ซ่อนปุ่มเปลี่ยนสถานะ กันกดบันทึกซ้ำโดยไม่ตั้งใจ
+  // เวลาเปิดผ่านลิงก์เก่า/ย้อนดูงานที่ปิดไปแล้ว โชว์ป้ายบอกสถานะชัดเจนแทน พร้อมปุ่มขอเปิดใหม่แยกต่างหาก
+  const isClosed = wo.status==='completed' || wo.status==='cancelled';
+  const banner=document.getElementById('modal-closed-banner');
+  const statusOpts=document.getElementById('modal-status-options');
+  const reopenBtn=document.getElementById('modal-reopen-btn');
+  if(isClosed){
+    const closedLabel = wo.status==='completed' ? '✅ งานนี้ปิดงานเรียบร้อยแล้ว' : '❌ งานนี้ถูกยกเลิกแล้ว';
+    const closedWhen = wo.closedAt ? new Date(wo.closedAt).toLocaleString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    banner.innerHTML = closedLabel + (closedWhen ? ' — เมื่อ '+closedWhen : '') + '<br><span style="font-weight:400">ไม่ต้องกดบันทึกซ้ำ</span>';
+    banner.style.display='block';
+    statusOpts.style.display='none';
+    reopenBtn.style.display='block';
+  }else{
+    banner.style.display='none';
+    statusOpts.style.display='grid';
+    reopenBtn.style.display='none';
+  }
   document.getElementById('modal').classList.add('open');
+}
+// (19 ส.ค. 69) ทางออกกรณีปิด/ยกเลิกงานผิดจริงๆ — ต้องกดยืนยันอีกขั้นก่อน ไม่ให้ปุ่มเปลี่ยนสถานะโผล่มาเฉยๆ
+function reopenClosedWo(){
+  if(!confirm('ยืนยันเปิดงาน '+editingWoId+' ใหม่อีกครั้ง? (ใช้เฉพาะกรณีปิด/ยกเลิกผิดพลาดเท่านั้น)')) return;
+  document.getElementById('modal-closed-banner').style.display='none';
+  document.getElementById('modal-status-options').style.display='grid';
+  document.getElementById('modal-reopen-btn').style.display='none';
 }
 function closeModal(e){
   if(!e||e.target===document.getElementById('modal'))
