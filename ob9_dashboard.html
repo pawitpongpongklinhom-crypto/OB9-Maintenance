@@ -709,6 +709,7 @@
   .wo-dot-pending { background:#e24b4a; }
   .wo-dot-in_progress { background:#378add; }
   .wo-dot-completed { background:#639922; }
+  .wo-dot-cancelled { background:#5a6472; }
   .wo-hist-part { font-size:13px; font-weight:600; color:#c8dde8; }
   .wo-hist-meta { font-size:11px; color:#4a7090; margin-top:2px; }
   .wo-hist-desc { font-size:12px; color:#7a9aaa; margin-top:3px; }
@@ -716,6 +717,7 @@
   .ws-pending { background:#3d1515; color:#f87171; }
   .ws-in_progress { background:#0c2d4a; color:#60a5fa; }
   .ws-completed { background:#14301a; color:#86efac; }
+  .ws-cancelled { background:#252b35; color:#9ca3af; }
   .wo-pri-badge { font-size:10px; padding:1px 6px; border-radius:99px; margin-left:5px; }
   .pri-critical { background:#3d1515; color:#f87171; }
   .pri-high { background:#3d2a10; color:#fb923c; }
@@ -3905,6 +3907,7 @@ function _getConfig() {
         <option value="pending">รอดำเนินการ</option>
         <option value="in_progress">กำลังซ่อม</option>
         <option value="completed">เสร็จแล้ว</option>
+        <option value="cancelled">ยกเลิก</option>
       </select>
       <select id="woFilterPri" onchange="renderWOHistory()">
         <option value="">ทุก priority</option>
@@ -6598,8 +6601,10 @@ function calcRPN() {
     if (!wos.length) { el.innerHTML = '<div style="text-align:center;color:#3a6080;padding:32px 0;font-size:13px">ยังไม่มี Work Order</div>'; return; }
     const priLabel = {critical:'Critical',high:'High',medium:'Medium',low:'Low'};
     const priCls = {critical:'pri-critical',high:'pri-high',medium:'pri-medium',low:'pri-low'};
-    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว'};
-    const stCls = {pending:'ws-pending',in_progress:'ws-in_progress',completed:'ws-completed'};
+    // (18 ส.ค. 69) เพิ่ม cancelled ให้ครบ — เดิมไม่มี ทำให้ WO ที่ถูกยกเลิกโชว์ป้ายสถานะเป็นคำว่า
+    // "undefined" ตรงๆ บนการ์ด (stLabel[w.status] หา key ไม่เจอ) เมื่อกรอง filter แบบไม่จำกัดสถานะ
+    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว',cancelled:'ยกเลิก'};
+    const stCls = {pending:'ws-pending',in_progress:'ws-in_progress',completed:'ws-completed',cancelled:'ws-cancelled'};
     const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};
     const fmLabel = {wear:'Wear',leakage:'Leakage',vibration:'Vibration',overheating:'Overheating',breakage:'Breakage',corrosion:'Corrosion',jamming:'Jamming',other:'Other'};
     const piLabel = {full:'🔴 Full Stop',full_stop:'🔴 Full Stop',partial:'🟡 Partial',none:'🟢 None'};
@@ -6664,9 +6669,9 @@ function calcRPN() {
     const priLabel = {critical:'Critical',high:'High',medium:'Medium',low:'Low'};
     const priColor = {critical:'#dc2626',high:'#d97706',medium:'#d97706',low:'#059669'};
     const priBg = {critical:'#fee2e2',high:'#fef3c7',medium:'#fef3c7',low:'#d1fae5'};
-    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว'};
-    const stColor = {pending:'#dc2626',in_progress:'#2563eb',completed:'#059669'};
-    const stBg = {pending:'#fee2e2',in_progress:'#dbeafe',completed:'#d1fae5'};
+    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว',cancelled:'ยกเลิก'};
+    const stColor = {pending:'#dc2626',in_progress:'#2563eb',completed:'#059669',cancelled:'#6b7280'};
+    const stBg = {pending:'#fee2e2',in_progress:'#dbeafe',completed:'#d1fae5',cancelled:'#f3f4f6'};
     const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};
     const fmLabel = {wear:'Wear',leakage:'Leakage',vibration:'Vibration',overheating:'Overheating',breakage:'Breakage',corrosion:'Corrosion',jamming:'Jamming',other:'Other'};
     const piLabel = {full:'🔴 Full Stop',full_stop:'🔴 Full Stop',partial:'🟡 Partial',none:'🟢 None'};
