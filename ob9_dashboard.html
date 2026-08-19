@@ -8,8 +8,10 @@
 //    หน้าเฉพาะโมดูลของตน (ob9_executive.html / ob9_wo_form.html / ob9_inspect.html) แทน ──
 (function(){
   try{
+    // (19 ส.ค. 69) กันบั๊ก deep-link หาย (เช่น ?editWO=WO-0029) เวลา session หมดอายุแล้วโดนเด้งไป login
+    var _qs = location.search ? '&return=' + encodeURIComponent(location.search) : '';
     var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=admin'); return; }
+    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=admin' + _qs); return; }
     if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
   }catch(e){ location.replace('ob9_portal_new.html?target=admin'); }
 })();

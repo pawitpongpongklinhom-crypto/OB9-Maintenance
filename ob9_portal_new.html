@@ -322,6 +322,10 @@
      admin → กลับ ob9_home.html แต่คราวนี้ล็อกอินแล้ว จะเห็นทุกฟีเจอร์ + ลิงก์ "⚙️ ตั้งค่าสิทธิ์"
      executive|workorder|inspection → เข้าโมดูลนั้นตรงๆ */
   const TARGET = new URLSearchParams(location.search).get('target') || '';
+  // (19 ส.ค. 69) รับ query string เดิมที่หน้าเป้าหมายแนบมาให้ตอนเด้งมา login (เช่น ?openWO=WO-0029 หรือ
+  // ?editWO=WO-0029) แล้วต่อกลับให้ตอน login เสร็จ — เดิมพารามิเตอร์นี้หายไปเลยตอนเด้งผ่าน login ทำให้
+  // ลิงก์เปิดใบ WO เจาะจงพา user ไปหน้าเปล่าๆ แทนที่จะเปิดใบที่ตั้งใจเปิดไว้
+  const RETURN_QS = new URLSearchParams(location.search).get('return') || '';
   const TARGET_URL = {
     admin: 'ob9_home.html',
     executive: 'ob9_executive.html',
@@ -398,7 +402,10 @@
   }
 
   function destinationAfterLogin() {
-    return (TARGET && TARGET_URL[TARGET]) ? TARGET_URL[TARGET] : REDIRECT_AFTER_LOGIN;
+    var base = (TARGET && TARGET_URL[TARGET]) ? TARGET_URL[TARGET] : REDIRECT_AFTER_LOGIN;
+    // RETURN_QS มาจาก location.search ต้นทาง (เช่น "?openWO=WO-0029") แนบต่อท้าย base ตรงๆ ได้เลย
+    // เพราะ encodeURIComponent ตอนส่งมาเก็บทั้งก้อนรวม "?" ไว้แล้ว
+    return base + (RETURN_QS || '');
   }
 
   // (12 ส.ค. 69) ก่อนไปหน้าจริง ให้แวะหน้า "รายการรอดำเนินการ" (ob9_pending.html) ก่อนเสมอ —

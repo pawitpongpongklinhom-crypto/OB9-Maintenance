@@ -7,8 +7,13 @@
 // หน้านี้ (Work Order) จำกัดเฉพาะ Admin หรือพนักงานที่ Admin ให้สิทธิ์ Work Order เท่านั้น
 (function(){
   try{
+    // (19 ส.ค. 69) แก้บั๊ก deep-link หาย: เดิมถ้ายังไม่ login แล้วเปิดลิงก์ที่มี query string ต่อท้าย
+    // (เช่น ?openWO=WO-0029 จากหน้ารายการรอดำเนินการ) จะโดนเด้งไป Portal โดยพารามิเตอร์เดิมหายไปเลย
+    // พอ login เสร็จเลยพาไปหน้าเปล่าๆ แทนที่จะเปิดใบ WO ที่ตั้งใจเปิดไว้ให้ — แก้โดยแนบ query เดิม
+    // (location.search) ไปกับ &return= แล้วให้ Portal (ob9_portal_new.html) ต่อกลับให้ตอน login เสร็จ
+    var _qs = location.search ? '&return=' + encodeURIComponent(location.search) : '';
     var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=workorder'); return; }
+    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=workorder' + _qs); return; }
     if(s.isSuperAdmin) return; // Admin เข้าได้ทุกส่วนเสมอ
     if(s.type==='field' && !(s.permissions && s.permissions.workorder)){ location.replace('ob9_home.html'); return; }
   }catch(e){ location.replace('ob9_portal_new.html'); }

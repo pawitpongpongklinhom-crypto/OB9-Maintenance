@@ -7,8 +7,10 @@
 // หน้านี้ (Executive Summary) จำกัดเฉพาะ Admin หรือพนักงานที่ Admin ให้สิทธิ์ Executive เท่านั้น
 (function(){
   try{
+    // (19 ส.ค. 69) กันบั๊ก deep-link หายเวลา session หมดอายุแล้วโดนเด้งไป login
+    var _qs = location.search ? '&return=' + encodeURIComponent(location.search) : '';
     var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=executive'); return; }
+    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=executive' + _qs); return; }
     if(s.isSuperAdmin) return; // Admin เข้าได้ทุกส่วนเสมอ
     if(s.type==='field' && !(s.permissions && s.permissions.executive)){ location.replace('ob9_home.html'); return; }
   }catch(e){ location.replace('ob9_portal_new.html'); }
