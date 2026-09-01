@@ -2,19 +2,13 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<!-- (19 ส.ค. 69) Access Gate ย้ายไป ob9_shared.js ไฟล์เดียวที่ทุกหน้าเรียกใช้ร่วมกันแล้ว -->
+<script src="ob9_shared.js"></script>
 <script>
-// ── OB9 Access Gate: หน้านี้คือ Dashboard เต็มรูปแบบ (PM Checklist, SMU, Spare Parts, WO, Settings ฯลฯ)
-//    รวมทุกฟีเจอร์ไว้ในที่เดียว จึงอนุญาตเฉพาะ Admin (isSuperAdmin) เท่านั้น — พนักงานทั่วไปให้ใช้
-//    หน้าเฉพาะโมดูลของตน (ob9_executive.html / ob9_wo_form.html / ob9_inspect.html) แทน ──
-(function(){
-  try{
-    // (19 ส.ค. 69) กันบั๊ก deep-link หาย (เช่น ?editWO=WO-0029) เวลา session หมดอายุแล้วโดนเด้งไป login
-    var _qs = location.search ? '&return=' + encodeURIComponent(location.search) : '';
-    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=admin' + _qs); return; }
-    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
-  }catch(e){ location.replace('ob9_portal_new.html?target=admin'); }
-})();
+// หน้านี้คือ Dashboard เต็มรูปแบบ (PM Checklist, SMU, Spare Parts, WO, Settings ฯลฯ)
+// รวมทุกฟีเจอร์ไว้ในที่เดียว จึงอนุญาตเฉพาะ Admin (isSuperAdmin) เท่านั้น — พนักงานทั่วไปให้ใช้
+// หน้าเฉพาะโมดูลของตน (ob9_executive.html / ob9_wo_form.html / ob9_inspect.html) แทน
+OB9.requireLogin({ target: 'admin', adminOnly: true });
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>OB9 Predictive Maintenance Dashboard</title>
@@ -6605,7 +6599,7 @@ function calcRPN() {
     const priCls = {critical:'pri-critical',high:'pri-high',medium:'pri-medium',low:'pri-low'};
     // (18 ส.ค. 69) เพิ่ม cancelled ให้ครบ — เดิมไม่มี ทำให้ WO ที่ถูกยกเลิกโชว์ป้ายสถานะเป็นคำว่า
     // "undefined" ตรงๆ บนการ์ด (stLabel[w.status] หา key ไม่เจอ) เมื่อกรอง filter แบบไม่จำกัดสถานะ
-    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว',cancelled:'ยกเลิก'};
+    const stLabel = OB9.STATUS_LABEL; // (19 ส.ค. 69) ใช้คำแปลกลางจาก ob9_shared.js แทนชุดของตัวเอง
     const stCls = {pending:'ws-pending',in_progress:'ws-in_progress',completed:'ws-completed',cancelled:'ws-cancelled'};
     const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};
     const fmLabel = {wear:'Wear',leakage:'Leakage',vibration:'Vibration',overheating:'Overheating',breakage:'Breakage',corrosion:'Corrosion',jamming:'Jamming',other:'Other'};
@@ -6671,7 +6665,7 @@ function calcRPN() {
     const priLabel = {critical:'Critical',high:'High',medium:'Medium',low:'Low'};
     const priColor = {critical:'#dc2626',high:'#d97706',medium:'#d97706',low:'#059669'};
     const priBg = {critical:'#fee2e2',high:'#fef3c7',medium:'#fef3c7',low:'#d1fae5'};
-    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว',cancelled:'ยกเลิก'};
+    const stLabel = OB9.STATUS_LABEL; // (19 ส.ค. 69) ใช้คำแปลกลางจาก ob9_shared.js แทนชุดของตัวเอง
     const stColor = {pending:'#dc2626',in_progress:'#2563eb',completed:'#059669',cancelled:'#6b7280'};
     const stBg = {pending:'#fee2e2',in_progress:'#dbeafe',completed:'#d1fae5',cancelled:'#f3f4f6'};
     const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};

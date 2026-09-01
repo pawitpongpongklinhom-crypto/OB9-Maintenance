@@ -2,19 +2,11 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<!-- (19 ส.ค. 69) Access Gate ย้ายไป ob9_shared.js ไฟล์เดียวที่ทุกหน้าเรียกใช้ร่วมกันแล้ว -->
+<script src="ob9_shared.js"></script>
 <script>
-// ── OB9 Access Gate: ต้อง login ผ่าน Portal ก่อนเสมอ ──
 // หน้านี้ (Executive Summary) จำกัดเฉพาะ Admin หรือพนักงานที่ Admin ให้สิทธิ์ Executive เท่านั้น
-(function(){
-  try{
-    // (19 ส.ค. 69) กันบั๊ก deep-link หายเวลา session หมดอายุแล้วโดนเด้งไป login
-    var _qs = location.search ? '&return=' + encodeURIComponent(location.search) : '';
-    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=executive' + _qs); return; }
-    if(s.isSuperAdmin) return; // Admin เข้าได้ทุกส่วนเสมอ
-    if(s.type==='field' && !(s.permissions && s.permissions.executive)){ location.replace('ob9_home.html'); return; }
-  }catch(e){ location.replace('ob9_portal_new.html'); }
-})();
+OB9.requireLogin({ target: 'executive', permission: 'executive' });
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>OB9 — Executive Summary</title>

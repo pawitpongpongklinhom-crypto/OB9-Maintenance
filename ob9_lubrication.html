@@ -2,23 +2,19 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<!-- (19 ส.ค. 69) Access Gate ย้ายไป ob9_shared.js ไฟล์เดียวที่ทุกหน้าเรียกใช้ร่วมกันแล้ว -->
+<script src="ob9_shared.js"></script>
 <script>
-// ── OB9 Access Gate (2 ส.ค. 69, แก้ไข) — เดิมเฉพาะ Admin (super-admin) เท่านั้นเหมือน
+// ── (2 ส.ค. 69, แก้ไข) — เดิมเฉพาะ Admin (super-admin) เท่านั้นเหมือน
 // ob9_asset_register.html / ob9_documents.html / ob9_training.html (หน้าอ้างอิง/วางแผนของ Admin)
 // ตอนนี้เปิดเพิ่มให้พนักงานที่ Admin ให้สิทธิ์ "เปลี่ยนถ่ายน้ำมัน" (permissions.lubrication) เข้าได้ด้วย
 // แต่จะเห็นเฉพาะมุมมองช่างซ่อม (ปิดงานเปลี่ยนถ่าย) เท่านั้น ไม่เห็นตารางอ้างอิง/ฟอร์มกรอกของ Admin —
 // ตัวแปร window.__OB9_TECH_ONLY__ ใช้ตัดสินใจตอน render ว่าจะโชว์แบบเต็ม (Admin) หรือแบบช่างซ่อมอย่างเดียว
 (function(){
-  try{
-    // (19 ส.ค. 69) กันบั๊ก deep-link หายเวลา session หมดอายุแล้วโดนเด้งไป login
-    var _qs = location.search ? '&return=' + encodeURIComponent(location.search) : '';
-    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=lubrication' + _qs); return; }
-    var isTechOnly = !s.isSuperAdmin && s.type === 'field' && s.permissions && s.permissions.lubrication;
-    if(!s.isSuperAdmin && !isTechOnly){ location.replace('ob9_home.html'); return; }
-    window.__OB9_TECH_ONLY__ = !!isTechOnly;
-    window.__OB9_TECH_NAME__ = s.name || '';
-  }catch(e){ location.replace('ob9_portal_new.html'); }
+  var s = OB9.requireLogin({ target: 'lubrication', permission: 'lubrication' });
+  if(!s) return; // requireLogin() redirect ไปแล้ว
+  window.__OB9_TECH_ONLY__ = !s.isSuperAdmin;
+  window.__OB9_TECH_NAME__ = s.name || '';
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">

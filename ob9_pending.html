@@ -2,6 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<!-- (19 ส.ค. 69) ใช้คำแปลสถานะกลางจาก ob9_shared.js ร่วมกับทุกหน้า -->
+<script src="ob9_shared.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>OB9 — รายการรอดำเนินการ</title>
 <style>
@@ -148,10 +150,8 @@
     } catch (e) { return String(iso); }
   }
   var PRIORITY_LABEL = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' };
-  // (18 ส.ค. 69) เพิ่ม 'cancelled'/'completed' ให้ครบ กันข้อความสถานะดิบ (ภาษาอังกฤษ) โผล่ในหน้าจอ
-  // ถ้ามีสถานะอื่นที่ไม่รู้จักในอนาคต — เดิมมีแค่ pending/in_progress ทำให้ WO ที่ถูกยกเลิก (cancelled)
-  // โผล่ป้าย "cancelled" ดิบๆ แทนที่จะเป็นภาษาไทย
-  var STATUS_LABEL = { pending: 'รอดำเนินการ', in_progress: 'กำลังซ่อม', completed: 'เสร็จแล้ว', cancelled: 'ยกเลิก' };
+  // (19 ส.ค. 69) ใช้คำแปลกลางจาก ob9_shared.js แทนชุดของตัวเอง (เดิมแต่ละหน้ามีสำเนาแยกกัน)
+  var STATUS_LABEL = OB9.STATUS_LABEL;
 
   function render(wos) {
     // (18 ส.ค. 69) แก้บั๊ก: เดิมกรองออกเฉพาะ status==='completed' ทำให้ WO ที่ถูกยกเลิก (cancelled — เช่น

@@ -2,22 +2,12 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<!-- (19 ส.ค. 69) Access Gate ย้ายไป ob9_shared.js ไฟล์เดียวที่ทุกหน้าเรียกใช้ร่วมกันแล้ว
+     (เดิมก็อปวางโค้ดชุดนี้แยกไว้ 5-6 ไฟล์ แก้บั๊ก 1 เรื่องต้องไล่แก้ทุกไฟล์) -->
+<script src="ob9_shared.js"></script>
 <script>
-// ── OB9 Access Gate: ต้อง login ผ่าน Portal ก่อนเสมอ ──
 // หน้านี้ (Work Order) จำกัดเฉพาะ Admin หรือพนักงานที่ Admin ให้สิทธิ์ Work Order เท่านั้น
-(function(){
-  try{
-    // (19 ส.ค. 69) แก้บั๊ก deep-link หาย: เดิมถ้ายังไม่ login แล้วเปิดลิงก์ที่มี query string ต่อท้าย
-    // (เช่น ?openWO=WO-0029 จากหน้ารายการรอดำเนินการ) จะโดนเด้งไป Portal โดยพารามิเตอร์เดิมหายไปเลย
-    // พอ login เสร็จเลยพาไปหน้าเปล่าๆ แทนที่จะเปิดใบ WO ที่ตั้งใจเปิดไว้ให้ — แก้โดยแนบ query เดิม
-    // (location.search) ไปกับ &return= แล้วให้ Portal (ob9_portal_new.html) ต่อกลับให้ตอน login เสร็จ
-    var _qs = location.search ? '&return=' + encodeURIComponent(location.search) : '';
-    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
-    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=workorder' + _qs); return; }
-    if(s.isSuperAdmin) return; // Admin เข้าได้ทุกส่วนเสมอ
-    if(s.type==='field' && !(s.permissions && s.permissions.workorder)){ location.replace('ob9_home.html'); return; }
-  }catch(e){ location.replace('ob9_portal_new.html'); }
-})();
+OB9.requireLogin({ target: 'workorder', permission: 'workorder' });
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>OB9 — Work Order</title>
@@ -1115,7 +1105,9 @@ function openModal(id){
   const system=wo.section||wo.system||'—';
   const desc=(wo.description||wo.symptom||'').slice(0,80);
   const priLabel={Critical:'🔴 Critical',high:'🟠 High',medium:'🔵 Normal',low:'🟢 Planned'}[wo.priority]||wo.priority;
-  const statLabel={pending:'รอดำเนินการ',in_progress:'กำลังดำเนินการ',completed:'เสร็จสิ้น',cancelled:'ยกเลิก'}[wo.status]||wo.status;
+  // (19 ส.ค. 69) ใช้คำแปลกลางจาก ob9_shared.js แทนชุดคำแปลของตัวเอง (เดิมเขียน "เสร็จสิ้น"/"กำลังดำเนินการ"
+  // ซึ่งไม่ตรงกับคำที่หน้าอื่นใช้ "เสร็จแล้ว"/"กำลังซ่อม" — รวมให้ตรงกันทุกหน้าแล้ว)
+  const statLabel=OB9.STATUS_LABEL[wo.status]||wo.status;
   document.getElementById('modal-title').textContent=wo.id+' — '+(wo.machine||wo.unit||'ไม่ระบุเครื่องจักร');
   document.getElementById('modal-sub').textContent=`${system} | ${priLabel} | สถานะ: ${statLabel}\n${desc}`;
   document.getElementById('modal-fulldetail').style.display='none';
