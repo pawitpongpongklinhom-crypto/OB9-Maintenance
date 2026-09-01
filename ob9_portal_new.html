@@ -213,6 +213,26 @@
 </head>
 <body>
 
+<!-- (1 ก.ย. 69) แบนเนอร์ชวนติดตั้งแอป — เดิมพึ่งพา popup อัตโนมัติของเบราว์เซอร์อย่างเดียว แต่ Chrome/Android
+     มักไม่โชว์ popup ให้เองในการเข้าเว็บครั้งแรกๆ (ต้องรอ engagement heuristic) และ iOS/Safari ไม่มี popup
+     อัตโนมัติเลยไม่ว่ากรณีใด ผู้ใช้ขอให้ทำให้ "เด่งขึ้นมาเลือกติดตั้งเลย" จึงทำแบนเนอร์ของเราเองแทน โชว์ทันที
+     ที่เข้าหน้านี้ (ถ้ายังไม่เคยติดตั้ง/ยังไม่ได้ปิดไปในเซสชันนี้) กดปุ่มเดียวติดตั้งได้เลยบน Android/Chrome/Edge
+     ส่วน iOS/Safari (ไม่รองรับปุ่มติดตั้งอัตโนมัติ เป็นข้อจำกัดของ Apple เอง) จะโชว์ขั้นตอนกดเองแทน -->
+<div id="installBanner" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;
+  background:#14213D;color:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);
+  align-items:center;gap:12px;max-width:420px;margin:0 auto;">
+  <div style="width:40px;height:40px;flex:0 0 auto;border-radius:10px;background:#1A5FA8;border:2px solid #F4A200;
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#F4A200;font-size:13px;">OB9</div>
+  <div style="flex:1;min-width:0;">
+    <div style="font-weight:700;font-size:13.5px;">ติดตั้งแอป OB9 ไว้ที่หน้าจอโฮม</div>
+    <div id="installBannerSub" style="font-size:11.5px;color:#C7D2E0;margin-top:2px;">เปิดเร็วขึ้น ใช้งานได้แม้เน็ตหลุดชั่วขณะ</div>
+  </div>
+  <button id="installBannerBtn" onclick="OB9InstallApp()" style="flex:0 0 auto;background:#F4A200;color:#14213D;
+    border:none;border-radius:9px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;">ติดตั้ง</button>
+  <button onclick="OB9DismissInstallBanner()" aria-label="ปิด" style="flex:0 0 auto;background:transparent;border:none;
+    color:#8894A8;font-size:18px;line-height:1;cursor:pointer;padding:4px;">✕</button>
+</div>
+
 <div class="login-wrap">
 
   <div class="card">
@@ -583,6 +603,78 @@
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('service-worker.js').catch(function () {});
     });
+  }
+</script>
+<script>
+  // (1 ก.ย. 69) แบนเนอร์ชวนติดตั้งแอป — ผู้ใช้ขอให้เด่งขึ้นมาเลยแทนที่จะรอ popup อัตโนมัติของเบราว์เซอร์
+  // (ซึ่งไม่ชัวร์ว่าจะขึ้นเมื่อไหร่ และ iOS/Safari ไม่มี popup อัตโนมัติเลยไม่ว่ากรณีใด)
+  var deferredInstallPrompt = null;
+
+  function isStandaloneMode() {
+    // เช็คว่าเปิดจากแอปที่ติดตั้งแล้วอยู่หรือเปล่า (ทั้ง 2 มาตรฐาน: display-mode ของ Chromium/Android,
+    // navigator.standalone ของ Safari/iOS) — ถ้าติดตั้งแล้วไม่ต้องโชว์แบนเนอร์ชวนติดตั้งซ้ำ
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS ปลอมตัวเป็น Mac
+  }
+
+  function showInstallBanner() {
+    var el = document.getElementById('installBanner');
+    if (!el) return;
+    el.style.display = 'flex';
+  }
+
+  window.OB9DismissInstallBanner = function () {
+    var el = document.getElementById('installBanner');
+    if (el) el.style.display = 'none';
+    // ปิดแค่เซสชันนี้พอ (ไม่ใช้ localStorage ถาวร) — เข้าใหม่วันหลังถ้ายังไม่ได้ติดตั้งจะเห็นแบนเนอร์อีก
+    try { sessionStorage.setItem('ob9_install_banner_dismissed', '1'); } catch (e) {}
+  };
+
+  window.OB9InstallApp = function () {
+    var btn = document.getElementById('installBannerBtn');
+    if (deferredInstallPrompt) {
+      // Android/Chrome/Edge — เรียก native install prompt ของเบราว์เซอร์ได้ตรงๆ
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(function () {
+        deferredInstallPrompt = null;
+        window.OB9DismissInstallBanner();
+      });
+    } else if (isIOS()) {
+      // Safari/iOS ไม่มี API ให้เรียก prompt เองได้เลย (ข้อจำกัดของ Apple) ต้องกดปุ่มแชร์เอง — โชว์คำอธิบายแทน
+      document.getElementById('installBannerSub').innerHTML =
+        'กดปุ่ม <b>แชร์</b> ⬆️ แถบล่างจอ (หรือแถบบนใน iPad) แล้วเลือก <b>"เพิ่มไปยังหน้าจอโฮม"</b>';
+      if (btn) btn.style.display = 'none';
+    } else {
+      // เบราว์เซอร์ไม่รองรับปุ่มติดตั้งอัตโนมัติ (เช่น Firefox mobile บางรุ่น) — ปิดแบนเนอร์ไปเงียบๆ
+      OB9DismissInstallBanner();
+    }
+  };
+
+  window.addEventListener('appinstalled', function () {
+    OB9DismissInstallBanner();
+  });
+
+  if (!isStandaloneMode()) {
+    var dismissedThisSession = false;
+    try { dismissedThisSession = sessionStorage.getItem('ob9_install_banner_dismissed') === '1'; } catch (e) {}
+    if (!dismissedThisSession) {
+      if (isIOS()) {
+        // iOS ไม่มี event ให้ดักจับ — โชว์แบนเนอร์ทันทีพร้อมคำแนะนำ กดปุ่ม "ติดตั้ง" แล้วค่อยเห็นขั้นตอนแชร์
+        showInstallBanner();
+      } else {
+        // Android/Chrome/Edge — ดักจับ event นี้ไว้ก่อน (ต้อง preventDefault ไม่งั้นเบราว์เซอร์จะเก็บไปโชว์เอง
+        // ตามจังหวะของมันแทน) แล้วโชว์แบนเนอร์ของเราทันทีที่ event มาถึง
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          deferredInstallPrompt = e;
+          showInstallBanner();
+        });
+      }
+    }
   }
 </script>
 </body>
