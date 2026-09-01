@@ -5,6 +5,15 @@
 <!-- (19 ส.ค. 69) ใช้คำแปลสถานะกลางจาก ob9_shared.js ร่วมกับทุกหน้า -->
 <script src="ob9_shared.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<!-- (1 ก.ย. 69) PWA — ผู้ใช้ที่ login ค้างอยู่แล้ว (session ไม่หมดอายุ) จะโดนเด้งผ่านหน้า ob9_portal_new.html
+     ทันทีแบบไม่ทันเห็นอะไร (redirect อัตโนมัติ ไม่มี delay) มาโผล่ที่หน้านี้เป็นหน้าแรกที่ "ค้าง" ให้เห็นจริง
+     จึงต้องผูก manifest + แบนเนอร์ชวนติดตั้งไว้ที่นี่ด้วย ไม่งั้นคนที่ login ค้างจะไม่มีทางเห็นตัวเลือกติดตั้งเลย -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A5FA8">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OB9">
 <title>OB9 — รายการรอดำเนินการ</title>
 <style>
   :root {
@@ -70,6 +79,22 @@
 </style>
 </head>
 <body>
+
+<!-- (1 ก.ย. 69) แบนเนอร์ชวนติดตั้งแอป — ดูรายละเอียดใน ob9_portal_new.html (โค้ดเดียวกันทุกประการ) -->
+<div id="installBanner" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;
+  background:#14213D;color:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);
+  align-items:center;gap:12px;max-width:420px;margin:0 auto;">
+  <div style="width:40px;height:40px;flex:0 0 auto;border-radius:10px;background:#1A5FA8;border:2px solid #F4A200;
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#F4A200;font-size:13px;">OB9</div>
+  <div style="flex:1;min-width:0;">
+    <div style="font-weight:700;font-size:13.5px;">ติดตั้งแอป OB9 ไว้ที่หน้าจอโฮม</div>
+    <div id="installBannerSub" style="font-size:11.5px;color:#C7D2E0;margin-top:2px;">เปิดเร็วขึ้น ใช้งานได้แม้เน็ตหลุดชั่วขณะ</div>
+  </div>
+  <button id="installBannerBtn" onclick="OB9InstallApp()" style="flex:0 0 auto;background:#F4A200;color:#14213D;
+    border:none;border-radius:9px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;">ติดตั้ง</button>
+  <button onclick="OB9DismissInstallBanner()" aria-label="ปิด" style="flex:0 0 auto;background:transparent;border:none;
+    color:#8894A8;font-size:18px;line-height:1;cursor:pointer;padding:4px;">✕</button>
+</div>
 
 <nav class="topnav">
   <div class="tn-brand">
@@ -228,6 +253,75 @@
   }
 
   loadPending();
+</script>
+<script>
+  // (1 ก.ย. 69) ลงทะเบียน Service Worker + แบนเนอร์ชวนติดตั้งแอป — ผูกไว้ที่หน้านี้ด้วย (ไม่ใช่แค่หน้า Login)
+  // เพราะผู้ใช้ที่ login ค้างอยู่แล้วจะโดนเด้งผ่านหน้า Login แบบไม่ทันเห็นอะไรเลย มาโผล่ที่นี่เป็นหน้าแรกจริงๆ
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('service-worker.js').catch(function () {});
+    });
+  }
+
+  var deferredInstallPrompt = null;
+
+  function isStandaloneMode() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function showInstallBanner() {
+    var el = document.getElementById('installBanner');
+    if (!el) return;
+    el.style.display = 'flex';
+  }
+
+  window.OB9DismissInstallBanner = function () {
+    var el = document.getElementById('installBanner');
+    if (el) el.style.display = 'none';
+    try { sessionStorage.setItem('ob9_install_banner_dismissed', '1'); } catch (e) {}
+  };
+
+  window.OB9InstallApp = function () {
+    var btn = document.getElementById('installBannerBtn');
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(function () {
+        deferredInstallPrompt = null;
+        window.OB9DismissInstallBanner();
+      });
+    } else if (isIOS()) {
+      document.getElementById('installBannerSub').innerHTML =
+        'กดปุ่ม <b>แชร์</b> ⬆️ แถบล่างจอ (หรือแถบบนใน iPad) แล้วเลือก <b>"เพิ่มไปยังหน้าจอโฮม"</b>';
+      if (btn) btn.style.display = 'none';
+    } else {
+      window.OB9DismissInstallBanner();
+    }
+  };
+
+  window.addEventListener('appinstalled', function () {
+    window.OB9DismissInstallBanner();
+  });
+
+  if (!isStandaloneMode()) {
+    var dismissedThisSession = false;
+    try { dismissedThisSession = sessionStorage.getItem('ob9_install_banner_dismissed') === '1'; } catch (e) {}
+    if (!dismissedThisSession) {
+      if (isIOS()) {
+        showInstallBanner();
+      } else {
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          deferredInstallPrompt = e;
+          showInstallBanner();
+        });
+      }
+    }
+  }
 </script>
 </body>
 </html>
