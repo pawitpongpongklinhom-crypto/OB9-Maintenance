@@ -7,6 +7,13 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<!-- (1 ก.ย. 69) PWA — ดูรายละเอียดใน ob9_portal_new.html -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A5FA8">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OB9">
 <title>OB9 — หน้าหลัก</title>
 <style>
   :root {
@@ -1017,6 +1024,15 @@
   populateSmuDropdown();
   loadStats();
   setInterval(loadStats, 30000);
+</script>
+<script>
+  // (1 ก.ย. 69) ลงทะเบียน Service Worker ที่นี่ด้วย — เผื่อผู้ใช้เปิดหน้านี้ตรงๆ (เช่นจาก shortcut ที่บันทึกไว้
+  // ก่อนหน้านี้) โดยไม่ผ่านหน้า Login ก่อน — ดูรายละเอียดเพิ่มเติมใน ob9_portal_new.html
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('service-worker.js').catch(function () {});
+    });
+  }
 </script>
 </body>
 </html>

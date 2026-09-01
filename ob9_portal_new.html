@@ -11,6 +11,14 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<!-- (1 ก.ย. 69) ทำ OB9 เป็น PWA (App ติดตั้งได้) ตามที่ผู้ใช้ขอ — manifest.json บอกเบราว์เซอร์ว่าแอปนี้
+     ชื่ออะไร ไอคอนหน้าจอโฮมเป็นแบบไหน เปิดแบบ standalone (ไม่มีแถบ URL) เริ่มต้นที่หน้านี้เสมอ -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A5FA8">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OB9">
 <title>OB9 — เข้าสู่ระบบ</title>
 <style>
   :root {
@@ -567,6 +575,15 @@
       } catch(e) {}
     }
   })();
+</script>
+<script>
+  // (1 ก.ย. 69) ลงทะเบียน Service Worker — ทำให้เบราว์เซอร์เสนอ "ติดตั้งแอป"/"เพิ่มไปยังหน้าจอโฮม" ได้
+  // scope เริ่มที่ '/' (root ของ repo) จึงครอบคลุมทุกหน้าในระบบ ไม่ใช่แค่หน้านี้ ลงทะเบียนครั้งเดียวพอ
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('service-worker.js').catch(function () {});
+    });
+  }
 </script>
 </body>
 </html>
