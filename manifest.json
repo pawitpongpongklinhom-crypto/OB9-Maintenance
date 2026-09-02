@@ -1,7 +1,7 @@
 {
-  "name": "OB9 Predictive Maintenance",
-  "short_name": "OB9",
-  "description": "OB9 Predictive Maintenance System — Mae Moh Mine, Overburden iX, thyssenkrupp Industrial Solutions",
+  "name": "OB&ME (SPD)",
+  "short_name": "OB&ME (SPD)",
+  "description": "OB&ME (SPD) — OB9 Predictive Maintenance System, Mae Moh Mine, Overburden iX, thyssenkrupp Industrial Solutions",
   "start_url": "ob9_portal_new.html",
   "scope": "./",
   "id": "./ob9_portal_new.html",
