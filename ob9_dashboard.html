@@ -2,15 +2,19 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<!-- (19 ส.ค. 69) Access Gate ย้ายไป ob9_shared.js ไฟล์เดียวที่ทุกหน้าเรียกใช้ร่วมกันแล้ว -->
-<script src="ob9_shared.js"></script>
 <script>
-// หน้านี้คือ Dashboard เต็มรูปแบบ (PM Checklist, SMU, Spare Parts, WO, Settings ฯลฯ)
-// รวมทุกฟีเจอร์ไว้ในที่เดียว จึงอนุญาตเฉพาะ Admin (isSuperAdmin) เท่านั้น — พนักงานทั่วไปให้ใช้
-// หน้าเฉพาะโมดูลของตน (ob9_executive.html / ob9_wo_form.html / ob9_inspect.html) แทน
-OB9.requireLogin({ target: 'admin', adminOnly: true });
+// ── OB9 Access Gate: หน้านี้คือ Dashboard เต็มรูปแบบ (PM Checklist, SMU, Spare Parts, WO, Settings ฯลฯ)
+//    รวมทุกฟีเจอร์ไว้ในที่เดียว จึงอนุญาตเฉพาะ Admin (isSuperAdmin) เท่านั้น — พนักงานทั่วไปให้ใช้
+//    หน้าเฉพาะโมดูลของตน (ob9_executive.html / ob9_wo_form.html / ob9_inspect.html) แทน ──
+(function(){
+  try{
+    var s = JSON.parse(sessionStorage.getItem('ob9_session')||'null');
+    if(!s || !s.type){ location.replace('ob9_portal_new.html?target=admin'); return; }
+    if(!s.isSuperAdmin){ location.replace('ob9_home.html'); return; }
+  }catch(e){ location.replace('ob9_portal_new.html?target=admin'); }
+})();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OB9 Predictive Maintenance Dashboard</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,11 +31,8 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
   input[type="date"].date-native-hidden::-webkit-datetime-edit-year-field { color: transparent; }
   input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; }
   .date-field-wrap{position:relative}
-  /* (17 ส.ค. 69) แก้บั๊ก: บางเบราว์เซอร์/WebView บนมือถือไม่รองรับ ::-webkit-datetime-edit color:transparent
-     ด้านบน ทำให้ตัวเลขวันที่จริงของเบราว์เซอร์ยังโผล่ออกมาซ้อนทับกับข้อความไทยที่ลอยทับอยู่ (อ่านไม่ออก) —
-     เพิ่มพื้นหลังทึบให้ overlay กันเป็นชั้นที่สอง ปิดตัวเลขเดิมไว้เสมอไม่ว่าเบราว์เซอร์จะซ่อนได้จริงหรือไม่ */
-  .date-thai-overlay{position:absolute;left:9px;right:28px;top:1px;bottom:1px;display:flex;align-items:center;
-    font-size:11px;color:#c8dde8;background:#061422;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .date-thai-overlay{position:absolute;left:9px;right:28px;top:0;height:100%;display:flex;align-items:center;
+    font-size:11px;color:#c8dde8;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   /* ─── HEADER ─── */
   .header {
@@ -57,7 +58,6 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
   .header-title p { font-size: 11px; color: #6ca0c2; margin-top: 2px; }
   .header-right { display: flex; align-items: center; gap: 14px; font-size: 11.5px; color: #8aaabb; }
   .header-right span b { color: #c8dde8; }
-  .hdr-more-toggle { display: none; }
   .btn-live {
     background: #0a7a3c;
     color: #5fffaa;
@@ -705,7 +705,6 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
   .wo-dot-pending { background:#e24b4a; }
   .wo-dot-in_progress { background:#378add; }
   .wo-dot-completed { background:#639922; }
-  .wo-dot-cancelled { background:#5a6472; }
   .wo-hist-part { font-size:13px; font-weight:600; color:#c8dde8; }
   .wo-hist-meta { font-size:11px; color:#4a7090; margin-top:2px; }
   .wo-hist-desc { font-size:12px; color:#7a9aaa; margin-top:3px; }
@@ -713,7 +712,6 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
   .ws-pending { background:#3d1515; color:#f87171; }
   .ws-in_progress { background:#0c2d4a; color:#60a5fa; }
   .ws-completed { background:#14301a; color:#86efac; }
-  .ws-cancelled { background:#252b35; color:#9ca3af; }
   .wo-pri-badge { font-size:10px; padding:1px 6px; border-radius:99px; margin-left:5px; }
   .pri-critical { background:#3d1515; color:#f87171; }
   .pri-high { background:#3d2a10; color:#fb923c; }
@@ -1191,73 +1189,9 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
     .ov-kpi-row { flex-wrap: wrap; }
     .ov-kpi-row > div { min-width: calc(50% - 8px) !important; flex: 1 1 calc(50% - 8px); }
     .mip-tab { padding: 6px 8px; font-size: 11px; }
-    .mip-tabs {
-      overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap;
-      -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    }
-    .mip-tabs::-webkit-scrollbar { display: none; }
-    /* ══ เมนูรวม ⋮ (8 ส.ค. 69) — ปุ่ม header-right + ob9-toolbar ทั้งหมดถูกย้ายมาไว้ใน
-       #mobMenuPanel ผ่าน JS (ob9InitMobMenu) แล้ว ที่เดิม (.header-right/.ob9-toolbar)
-       จึงไม่มีปุ่มเหลืออยู่บนจอเล็ก ไม่ต้องมี overflow-x scroll อีกต่อไป ══ */
-    .hdr-more-toggle {
-      display: inline-flex; align-items: center; justify-content: center;
-      background: #0a2a3a; color: #7ec8f0; border: 1px solid #2a6a90; border-radius: 6px;
-      padding: 4px 10px; font-size: 16px; font-weight: 700; cursor: pointer; flex-shrink: 0;
-    }
-    .header-right > button:not(.btn-live):not(.btn-refresh):not(.hdr-more-toggle),
-    .header-right > input[type=file] { display: none; }
-    .ob9-toolbar > .tb-btn, .ob9-toolbar > .tb-sep { display: none; }
-    .mob-menu-panel {
-      display: none; position: fixed; top: 54px; right: 8px; left: 8px; z-index: 250;
-      background: #0c1f33; border: 1px solid #1e3a52; border-radius: 10px;
-      padding: 10px; max-height: 75vh; overflow-y: auto;
-      flex-direction: column; gap: 6px; box-shadow: 0 8px 28px rgba(0,0,0,0.55);
-    }
-    .mob-menu-panel.open { display: flex; }
-    .mob-menu-panel button { width: 100%; text-align: left; white-space: normal; }
-    .mob-menu-panel input[type=file] { display: none; }
     body { font-size: 12px; }
     thead th { padding: 6px 7px !important; font-size: 10.5px; }
     tbody td { padding: 5px 7px !important; font-size: 11.5px; }
-  }
-
-  /* ══ PM Checklist (รายงานการตรวจเช็คเครื่องจักร) — เปลี่ยนเป็นการ์ดบนมือถือ (8 ส.ค. 69) ══ */
-  /* ผู้ใช้แจ้งว่าตารางเดิมบนมือถือต้อง scroll แนวนอนเพื่อดูให้ครบ (คอลัมน์ #/เครื่อง/ส่วน
-     หลุดจอไปทางซ้าย ดูไม่ครบ/ดูยาก) — เปลี่ยนเฉพาะตารางนี้ (#pmTable) เป็นการ์ดแนวตั้งแบบแอป
-     มือถือทั่วไป ไม่กระทบตารางอื่น (Spare Parts/WO/ฯลฯ) ยังเป็นตารางปกติ+scroll เหมือนเดิม —
-     ทำด้วย CSS ล้วน (flexbox reorder ตาม nth-child) ไม่แตะ JS ที่ query .td-machine/.td-desc/ฯลฯ
-     อยู่เดิม (filter/sync/action button ทำงานเหมือนเดิมทุกอย่าง) */
-  @media (max-width: 768px) {
-    #pmTable { min-width: 0 !important; width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-    #pmTable thead { display: none; }
-    #pmTable tbody, #pmTable tr, #pmTable td { display: block; }
-    #pmTable tbody tr {
-      display: flex; flex-wrap: wrap; align-items: flex-start;
-      background: #0c1f33; border: 1px solid #1e3a52; border-radius: 10px;
-      padding: 10px 12px; margin-bottom: 10px;
-    }
-    #pmTable tbody td { border: none !important; padding: 3px 4px !important; box-sizing: border-box; }
-
-    #pmTable td.td-num { order: 1; width: auto; font-size: 10px; color: #4a7090; }
-    #pmTable td:nth-child(11) { order: 2; width: auto; margin-left: auto; } /* STATUS badge */
-    #pmTable td.td-machine { order: 3; width: 100%; font-size: 13.5px; font-weight: 700; color: #c8dde8; margin-top: 2px; }
-    #pmTable td:nth-child(5) { order: 4; width: auto; display: inline-block !important; } /* dots สี */
-    #pmTable td:nth-child(6) { order: 5; width: auto; display: inline-block !important; margin-left: 6px; } /* ประเภท badge */
-    #pmTable td.td-desc { order: 6; width: 100%; font-size: 12px; color: #9fc3d8; margin-top: 6px; line-height: 1.4; }
-    #pmTable td.td-part, #pmTable td.td-sys { order: 7; width: 50%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
-    #pmTable td.td-part::before { content: "ส่วน: "; color: #3a6080; }
-    #pmTable td.td-sys::before { content: "ระบบ: "; color: #3a6080; }
-    #pmTable td:nth-child(8) { order: 8; width: 50%; margin-top: 4px; } /* INTERVAL */
-    #pmTable td.td-date, #pmTable td.td-next { order: 9; width: 50%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
-    #pmTable td.td-date::before { content: "ตรวจล่าสุด: "; color: #3a6080; }
-    #pmTable td.td-next::before { content: "ครบกำหนด: "; color: #3a6080; }
-    #pmTable td.assignee { order: 10; width: 50%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
-    #pmTable td.assignee::before { content: "ผู้รับผิดชอบ: "; color: #3a6080; }
-    #pmTable td.remark { order: 11; width: 100%; font-size: 11px; color: #5a8aaa; margin-top: 4px; }
-    #pmTable td.remark::before { content: "หมายเหตุ: "; color: #3a6080; }
-    #pmTable td:nth-child(14) { order: 12; width: 100%; margin-top: 8px; } /* ปุ่ม action */
-    #pmTable .insp-action-grp { flex-wrap: wrap; }
-    #pmTable .insp-action-grp button { flex: 1 1 auto; font-size: 10.5px; padding: 6px 4px; }
   }
 
   /* ══ SMALL MOBILE (<480px) ══ */
@@ -1358,7 +1292,6 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
     <button class="btn-refresh">⟳ Refresh</button>
     <span id="syncBadge" class="sync-badge" style="display:none"></span>
     <span id="smuStaleBadge" class="sync-badge" style="display:none;background:#4a1f0a;color:#fb923c;border:1px solid #9a5a2a;cursor:help" title=""></span>
-    <button class="hdr-more-toggle" id="hdrMoreToggle" onclick="toggleMobMenu()" title="เมนู">⋮</button>
     <!-- TIER NAV -->
     <button onclick="window.open('ob9_executive.html','_blank')" style="background:#0a2a3a;color:#38bdf8;border:1px solid #2a6a90;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="เปิด Executive Dashboard">📊 Exec</button>
     <button onclick="window.open('ob9_inspect.html','_blank')" style="background:#0a2a1a;color:#4ade80;border:1px solid #2a6a3a;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="เปิดฟอร์มตรวจเช็ค">✅ Inspect</button>
@@ -1373,10 +1306,6 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
     <button onclick="location.href='ob9_portal_new.html'" style="background:#1a1a2a;color:#94a3b8;border:1px solid #374151;border-radius:6px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:600" title="กลับหน้า Portal / Login">🏠 Portal</button>
   </div>
 </div>
-
-<!-- MOBILE: เมนูรวม (8 ส.ค. 69) — บนจอเล็กปุ่มต่างๆ ใน header-right + ob9-toolbar จะถูกย้าย
-     (ผ่าน JS, ไม่ clone) มาไว้ในนี้แทน กดปุ่ม ⋮ เพื่อเปิด/ปิด ไม่กระทบ id/onclick เดิมเลย -->
-<div class="mob-menu-panel" id="mobMenuPanel"></div>
 
 <!-- TOOLBAR -->
 <div class="ob9-toolbar" id="ob9Toolbar">
@@ -1395,6 +1324,7 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
   <button class="tb-btn" onclick="export3MReport()" style="border-color:#6a4a00;color:#fbbf24;font-weight:700" title="Export 3M Report (Manpower/Equipment/Material)">📊 3M Rpt</button>
   <div class="tb-sep"></div>
   <button class="tb-btn" onclick="exportToExec()" style="border-color:#2a6a90;color:#38bdf8;font-weight:700" title="ส่งข้อมูลสรุปไปยัง Executive Dashboard">📤 → Exec</button>
+  <button class="tb-btn" onclick="openDutyModal()" style="border-color:#1e7a4a;color:#7ee0a0;font-weight:700" title="ดูตารางเวรตรวจเช็ค Spreader กันยายน 2569 (ดูได้จากทุกหน้า)">📅 เวรตรวจ</button>
   <!-- SMU + DT + Link inline on right side -->
   <div class="smu-box" id="smuBox">
     <div class="smu-top">
@@ -1728,6 +1658,7 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
         <div class="mip-tab" data-panel="panel-docs" onclick="switchTab(this);renderDocs()">📎 คลังเอกสารอ้างอิง</div>
         <div class="mip-tab" data-panel="panel-workorders" onclick="switchTab(this);renderWOHistory();renderWOStats();">📋 งานซ่อม / WO</div>
         <div class="mip-tab" data-panel="panel-pm" onclick="switchTab(this);renderPMLibrary()">🗓 PM Library</div>
+        <div class="mip-tab" data-panel="panel-report4" onclick="switchTab(this)">📊 รายงาน 4 หัวข้อ + เวรตรวจ</div>
         <div class="mip-tab" data-panel="panel-settings" onclick="switchTab(this);initGSSettings()">⚙ เชื่อมต่อ Google Sheet</div>
       </div>
     </div>
@@ -1792,7 +1723,7 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
 
     <!-- TABLE -->
     <div class="table-wrap">
-      <table id="pmTable">
+      <table>
         <thead>
           <tr>
             <th>#</th>
@@ -3186,6 +3117,787 @@ OB9.requireLogin({ target: 'admin', adminOnly: true });
       <!-- List -->
       <div id="docList" style="flex:1;overflow-y:auto;padding:10px 16px"></div>
     </div>
+    <div id="panel-report4" class="tab-panel rpt4-wrap" style="display:none;flex-direction:column;flex:1;overflow-y:auto;padding:16px 20px;background:#0a1420">
+      <style>
+        .rpt4-wrap table{border-collapse:collapse;width:100%;margin-bottom:18px;font-size:12px}
+        .rpt4-wrap td,.rpt4-wrap th{border:1px solid #1e3a52;padding:5px 7px;vertical-align:middle;color:#c8dce8}
+        .rpt4-wrap th{background:#12335a;color:#7ec8f0;font-weight:700;text-align:center}
+        .rpt4-wrap .rpt4-title{font-size:15px;font-weight:700;color:#7ec8f0;margin:18px 0 8px}
+        .rpt4-wrap .rpt4-sub{font-style:italic;color:#5a8aaa;font-size:11.5px;margin-bottom:8px}
+        .rpt4-wrap .rpt4-section{background:#1a2f45;color:#f0c674;font-weight:700;padding:6px 8px;border-radius:4px;margin:10px 0 6px;font-size:12.5px}
+        .rpt4-wrap .crit{background:#4a1418;color:#ff8a8a;font-weight:700;text-align:center}
+        .rpt4-wrap .watch{background:#4a3a10;color:#f0c674;font-weight:700;text-align:center}
+        .rpt4-wrap .ok{background:#123a1e;color:#7ee0a0;font-weight:700;text-align:center}
+        .rpt4-wrap .check{background:#3a2410;color:#f0a060;font-weight:700;text-align:center}
+        .rpt4-wrap .confirm{background:#0f2a3a;color:#7ec8f0}
+        .rpt4-wrap .num{text-align:center}
+        .rpt4-wrap .pending{background:#4a3a10;color:#f0c674;text-align:center}
+        .rpt4-wrap .completed{background:#123a1e;color:#7ee0a0;text-align:center}
+        .rpt4-wrap .cancelled{background:#242424;color:#999;text-align:center}
+        .rpt4-wrap .warnbanner{background:#4a3a10;color:#f0c674;font-weight:700;padding:8px 10px;border-radius:6px;margin-bottom:12px;font-size:12px}
+        .rpt4-wrap .dutycell{background:#123a1e;color:#7ee0a0;font-weight:700;text-align:center}
+        .rpt4-wrap .sun{background:#3a2015}
+        .rpt4-wrap .totalcol{background:#3a2410;font-weight:700;text-align:center}
+        .rpt4-wrap .name{text-align:left}
+      </style>
+
+      <div class="rpt4-title" style="font-size:17px">4 หัวข้อการจัดเก็บ/วิเคราะห์ข้อมูล — Spreader SPD</div>
+      <div class="rpt4-sub">ตามแนวทางปฏิบัติงาน นายช่างวิศวกรรม พงศ์กลิ่นหอม — จัดทำจากข้อมูลจริงใน OB9 Dashboard (Work Orders, Inspection Records) + Inventory Control + คู่มือ OEM (thyssenkrupp) ณ วันที่ 11 กันยายน 2569</div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px">
+        <button onclick="document.getElementById('rpt4-sec1').scrollIntoView({behavior:'smooth',block:'start'})" style="background:#12335a;color:#7ec8f0;border:1px solid #1e5a8a;border-radius:6px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer">📦 1. Stock อะไหล่</button>
+        <button onclick="document.getElementById('rpt4-sec2').scrollIntoView({behavior:'smooth',block:'start'})" style="background:#12335a;color:#7ec8f0;border:1px solid #1e5a8a;border-radius:6px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer">🛠 2. Ops/PM</button>
+        <button onclick="document.getElementById('rpt4-sec3').scrollIntoView({behavior:'smooth',block:'start'})" style="background:#12335a;color:#7ec8f0;border:1px solid #1e5a8a;border-radius:6px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer">🔍 3. Inspection</button>
+        <button onclick="document.getElementById('rpt4-sec4').scrollIntoView({behavior:'smooth',block:'start'})" style="background:#12335a;color:#7ec8f0;border:1px solid #1e5a8a;border-radius:6px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer">📊 4. วิเคราะห์ข้อมูล</button>
+        <button onclick="document.getElementById('rpt4-sec5').scrollIntoView({behavior:'smooth',block:'start'})" style="background:#123a1e;color:#7ee0a0;border:1px solid #1e7a4a;border-radius:6px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer">📅 ตารางเวรตรวจเช็ค</button>
+      </div>
+
+      <div class="rpt4-section">สรุปประเด็นสำคัญ 4 หัวข้อ</div>
+      <table>
+        <tr><th>หัวข้อ</th><th colspan="5">ประเด็นสำคัญที่พบ</th></tr>
+        <tr><td><b>1. Stock อะไหล่ทดแทน</b></td><td colspan="5">🔴 Brake Shoe D400 (No.3) สต็อก=0 ทั้งหมด ขณะที่ OEM แนะนำสำรองขั้นต่ำ 8 ชุด — เสี่ยงกระทบความปลอดภัยโดยตรงหากเบรกขัดข้อง</td></tr>
+        <tr><td></td><td colspan="5">🟡 5 รายการเหลือสต็อก 1 ชิ้น (No.1,21,25,29,31) ส่วนใหญ่เป็น Capital Spare ตาม OEM แต่ Lead Time นำเข้าสูง</td></tr>
+        <tr><td><b>2. รายงานปฏิบัติงาน/PM</b></td><td colspan="5">Work Order 38 รายการ (real) — 89% เป็นงานแก้ไข (Corrective) มีเพียง 10.5% เป็นงานป้องกัน (Preventive) แสดงว่าองค์กรยังตั้งรับมากกว่าเชิงป้องกัน</td></tr>
+        <tr><td></td><td colspan="5">92.5% ของ WO ไม่ได้กรอก Failure Mode และ Downtime = 0 ทุกรายการ — ขาดข้อมูลสำหรับคำนวณ MTBF/MTTR</td></tr>
+        <tr><td><b>3. การตรวจสอบ Inspection</b></td><td colspan="5">มีบันทึกตรวจสอบ 8 ครั้ง (9 ก.ค. - 1 ส.ค. 69) หลังจากนั้นไม่มีบันทึกใหม่เลยกว่า 41 วัน (ถึง 11 ก.ย.) — ช่องว่างการตรวจสอบที่ต้องเร่งแก้ไข</td></tr>
+        <tr><td></td><td colspan="5">ความครบถ้วนของการตรวจ (Done/Total 16 จุด) แกว่งมาก ตั้งแต่ 0 ถึง 16 จุด — ควรบังคับให้ตรวจครบทุกจุดทุกครั้ง</td></tr>
+        <tr><td><b>4. วิเคราะห์ข้อมูล</b></td><td colspan="5">Cam Tumbler/Drive Tumbler และ Travel Drive เป็นจุดที่เกิดปัญหาซ้ำบ่อยที่สุด (พบใน WO และ Inspection ตรงกัน 3+ ครั้ง) ควรตรวจสอบ Root Cause เชิงลึก</td></tr>
+      </table>
+
+      <div id="rpt4-sec1" class="rpt4-title">1. Stock อะไหล่ทดแทน</div>
+      <div class="rpt4-sub">ตาราง Stock อะไหล่ทดแทน พร้อมจุดสั่งซื้อ (Reorder Point) เทียบกับคำแนะนำผู้ผลิต (OEM 2YOP/5YOP)</div>
+      <table>
+        <tr><th>No</th><th>รายการ</th><th>ชิ้นส่วนหลัก</th><th>Available</th><th>OEM (2YOP)</th><th>ความเสี่ยง</th><th>Reorder Point</th><th>เหตุผล/ข้อเสนอแนะ</th></tr>
+        <tr><td class="num">3</td><td>BRAKE SHOE WITH PAD D400</td><td>Crawler BWE,SPD</td><td class="crit">0</td><td class="num">8</td><td class="crit">วิกฤต</td><td class="num">≥2</td><td>ชิ้นส่วนความปลอดภัย (เบรก) — สต็อก 0 ทั้งหมด สั่งซื้อด่วนที่สุดอย่างน้อย 8 ชุดตาม OEM</td></tr>
+        <tr><td class="num">1</td><td>UNIVERSAL JOINT 130x269mm</td><td>Crawler BWE,SPD</td><td class="watch">1</td><td class="num">-</td><td class="watch">เฝ้าระวัง</td><td class="num">1</td><td>อยู่ใน Store จริง แต่ไม่มีสำรองส่วนต่อ ตั้ง Reorder ที่ 1 ชิ้น</td></tr>
+        <tr><td class="num">21</td><td>Track Crawler Bottom Plate</td><td>Crawler BWE,SPD</td><td class="watch">1</td><td class="num">0 (Capital)</td><td class="watch">เฝ้าระวัง</td><td class="num">1</td><td>Capital Spare — สำรอง 1 ชิ้นเหมาะสมแล้ว ต้องเร่งนำเข้า Store จริง</td></tr>
+        <tr><td class="num">25</td><td>ล้อนำ</td><td>BWE&amp;SPD</td><td class="watch">1</td><td class="num">0 (Capital)</td><td class="watch">เฝ้าระวัง</td><td class="num">1</td><td>Capital Spare — On-Hand เท่านั้น นำเข้า Store จริง</td></tr>
+        <tr><td class="num">29</td><td>Two Wheel Bogie</td><td>BWE&amp;SPD</td><td class="watch">1</td><td class="num">0 (Capital)</td><td class="watch">เฝ้าระวัง</td><td class="num">1</td><td>Capital Spare — On-Hand เท่านั้น นำเข้า Store จริง</td></tr>
+        <tr><td class="num">31</td><td>Gear Crawler</td><td>BWE&amp;SPD</td><td class="watch">1</td><td class="num">0 (Capital)</td><td class="watch">เฝ้าระวัง</td><td class="num">1</td><td>ราคาสูง — สั่งซื้อล่วงหน้าตามผลตรวจ Oil Analysis</td></tr>
+        <tr><td class="num">7</td><td>Bearing 23060 CCK/W33 (Drive Pulley)</td><td>Pulley Discharge/Bend</td><td class="ok">8</td><td class="num">0 (Capital)</td><td class="ok">ปกติ</td><td class="num">2</td><td>เกินเกณฑ์ OEM แล้ว ผูก Reorder กับผล CBM แทนจำนวนตายตัว</td></tr>
+        <tr><td class="num">8</td><td>Bearing 23152 CCK/W33 (Take-up)</td><td>Take-up pulley</td><td class="ok">7</td><td class="num">0 (Capital)</td><td class="ok">ปกติ</td><td class="num">2</td><td>เกินเกณฑ์ OEM แล้ว ผูก Reorder กับผล CBM</td></tr>
+        <tr><td class="num">9</td><td>Bearing 22218-E1-XL-K (Snap pulley)</td><td>Snap pulley</td><td class="ok">10</td><td class="num">5</td><td class="ok">ปกติ</td><td class="num">2</td><td>สูงกว่าคำแนะนำ 5YOP — ตรวจ Drawing ยืนยันเบอร์ก่อนลดสต็อก</td></tr>
+        <tr><td class="num">15</td><td>ประกับ Carry (Carry Garland)</td><td>BWE,SPD</td><td class="check">7</td><td class="num">68 (5YOP)</td><td class="check">ต่ำกว่าเกณฑ์มาก</td><td class="num">15-20</td><td>ต่างจากคำแนะนำ OEM มาก (7 vs 68) ควรเพิ่มแผนสั่งซื้อ</td></tr>
+        <tr><td class="num">17-20</td><td>Idler ชุด Carry/Return/Impact/Inverted (2400)</td><td>SPD</td><td class="check">19/7/4/5</td><td class="num">สูงกว่ามาก (28-68)</td><td class="check">ต่ำกว่าเกณฑ์</td><td class="num">10-20/ชนิด</td><td>สต็อกต่ำกว่าคำแนะนำ OEM ทุกชนิด ควรจัดสรร Safety Stock 10-20%</td></tr>
+        <tr><td class="num">33-36</td><td>ราง/Fish Plate/Rail Clamp/Bolt M24</td><td>งาน Shift</td><td class="ok">4,126 m. (418 เส้น)</td><td class="num">1,550 m. (136 เส้น)</td><td class="ok">ปกติ — Stock พอ</td><td class="num">0</td><td>อัปเดตจากไฟล์คลังรางจริง (12 ก.ย. 69): Stock ครอบคลุมทุกความยาวที่ต้องใช้ (10/11/11.8/12/13m) ดูรายละเอียดในตาราง "Stock รางแยกตามความยาว" ด้านล่าง</td></tr>
+      </table>
+      <div class="rpt4-section">แผนเตรียมของงานราง — Line B (คำนวณจากความยาวรางจริง)</div>
+      <table>
+        <tr><th colspan="2">รายการ</th><th>ต้องใช้ (Need)</th><th>Stock</th><th colspan="2">ต้องสั่งเพิ่ม</th><th colspan="2">หมายเหตุ</th></tr>
+        <tr><td colspan="2">Rail (ความยาวรวม)</td><td class="num">1,550 m.</td><td class="ok" id="lineB-railLenStock">4,126 m. (418 เส้น รวมทุกความยาว)</td><td colspan="2" class="ok">0 (Stock ครอบคลุมครบ)</td><td colspan="2">รวมจากราง 10m×32, 11m×2, 12m×49, 13m×1 (84 เส้น=943m) + 11.8m×52 เส้น=607m — เทียบ Stock จริงตามความยาวด้านล่างแล้วครบทุกขนาด</td></tr>
+        <tr><td colspan="2">Rail (จำนวนเส้น)</td><td class="num">136 เส้น</td><td class="ok" id="lineB-railCountStock">418 เส้น (ทุกความยาว)</td><td colspan="2" class="ok">0</td><td colspan="2">Stock ตามความยาวจริง (ดูตารางแยกตามความยาวด้านล่าง) ≥ ที่ต้องใช้ทุกขนาด (10/11/11.8/12/13m)</td></tr>
+        <tr><td colspan="2">Rail Clamp</td><td class="num">1,908 Ea</td><td class="ok">624</td><td colspan="2" class="check">1,284</td><td colspan="2">Order = Need − Stock</td></tr>
+        <tr><td colspan="2">Fish Plate</td><td class="num">136 set</td><td class="ok" id="lineB-fishStock">55</td><td colspan="2" class="check" id="lineB-fishOrder">81</td><td colspan="2">Order = Need − Stock (ยืนยันจากไฟล์ "แผนงานสั่งซื้อของชุดราง" ชีท 2_สรุปงานราง)</td></tr>
+        <tr><td colspan="2">Bolt Fish Plate</td><td class="num">816 set</td><td class="ok">78</td><td colspan="2" class="check">738</td><td colspan="2">1 Fish Plate ใช้ Bolt 6 ชุด</td></tr>
+        <tr><td colspan="2">Bolt Rail Clamp</td><td class="num">1,908 Ea</td><td class="ok">367</td><td colspan="2" class="check">1,541</td><td colspan="2">1 Rail Clamp ใช้ Bolt 1 ตัว</td></tr>
+      </table>
+
+      <div id="railStockSectionHeader" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px">
+        <div class="rpt4-section" style="margin:0">รายละเอียด Stock รางแยกตามความยาว + Rail Clamp/Fish Plate/Bolt (จากไฟล์คลังราง)</div>
+        <input type="file" id="railStockFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleRailStockFile(this)">
+        <button onclick="document.getElementById('railStockFileInput').click()" style="background:#12335a;color:#7ec8f0;border:1px solid #1e5a8a;border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer" title="อัปโหลดไฟล์ Excel คลังราง/Fish Plate/Rail Clamp/Bolt ฉบับล่าสุด เพื่ออัปเดตตัวเลขด้านล่างและยอดรวม Line B ด้านบนอัตโนมัติ">📥 อัปเดตไฟล์คลังราง (.xlsx)</button>
+      </div>
+      <div id="railStockUpdatedNote" class="rpt4-sub">ข้อมูลล่าสุด: กรอกด้วยมือจากข้อมูลที่ผู้ใช้ส่งให้ 12 ก.ย. 69 — อัปโหลดไฟล์ใหม่เพื่ออัปเดตทุกครั้งที่มีการแก้ไขจริง</div>
+      <div style="overflow-x:auto">
+      <table id="railStockTable">
+        <tr><th rowspan="2">ความยาว (m)</th><th rowspan="2">จำนวน (เส้น)</th><th rowspan="2">ความยาวรวม (m)</th><th colspan="2">Rail Clamp</th><th colspan="2">Fish Plate</th><th>Bolt</th><th>Bolt</th></tr>
+        <tr><th>มาตรฐาน</th><th>สั้น+ยาว+บาง</th><th>มาตรฐาน</th><th>บาง</th><th>Fish Plate</th><th>Log Rail</th></tr>
+        <tr><td class="num">Stock (1)</td><td class="num">0</td><td class="num">0</td><td class="num">624</td><td class="num">0</td><td class="num">55</td><td class="num">0</td><td class="num">78</td><td class="num">367</td></tr>
+        <tr><td class="num">Stock (2)</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">3</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">3</td><td class="num">17</td><td class="num">51</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">4</td><td class="num">18</td><td class="num">72</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">5</td><td class="num">15</td><td class="num">75</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">6</td><td class="num">19</td><td class="num">114</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">7</td><td class="num">24</td><td class="num">168</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">8</td><td class="num">26</td><td class="num">208</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">9</td><td class="num">15</td><td class="num">135</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num ok">10</td><td class="num">32</td><td class="num">320</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num ok">11</td><td class="num">2</td><td class="num">22</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num ok">11.8</td><td class="num">200</td><td class="num">2,360</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num ok">12</td><td class="num">49</td><td class="num">588</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num ok">13</td><td class="num">1</td><td class="num">13</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">14</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">15</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">16</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">17</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">18</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">19</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td class="num">25</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr id="railStockTotalRow"><td class="name"><b>รวม</b></td><td class="totalcol">418</td><td class="totalcol">4,126</td><td class="totalcol">624</td><td class="totalcol">0</td><td class="totalcol">58</td><td class="totalcol">0</td><td class="totalcol">78</td><td class="totalcol">367</td></tr>
+      </table>
+      </div>
+      <div class="rpt4-sub">"Stock (1)"/"Stock (2)" = ยอดที่นับแยกไว้ในไฟล์ต้นฉบับ (แถว "รวม" ด้านล่างคือผลรวมทั้งคอลัมน์ตามไฟล์) — ยอด Fish Plate Stock ที่ใช้จริงในตาราง Line B ด้านบนอ้างอิงจากชีทสรุป "2_สรุปงานราง" ของไฟล์ "แผนงานสั่งซื้อของชุดราง" = 55 ชุด (ไม่รวมแถว Stock(2)=3 ซึ่งไฟล์ต้นฉบับไม่ได้นับรวมในยอด Stock ทางการ) | แถวสีเขียว (10/11/11.8/12/13m) = ความยาวที่ใช้จริงในงาน Line B — Stock ครบทุกขนาดตามที่ต้องใช้</div>
+      <script>
+      (function(){
+        var NEEDED_LABELS = ['10','11','11.8','12','13'];
+        function n(v){ var x=parseFloat(String(v).replace(/,/g,'')); return isNaN(x)?0:x; }
+        function fmt(v){ return Number(v||0).toLocaleString('en-US', {maximumFractionDigits:2}); }
+
+        function handleRailStockFile(input){
+          var file = input.files && input.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function(e){
+            try{
+              if (typeof XLSX==='undefined') throw new Error('ไลบรารีอ่าน Excel (SheetJS) ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง');
+              var wb = XLSX.read(e.target.result, {type:'binary'});
+              var sheet = wb.Sheets[wb.SheetNames[0]];
+              var rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+              var headerIdx = -1;
+              for (var r=0;r<rows.length;r++){ if (String(rows[r][0]||'').trim()==='ลำดับ'){ headerIdx=r; break; } }
+              if (headerIdx<0) throw new Error('ไม่พบแถวหัวตาราง "ลำดับ" ในไฟล์ — รูปแบบไฟล์อาจไม่ตรงกับที่คาดไว้ ส่งไฟล์มาให้ปรับตัวอ่านให้ตรงได้เลย');
+
+              var items = [], totalsRow = null;
+              for (var r2=headerIdx+1; r2<rows.length; r2++){
+                var row = rows[r2];
+                if (!row || row.length===0) continue;
+                var label = String(row[0]||'').trim();
+                if (!label) continue;
+                if (label.indexOf('รวม')===0){ totalsRow = row; break; }
+                items.push({
+                  label:label, count:n(row[1]), length:n(row[2]),
+                  clampStd:n(row[3]), clampThin:n(row[4]),
+                  fishStd:n(row[5]), fishThin:n(row[6]),
+                  boltFish:n(row[7]), boltLog:n(row[8])
+                });
+              }
+              if (!items.length) throw new Error('ไม่พบแถวข้อมูลใต้หัวตาราง "ลำดับ"');
+
+              var sum = {count:0,length:0,clampStd:0,clampThin:0,fishStd:0,fishThin:0,boltFish:0,boltLog:0};
+              items.forEach(function(it){
+                sum.count+=it.count; sum.length+=it.length;
+                sum.clampStd+=it.clampStd; sum.clampThin+=it.clampThin;
+                sum.fishStd+=it.fishStd; sum.fishThin+=it.fishThin;
+                sum.boltFish+=it.boltFish; sum.boltLog+=it.boltLog;
+              });
+              var totals = totalsRow ? {
+                count:n(totalsRow[1]), length:n(totalsRow[2]),
+                clampStd:n(totalsRow[3]), clampThin:n(totalsRow[4]),
+                fishStd:n(totalsRow[5]), fishThin:n(totalsRow[6]),
+                boltFish:n(totalsRow[7]), boltLog:n(totalsRow[8])
+              } : sum;
+              var mismatch = !!totalsRow && (Math.abs(totals.count-sum.count)>0.01 || Math.abs(totals.length-sum.length)>0.01);
+
+              var data = { items:items, totals:totals, mismatch:mismatch, importedAt:new Date().toISOString(), sourceFile:file.name };
+              localStorage.setItem('ob9_railStock', JSON.stringify(data));
+              renderRailStockFromStore();
+              showToast('อัปเดตข้อมูลคลังราง/Rail Clamp/Fish Plate/Bolt สำเร็จ ('+items.length+' รายการ)'+(mismatch?' (⚠️ ยอดรวมในไฟล์กับที่คำนวณได้ไม่ตรงกัน ตรวจสอบไฟล์อีกครั้ง)':''), mismatch?'⚠️':'✅');
+            } catch(err){
+              if (window.console) console.error('railStock parse error', err);
+              showToast('อ่านไฟล์คลังรางไม่สำเร็จ: '+String(err.message||err), '❌');
+            }
+          };
+          reader.readAsBinaryString(file);
+        }
+
+        function renderRailStockFromStore(){
+          var raw = localStorage.getItem('ob9_railStock');
+          if (!raw) return;
+          var data = JSON.parse(raw);
+          var table = document.getElementById('railStockTable');
+          if (!table) return;
+          var html = '<tr><th rowspan="2">ความยาว (m)</th><th rowspan="2">จำนวน (เส้น)</th><th rowspan="2">ความยาวรวม (m)</th><th colspan="2">Rail Clamp</th><th colspan="2">Fish Plate</th><th>Bolt</th><th>Bolt</th></tr>';
+          html += '<tr><th>มาตรฐาน</th><th>สั้น+ยาว+บาง</th><th>มาตรฐาน</th><th>บาง</th><th>Fish Plate</th><th>Log Rail</th></tr>';
+          data.items.forEach(function(it){
+            var isNeeded = NEEDED_LABELS.indexOf(it.label)>=0;
+            html += '<tr><td class="num'+(isNeeded?' ok':'')+'">'+it.label+'</td><td class="num">'+fmt(it.count)+'</td><td class="num">'+fmt(it.length)+'</td>'
+              + '<td class="num">'+fmt(it.clampStd)+'</td><td class="num">'+fmt(it.clampThin)+'</td>'
+              + '<td class="num">'+fmt(it.fishStd)+'</td><td class="num">'+fmt(it.fishThin)+'</td>'
+              + '<td class="num">'+fmt(it.boltFish)+'</td><td class="num">'+fmt(it.boltLog)+'</td></tr>';
+          });
+          var t = data.totals;
+          html += '<tr id="railStockTotalRow"><td class="name"><b>รวม</b></td><td class="totalcol">'+fmt(t.count)+'</td><td class="totalcol">'+fmt(t.length)+'</td>'
+            + '<td class="totalcol">'+fmt(t.clampStd)+'</td><td class="totalcol">'+fmt(t.clampThin)+'</td>'
+            + '<td class="totalcol">'+fmt(t.fishStd)+'</td><td class="totalcol">'+fmt(t.fishThin)+'</td>'
+            + '<td class="totalcol">'+fmt(t.boltFish)+'</td><td class="totalcol">'+fmt(t.boltLog)+'</td></tr>';
+          table.innerHTML = html;
+
+          var note = document.getElementById('railStockUpdatedNote');
+          if (note) note.textContent = 'ข้อมูลล่าสุด: นำเข้าจาก "'+data.sourceFile+'" เมื่อ '+new Date(data.importedAt).toLocaleString('th-TH')+(data.mismatch?' — ⚠️ ยอดรวมในไฟล์กับที่คำนวณได้ไม่ตรงกัน ตรวจสอบไฟล์':'');
+
+          // หมายเหตุ: ไม่ auto-update ยอด Fish Plate Stock/สั่งในตาราง Line B จากตารางนี้ตรงๆ เพราะไฟล์ต้นฉบับ
+          // "แผนงานสั่งซื้อของชุดราง" มี 2 ชีทที่นับ Fish Plate Stock ไม่ตรงกัน (ชีทนี้รวม Stock(2)=3 เข้าไปด้วย
+          // เป็น 58, แต่ชีทสรุป "2_สรุปงานราง" ที่ใช้คำนวณยอดสั่งจริงนับ Stock=55 เท่านั้น) — ยึดตาม
+          // "2_สรุปงานราง" เป็นหลัก จึงคงเลข Fish Plate ในตาราง Line B ไว้ตามที่กรอกด้วยมือ ปรับแค่ยอดราง
+          // (ความยาวรวม/จำนวนเส้น) ที่ตรงกันทั้ง 2 ชีทเท่านั้น
+          var railLenCell = document.getElementById('lineB-railLenStock');
+          var railCountCell = document.getElementById('lineB-railCountStock');
+          if (railLenCell) railLenCell.textContent = fmt(t.length)+' m. ('+fmt(t.count)+' เส้น รวมทุกความยาว)';
+          if (railCountCell) railCountCell.textContent = fmt(t.count)+' เส้น (ทุกความยาว)';
+        }
+
+        window.handleRailStockFile = handleRailStockFile;
+        window.renderRailStockFromStore = renderRailStockFromStore;
+        document.addEventListener('DOMContentLoaded', function(){
+          try{ if (localStorage.getItem('ob9_railStock')) renderRailStockFromStore(); }catch(e){ if(window.console) console.error('railStock auto-load error', e); }
+        });
+        if (document.readyState==='complete' || document.readyState==='interactive'){
+          setTimeout(function(){ try{ if (localStorage.getItem('ob9_railStock')) renderRailStockFromStore(); }catch(e){} },0);
+        }
+      })();
+      </script>
+
+      <div id="fullStockSectionHeader" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:22px 0 4px">
+        <div class="rpt4-section" style="margin:0">สถานะ Stock อะไหล่ทั้งหมด (Inventory Control + OEM Spare List — Full Inventory)</div>
+        <input type="file" id="fullStockFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFullStockFile(this)">
+        <button onclick="document.getElementById('fullStockFileInput').click()" style="background:#12335a;color:#7ec8f0;border:1px solid #1e5a8a;border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer" title="อัปโหลดไฟล์ Excel สถานะ Stock อะไหล่ทั้งหมด ตาม Template ที่ดาวน์โหลดได้ด้านล่าง">📥 อัปโหลดไฟล์ Stock ทั้งหมด (.xlsx)</button>
+        <button onclick="downloadFullStockTemplate()" style="background:#123a1e;color:#7ee0a0;border:1px solid #1e5a3a;border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer" title="ดาวน์โหลด Template เปล่าสำหรับกรอกข้อมูล Stock อะไหล่ทั้งหมด แล้วอัปโหลดกลับมาที่นี่">📄 ดาวน์โหลด Template</button>
+      </div>
+      <div id="fullStockUpdatedNote" class="rpt4-sub">ยังไม่มีข้อมูล — กด "ดาวน์โหลด Template" กรอกรายการ Stock อะไหล่ทั้งหมด (Inventory Control ~36 รายการ + OEM Spare ~180 รายการ) แล้วอัปโหลดไฟล์กลับมาที่นี่ อัปเดตทุกครั้งที่ยอด Stock เปลี่ยน</div>
+      <div id="fullStockSummary" style="display:none;gap:14px;flex-wrap:wrap;margin:6px 0 10px">
+        <div style="background:#4a1418;border:1px solid #7a2a2a;border-radius:8px;padding:8px 14px"><span style="color:#ff8a8a;font-weight:800;font-size:18px" id="fullStockCritCount">0</span> <span style="color:#ff8a8a;font-size:12px">วิกฤต (Stock=0)</span></div>
+        <div style="background:#4a3a10;border:1px solid #7a5a1a;border-radius:8px;padding:8px 14px"><span style="color:#f0c674;font-weight:800;font-size:18px" id="fullStockWatchCount">0</span> <span style="color:#f0c674;font-size:12px">เฝ้าระวัง (≤ Reorder Point)</span></div>
+        <div style="background:#123a1e;border:1px solid #1a7a3a;border-radius:8px;padding:8px 14px"><span style="color:#7ee0a0;font-weight:800;font-size:18px" id="fullStockOkCount">0</span> <span style="color:#7ee0a0;font-size:12px">ปกติ</span></div>
+        <div style="background:#0f2338;border:1px solid #1e3a52;border-radius:8px;padding:8px 14px"><span style="color:#7ec8f0;font-weight:800;font-size:18px" id="fullStockTotalCount">0</span> <span style="color:#8fb0c8;font-size:12px">รายการทั้งหมด</span></div>
+      </div>
+      <div style="overflow-x:auto">
+      <table id="fullStockTable">
+        <tr><th>No</th><th>รหัส/Part No.</th><th>ชื่ออะไหล่</th><th>ระบบ/เครื่องจักร</th><th>หมวด</th><th>Stock คงเหลือ</th><th>Reorder Point</th><th>สถานะ</th><th>หมายเหตุ</th></tr>
+        <tr><td colspan="9" style="text-align:center;color:#5a8aaa;padding:18px">ยังไม่มีข้อมูล — อัปโหลดไฟล์ Excel ด้านบนเพื่อเริ่มต้น</td></tr>
+      </table>
+      </div>
+      <script>
+      (function(){
+        function n(v){ var x=parseFloat(String(v).replace(/,/g,'')); return isNaN(x)?0:x; }
+        function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+        function downloadFullStockTemplate(){
+          if (typeof XLSX==='undefined'){ showToast('ไลบรารี Excel (SheetJS) ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง', '❌'); return; }
+          var rows = [
+            ['ลำดับ','รหัส/Part No.','ชื่ออะไหล่','ระบบ/เครื่องจักร','หมวด','Stock คงเหลือ','Reorder Point','หมายเหตุ'],
+            [1,'ตัวอย่าง: UJ-130-269','UNIVERSAL JOINT 130x269mm','Spreader / Crawler','Inventory Control',1,1,'ตัวอย่างแถวข้อมูล — ลบแถวนี้ทิ้งก่อนอัปโหลดจริง']
+          ];
+          var ws = XLSX.utils.aoa_to_sheet(rows);
+          ws['!cols'] = [{wch:6},{wch:18},{wch:32},{wch:20},{wch:18},{wch:12},{wch:12},{wch:40}];
+          var wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Stock ทั้งหมด');
+          XLSX.writeFile(wb, 'OB9_Template_Stock_อะไหล่ทั้งหมด.xlsx');
+        }
+
+        function handleFullStockFile(input){
+          var file = input.files && input.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function(e){
+            try{
+              if (typeof XLSX==='undefined') throw new Error('ไลบรารีอ่าน Excel (SheetJS) ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง');
+              var wb = XLSX.read(e.target.result, {type:'binary'});
+              var sheet = wb.Sheets[wb.SheetNames[0]];
+              var rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+              var headerIdx = -1;
+              for (var r=0;r<rows.length;r++){ if (String(rows[r][0]||'').trim()==='ลำดับ'){ headerIdx=r; break; } }
+              if (headerIdx<0) throw new Error('ไม่พบแถวหัวตาราง "ลำดับ" ในไฟล์ — กรุณาใช้ Template ที่ดาวน์โหลดจากปุ่ม "ดาวน์โหลด Template"');
+
+              var items = [];
+              for (var r2=headerIdx+1; r2<rows.length; r2++){
+                var row = rows[r2];
+                if (!row || row.length===0) continue;
+                var code = String(row[1]||'').trim(), name = String(row[2]||'').trim();
+                if (!code && !name) continue;
+                items.push({
+                  no: row[0]||(items.length+1), code:code, name:name,
+                  system: String(row[3]||'').trim(), category: String(row[4]||'').trim(),
+                  stock: n(row[5]), reorder: n(row[6]), note: String(row[7]||'').trim()
+                });
+              }
+              if (!items.length) throw new Error('ไม่พบแถวข้อมูลใต้หัวตาราง "ลำดับ"');
+
+              var data = { items:items, importedAt:new Date().toISOString(), sourceFile:file.name };
+              localStorage.setItem('ob9_fullStock', JSON.stringify(data));
+              renderFullStockFromStore();
+              showToast('อัปเดตสถานะ Stock อะไหล่ทั้งหมดสำเร็จ ('+items.length+' รายการ)', '✅');
+            } catch(err){
+              if (window.console) console.error('fullStock parse error', err);
+              showToast('อ่านไฟล์ Stock ทั้งหมดไม่สำเร็จ: '+String(err.message||err), '❌');
+            }
+          };
+          reader.readAsBinaryString(file);
+        }
+
+        // ข้อมูลเริ่มต้น: รวมจากตาราง "1. Stock อะไหล่ทดแทน" + ตาราง Line B (Rail/Fish Plate/Rail Clamp/Bolt)
+        // ที่มีอยู่แล้วในรายงานนี้ — ยังไม่ครบ Inventory Control 36 + OEM Spare ~180 รายการ ใช้แสดงผลก่อน
+        // จนกว่าจะมีไฟล์ Excel ฉบับเต็มมาอัปโหลดทับ (การอัปโหลดไฟล์จริงจะแทนที่ชุดนี้ทั้งหมด)
+        var SEED_ITEMS = [
+          {no:3, code:'-', name:'BRAKE SHOE WITH PAD D400', system:'Crawler BWE,SPD', category:'Inventory Control', stock:0, reorder:2, note:'ชิ้นส่วนความปลอดภัย (เบรก) — สต็อก 0 ทั้งหมด สั่งซื้อด่วนที่สุดอย่างน้อย 8 ชุดตาม OEM'},
+          {no:1, code:'-', name:'UNIVERSAL JOINT 130x269mm', system:'Crawler BWE,SPD', category:'Inventory Control', stock:1, reorder:1, note:'อยู่ใน Store จริง แต่ไม่มีสำรองส่วนต่อ'},
+          {no:21, code:'-', name:'Track Crawler Bottom Plate', system:'Crawler BWE,SPD', category:'Inventory Control', stock:1, reorder:1, note:'Capital Spare — สำรอง 1 ชิ้นเหมาะสมแล้ว ต้องเร่งนำเข้า Store จริง'},
+          {no:25, code:'-', name:'ล้อนำ', system:'BWE&SPD', category:'Inventory Control', stock:1, reorder:1, note:'Capital Spare — On-Hand เท่านั้น นำเข้า Store จริง'},
+          {no:29, code:'-', name:'Two Wheel Bogie', system:'BWE&SPD', category:'Inventory Control', stock:1, reorder:1, note:'Capital Spare — On-Hand เท่านั้น นำเข้า Store จริง'},
+          {no:31, code:'-', name:'Gear Crawler', system:'BWE&SPD', category:'Inventory Control', stock:1, reorder:1, note:'ราคาสูง — สั่งซื้อล่วงหน้าตามผลตรวจ Oil Analysis'},
+          {no:7, code:'-', name:'Bearing 23060 CCK/W33 (Drive Pulley)', system:'Pulley Discharge/Bend', category:'Inventory Control', stock:8, reorder:2, note:'เกินเกณฑ์ OEM แล้ว ผูก Reorder กับผล CBM แทนจำนวนตายตัว'},
+          {no:8, code:'-', name:'Bearing 23152 CCK/W33 (Take-up)', system:'Take-up pulley', category:'Inventory Control', stock:7, reorder:2, note:'เกินเกณฑ์ OEM แล้ว ผูก Reorder กับผล CBM'},
+          {no:9, code:'-', name:'Bearing 22218-E1-XL-K (Snap pulley)', system:'Snap pulley', category:'Inventory Control', stock:10, reorder:2, note:'สูงกว่าคำแนะนำ 5YOP — ตรวจ Drawing ยืนยันเบอร์ก่อนลดสต็อก'},
+          {no:15, code:'-', name:'ประกับ Carry (Carry Garland)', system:'BWE,SPD', category:'Inventory Control', stock:7, reorder:15, note:'ต่ำกว่าคำแนะนำ OEM มาก (7 vs 68) ควรเพิ่มแผนสั่งซื้อ'},
+          {no:17, code:'-', name:'Idler ชุด Carry (2400)', system:'SPD', category:'Inventory Control', stock:19, reorder:15, note:'สต็อกต่ำกว่าคำแนะนำ OEM ควรจัดสรร Safety Stock 10-20%'},
+          {no:18, code:'-', name:'Idler ชุด Return (2400)', system:'SPD', category:'Inventory Control', stock:7, reorder:15, note:'สต็อกต่ำกว่าคำแนะนำ OEM ควรจัดสรร Safety Stock 10-20%'},
+          {no:19, code:'-', name:'Idler ชุด Impact (2400)', system:'SPD', category:'Inventory Control', stock:4, reorder:15, note:'สต็อกต่ำกว่าคำแนะนำ OEM ควรจัดสรร Safety Stock 10-20%'},
+          {no:20, code:'-', name:'Idler ชุด Inverted (2400)', system:'SPD', category:'Inventory Control', stock:5, reorder:15, note:'สต็อกต่ำกว่าคำแนะนำ OEM ควรจัดสรร Safety Stock 10-20%'},
+          {no:'33-36', code:'-', name:'Rail (รวมทุกความยาว 10/11/11.8/12/13m)', system:'งาน Shift Line B', category:'งานราง', stock:4126, reorder:1550, note:'หน่วยเมตร — Stock ครอบคลุมทุกความยาวที่ต้องใช้ (ดูรายละเอียดในตาราง Stock รางแยกตามความยาวด้านบน)'},
+          {no:'33-36', code:'-', name:'Rail Clamp', system:'งาน Shift Line B', category:'งานราง', stock:624, reorder:1908, note:'ต้องใช้ 1,908 Ea — ต้องสั่งเพิ่ม 1,284'},
+          {no:'33-36', code:'-', name:'Fish Plate', system:'งาน Shift Line B', category:'งานราง', stock:55, reorder:136, note:'ยืนยันจากไฟล์ "แผนงานสั่งซื้อของชุดราง" ชีทสรุป 2_สรุปงานราง — ต้องสั่งเพิ่ม 81'},
+          {no:'33-36', code:'-', name:'Bolt Fish Plate', system:'งาน Shift Line B', category:'งานราง', stock:78, reorder:816, note:'1 Fish Plate ใช้ Bolt 6 ชุด — ต้องสั่งเพิ่ม 738'},
+          {no:'33-36', code:'-', name:'Bolt Rail Clamp', system:'งาน Shift Line B', category:'งานราง', stock:367, reorder:1908, note:'1 Rail Clamp ใช้ Bolt 1 ตัว — ต้องสั่งเพิ่ม 1,541'}
+        ];
+
+        function renderFullStockData(items, noteText){
+          var table = document.getElementById('fullStockTable');
+          if (!table) return;
+
+          var crit=0, watch=0, ok=0;
+          var html = '<tr><th>No</th><th>รหัส/Part No.</th><th>ชื่ออะไหล่</th><th>ระบบ/เครื่องจักร</th><th>หมวด</th><th>Stock คงเหลือ</th><th>Reorder Point</th><th>สถานะ</th><th>หมายเหตุ</th></tr>';
+          items.forEach(function(it){
+            var cls, label;
+            if (it.stock<=0){ cls='crit'; label='วิกฤต'; crit++; }
+            else if (it.stock<=it.reorder){ cls='watch'; label='เฝ้าระวัง'; watch++; }
+            else { cls='ok'; label='ปกติ'; ok++; }
+            html += '<tr><td class="num">'+esc(it.no)+'</td><td>'+esc(it.code)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.system)+'</td><td>'+esc(it.category)+'</td>'
+              + '<td class="num '+cls+'">'+esc(it.stock)+'</td><td class="num">'+esc(it.reorder)+'</td><td class="'+cls+'">'+label+'</td><td>'+esc(it.note)+'</td></tr>';
+          });
+          table.innerHTML = html;
+
+          document.getElementById('fullStockCritCount').textContent = crit;
+          document.getElementById('fullStockWatchCount').textContent = watch;
+          document.getElementById('fullStockOkCount').textContent = ok;
+          document.getElementById('fullStockTotalCount').textContent = items.length;
+          document.getElementById('fullStockSummary').style.display = 'flex';
+
+          var note = document.getElementById('fullStockUpdatedNote');
+          if (note) note.textContent = noteText;
+        }
+
+        function renderFullStockFromStore(){
+          var raw = localStorage.getItem('ob9_fullStock');
+          if (!raw){ renderFullStockSeed(); return; }
+          var data = JSON.parse(raw);
+          renderFullStockData(data.items, 'ข้อมูลล่าสุด: นำเข้าจาก "'+data.sourceFile+'" เมื่อ '+new Date(data.importedAt).toLocaleString('th-TH')+' — รวม '+data.items.length+' รายการ');
+        }
+
+        function renderFullStockSeed(){
+          renderFullStockData(SEED_ITEMS, '⚠️ ยังไม่มีไฟล์ครบชุด — แสดงจากข้อมูลที่มีอยู่แล้วในรายงานนี้ ('+SEED_ITEMS.length+' รายการ จากทั้งหมด Inventory Control ~36 + OEM Spare ~180) กด "ดาวน์โหลด Template" แล้วอัปโหลดไฟล์ฉบับเต็มเพื่อแทนที่ชุดนี้');
+        }
+
+        window.downloadFullStockTemplate = downloadFullStockTemplate;
+        window.handleFullStockFile = handleFullStockFile;
+        window.renderFullStockFromStore = renderFullStockFromStore;
+        document.addEventListener('DOMContentLoaded', function(){
+          try{ renderFullStockFromStore(); }catch(e){ if(window.console) console.error('fullStock auto-load error', e); }
+        });
+        if (document.readyState==='complete' || document.readyState==='interactive'){
+          setTimeout(function(){ try{ renderFullStockFromStore(); }catch(e){} },0);
+        }
+      })();
+      </script>
+
+      <div id="rpt4-sec2" class="rpt4-title">2. รายงานปฏิบัติงาน / PM</div>
+      <div class="rpt4-sub">สรุป Work Order จริงจาก OB9 Dashboard (38 รายการ) — ครอบคลุมช่วง 4 ก.ค. - 16 ส.ค. 2569</div>
+      <table>
+        <tr><td>ประเภทงาน</td><td>Corrective 34 (89.5%) | Preventive 4 (10.5%)</td></tr>
+        <tr><td>สถานะ</td><td>Completed 28 | Pending 7 | Cancelled 3</td></tr>
+        <tr><td>ระดับความสำคัญ</td><td>Critical 7 | High 7 | Medium 23 | Low 1</td></tr>
+        <tr><td>Failure Mode</td><td>กรอกแล้ว 4/38 (10.5%) — ไม่ได้กรอก 34/38 (89.5%)</td></tr>
+        <tr><td>Downtime</td><td>Start/End = 0 ทุกรายการ → ยังคำนวณ MTBF/MTTR ไม่ได้</td></tr>
+        <tr><td>บันทึกล่าสุด</td><td>WO-0040 (16 ส.ค. 69) — ห่างจากปัจจุบัน 26 วัน</td></tr>
+      </table>
+      <details style="margin-bottom:16px">
+        <summary style="cursor:pointer;color:#7ec8f0;font-weight:700;padding:6px 0">▸ ดูรายการ Work Order ทั้งหมด (38 รายการ)</summary>
+        <table>
+          <tr><th>WO ID</th><th>วันที่</th><th>Unit</th><th>ประเภท</th><th>ความสำคัญ</th><th>สถานะ / รายละเอียดย่อ</th></tr>
+          <tr><td>WO-2026-001</td><td>05/07/69</td><td>Spreader.A</td><td>Corrective</td><td class="crit">Critical</td><td class="pending">Pending — Crawler track components (กู้คืนจากรายงาน)</td></tr>
+          <tr><td>WO-2026-002</td><td>04/07/69</td><td>Spreader.B</td><td>Corrective</td><td>High</td><td class="completed">Completed — Slewing mechanism</td></tr>
+          <tr><td>WO-2026-003</td><td>04/07/69</td><td>Tripper.A</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Rail travel mechanism</td></tr>
+          <tr><td>WO-2026-004</td><td>04/07/69</td><td>Spreader.A</td><td>Corrective</td><td>High</td><td class="completed">Completed — Travel drive</td></tr>
+          <tr><td>WO-2026-005</td><td>04/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Conveyor drive</td></tr>
+          <tr><td>WO-2026-006</td><td>05/07/69</td><td>Tripper.B</td><td>Corrective</td><td class="crit">Critical</td><td class="pending">Pending — Brakes</td></tr>
+          <tr><td>WO-2026-007</td><td>04/07/69</td><td>Spreader.A</td><td>Corrective</td><td>Low</td><td class="completed">Completed — Crawler track components</td></tr>
+          <tr><td>WO-2026-008</td><td>05/07/69</td><td>Spreader.B</td><td>Corrective</td><td>High</td><td class="completed">Completed — Ball race bearing</td></tr>
+          <tr><td>WO-0009</td><td>07/07/69</td><td>A9</td><td>Corrective</td><td>Medium</td><td class="completed">Completed</td></tr>
+          <tr><td>WO-0010</td><td>08/07/69</td><td>Spreader.B</td><td>Preventive</td><td>High</td><td class="completed">Completed — รอยแตกระหว่างใบ pad กับ link</td></tr>
+          <tr><td>WO-0011</td><td>09/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed</td></tr>
+          <tr><td>WO-0012</td><td>09/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed</td></tr>
+          <tr><td>WO-0013</td><td>09/07/69</td><td>Spreader.B</td><td>Preventive</td><td>High</td><td class="completed">Completed — Tension ไม่ได้ตามข้อกำหนด 310 Bar</td></tr>
+          <tr><td>WO-0014</td><td>10/07/69</td><td>Spreader.B</td><td>Corrective</td><td class="crit">Critical</td><td class="completed">Completed — Crawler track ความตึง</td></tr>
+          <tr><td>WO-0015</td><td>10/07/69</td><td>Spreader.B</td><td>Corrective</td><td class="crit">Critical</td><td class="completed">Completed — ใส่ Bolt Cam tumbler ใหม่</td></tr>
+          <tr><td>WO-0016</td><td>10/07/69</td><td>Spreader.A</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Track wheel สภาพ</td></tr>
+          <tr><td>WO-0017</td><td>16/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — เสียงผิดปกติ Travel drive</td></tr>
+          <tr><td>WO-0018</td><td>16/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Slewing drive ตรวจสภาพ</td></tr>
+          <tr><td>WO-0019</td><td>16/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Track wheel สภาพ</td></tr>
+          <tr><td>WO-0020</td><td>16/07/69</td><td>(ไม่ระบุ)</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — เสียงผิดปกติ Travel drive</td></tr>
+          <tr><td>WO-0021</td><td>16/07/69</td><td>(ไม่ระบุ)</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Slewing drive ตรวจสภาพ</td></tr>
+          <tr><td>WO-0022</td><td>16/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Cardan Shaft D1 เสียงดังผิดปกติ</td></tr>
+          <tr><td>WO-0023</td><td>16/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Slewing drive Gap ตรวจสภาพ</td></tr>
+          <tr><td>WO-0024</td><td>18/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Bolt Cam drive 1 ขาด 3 Set</td></tr>
+          <tr><td>WO-0025</td><td>18/07/69</td><td>Spreader.B</td><td>Preventive</td><td>High</td><td class="completed">Completed — Bolt หักจากสภาพการล้า</td></tr>
+          <tr><td>WO-0026</td><td>22/07/69</td><td>A1.1</td><td>Corrective</td><td class="crit">Critical</td><td class="completed">Completed — Fish plate/รางหักหลายจุด (crack)</td></tr>
+          <tr><td>WO-0027</td><td>24/07/69</td><td>A1.1</td><td>Corrective</td><td>High</td><td class="cancelled">Cancelled — Fish plate (crack)</td></tr>
+          <tr><td>WO-0028</td><td>24/07/69</td><td>A1.1</td><td>Corrective</td><td>Medium</td><td class="cancelled">Cancelled — Rail clamp (wear)</td></tr>
+          <tr><td>WO-0029</td><td>24/07/69</td><td>A1.1</td><td>Corrective</td><td class="crit">Critical</td><td class="cancelled">Cancelled — Rail (crack)</td></tr>
+          <tr><td>WO-0032</td><td>29/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Cam tumbler D1 แตกหัก 2 Set + หลังคา Gear Crawler เสียหาย</td></tr>
+          <tr><td>WO-0033</td><td>29/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — Crawler track ความหย่อน D1,D2</td></tr>
+          <tr><td>WO-0034</td><td>29/07/69</td><td>Spreader.B</td><td>Corrective</td><td class="crit">Critical</td><td class="completed">Completed — หลังคา Gear Crawler เสีย + Cam tumbler แตก 2 set</td></tr>
+          <tr><td>WO-0035</td><td>30/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="pending">Pending — เสียงผิดปกติ Travel drive</td></tr>
+          <tr><td>WO-0036</td><td>30/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="pending">Pending — อุณหภูมิ Travel drive motor</td></tr>
+          <tr><td>WO-0037</td><td>30/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="pending">Pending — Slewing drive ตรวจสภาพ</td></tr>
+          <tr><td>WO-0038</td><td>30/07/69</td><td>Spreader.B</td><td>Corrective</td><td>Medium</td><td class="pending">Pending — Impact idler garlands</td></tr>
+          <tr><td>WO-0039</td><td>01/08/69</td><td>Spreader.A</td><td>Corrective</td><td>Medium</td><td class="completed">Completed — เสียงดังผิดปกติปั๊ม Hydraulic</td></tr>
+          <tr><td>WO-0040</td><td>16/08/69</td><td>Spreader.B</td><td>Preventive</td><td>Medium</td><td class="pending">Pending — มีเสียงดัง Travel drive</td></tr>
+        </table>
+      </details>
+
+      <div id="rpt4-sec3" class="rpt4-title">3. การตรวจสอบ (Inspection)</div>
+      <div class="rpt4-sub">บันทึกจริงจาก OB9 Dashboard (8 ครั้ง 9 ก.ค. - 1 ส.ค. 69)</div>
+      <table>
+        <tr><th>วันที่</th><th>กะ</th><th>Unit</th><th>ผู้ตรวจ</th><th>Done/Total</th><th>OK/WARN/CRIT</th><th>ประเด็นสำคัญ</th></tr>
+        <tr><td>09/07/69</td><td>Eve-14</td><td>B</td><td>พนมชัย ปานจันทร์</td><td class="check">1/16</td><td>0/1/0</td><td>Tension Discharge สายพาน ปรับ Pressure 310 bar</td></tr>
+        <tr><td>10/07/69</td><td>Day-06</td><td>B</td><td>ปวิตรพงศ์ พงศ์กลิ่นหอม</td><td class="check">1/16</td><td>0/0/1</td><td class="crit">CRITICAL: Crawler track ความตึง — Bolt Cam tumbler D1 หาย 1 Set</td></tr>
+        <tr><td>10/07/69</td><td>Day-06</td><td>A</td><td>ปวิตรพงศ์ พงศ์กลิ่นหอม</td><td class="check">1/16</td><td>0/1/0</td><td>Track wheel สภาพ — ต้องเชื่อมแก้ไข</td></tr>
+        <tr><td>28/07/69</td><td>Day-06</td><td>B</td><td>Pawitpong</td><td class="ok">16/16</td><td>14/2/0</td><td>ครบทุกจุด — ติดตาม Cam tumbler D1 SPD.B, เสียง Travel drive, Crawler track ตึง</td></tr>
+        <tr><td>30/07/69</td><td>Day-06</td><td>B</td><td>Pawitpong</td><td class="check">4/16</td><td>0/4/0</td><td>เสียง Travel drive, อุณหภูมิมอเตอร์, Slewing drive, อื่นๆ</td></tr>
+        <tr><td>01/08/69</td><td>Day-06</td><td>B</td><td>นายพนมชัย ปานจันทร์</td><td class="crit">0/16</td><td>0/0/0</td><td>ไม่ได้เช็คลิสต์ — บันทึกเฉพาะ Guard ยางสึกหรอ, Buffer Tripper สึกหรอ</td></tr>
+        <tr><td>01/08/69</td><td>Day-06</td><td>B</td><td>นายพนมชัย ปานจันทร์</td><td class="check">5/16</td><td>1/4/0</td><td>เสียง Travel drive, Slewing drive, Track wheel, Crawler track ตึง</td></tr>
+        <tr><td colspan="7" class="crit">⚠️ ไม่มีบันทึกใหม่ตั้งแต่ 1 ส.ค. 69 (ห่าง 41 วันถึง 11 ก.ย.) — ควรเร่งกลับมาตรวจสอบตามรอบทันที</td></tr>
+      </table>
+
+      <div id="rpt4-sec4" class="rpt4-title">4. วิเคราะห์ข้อมูล</div>
+      <div class="rpt4-section">จุดที่เกิดปัญหาซ้ำบ่อยที่สุด</div>
+      <table>
+        <tr><th>ชิ้นส่วน/ระบบ</th><th>จำนวนครั้งที่พบ</th><th>เชื่อมโยง Stock</th><th>ข้อเสนอแนะ</th></tr>
+        <tr><td>Travel Drive (เสียง/อุณหภูมิ)</td><td class="num">6+ ครั้ง</td><td>No.1,2 Universal Joint</td><td>เกิดซ้ำมากที่สุด — ควรตรวจ Root Cause เชิงลึก สต็อก UJ No.1 เหลือ 1 ชิ้นเท่านั้น</td></tr>
+        <tr><td>Cam Tumbler / Drive Tumbler</td><td class="num">4 ครั้ง</td><td>No.4,5,6,23</td><td>รูปแบบเสียหายซ้ำ — ควรลดรอบ PM และตรวจ Bolt Torque ทุกกะ</td></tr>
+        <tr><td>Slewing Drive</td><td class="num">4 ครั้ง</td><td>5.21.x Slew Gearbox</td><td>ตรวจ Gap ตามค่ามาตรฐาน (X=9-11mm, Y=0.72-0.96mm) ต่อเนื่อง</td></tr>
+        <tr><td>Crawler Track Tension</td><td class="num">3 ครั้ง</td><td>No.12,26,27</td><td>ควรตรวจความตึงทุกกะแทนการรอจนพบปัญหา</td></tr>
+        <tr><td>Rail/Fish Plate (A1.1)</td><td class="num">4 ครั้ง</td><td>No.33-36</td><td>กลุ่มเดียวที่บันทึก Failure Mode ครบ — ใช้เป็นต้นแบบ</td></tr>
+      </table>
+      <div class="rpt4-section">ข้อเสนอแนะเชิงระบบ</div>
+      <table>
+        <tr><td>1) บังคับกรอก Failure Mode และ Downtime ทุกครั้งที่ปิด WO</td></tr>
+        <tr><td>2) นำสต็อก Inventory Control 36 รายการ + OEM ~180 รายการ เข้าระบบ Spare Parts tracker ให้ครบ</td></tr>
+        <tr><td>3) เพิ่มสัดส่วน Preventive จาก 10.5% เป็นอย่างน้อย 30-40% (เน้น Travel Drive, Cam Tumbler, Crawler Track Tension)</td></tr>
+        <tr><td>4) เร่งกลับมาบันทึก Inspection ตามรอบทันที ห้ามปิดรอบถ้าตรวจไม่ครบ 16 จุด</td></tr>
+        <tr><td>5) สั่งซื้อ Brake Shoe D400 (No.3) ด่วนที่สุด (8 ชุดตาม OEM) — ชิ้นส่วนความปลอดภัยที่สต็อก=0</td></tr>
+      </table>
+
+      <div id="dutySectionContent">
+      <div id="rpt4-sec5" class="rpt4-title">ตารางเวรตรวจเช็ค Spreader — กันยายน 2569 (ร่าง)</div>
+      <div class="warnbanner">⚠️ ร่างเบื้องต้น: จัดด้วยการหมุนเวียน Round-Robin (ทำงาน 2 วันติด พัก 3 วัน) ยังไม่ได้อิงวันหยุดจริงรายบุคคลจากตาราง Off — กรุณาตรวจสอบกับตาราง Off จริงก่อนประกาศใช้ แจ้งวันที่ใครติดวันหยุด/อบรมได้ ผมจะปรับให้ตรงทันที</div>
+      <div id="dutyRangeSub" class="rpt4-sub">ประจำงวด 21 ส.ค. – 20 ก.ย. 2569 | เครื่องจักร Spreader ARs 2400/52+50x19 และ Tripper Car Ü2200 (2 คน/วัน) — ไม่รวมพนักงานเมียนมา</div>
+      <div id="dutyTodayBox" style="background:#123a1e;color:#7ee0a0;font-weight:700;padding:8px 10px;border-radius:6px;margin-bottom:10px;font-size:12.5px">กำลังตรวจสอบวันที่...</div>
+      <div style="overflow-x:auto">
+      <table id="dutyRosterTable" style="min-width:1100px">
+        <tr>
+          <th rowspan="2">ที่</th><th rowspan="2" class="name">ชื่อ-สกุล</th>
+          <th>21</th><th>22</th><th class="sun">23</th><th>24</th><th>25</th><th>26</th><th>27</th>
+          <th>28</th><th>29</th><th class="sun">30</th><th>31</th><th>1</th><th>2</th><th>3</th>
+          <th>4</th><th>5</th><th class="sun">6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+          <th>11</th><th>12</th><th class="sun">13</th><th>14</th><th>15</th><th>16</th><th>17</th>
+          <th>18</th><th>19</th><th class="sun">20</th>
+          <th rowspan="2">รวมเวร</th>
+        </tr>
+        <tr>
+          <th>ศ</th><th>ส</th><th class="sun">S</th><th>จ</th><th>อ</th><th>พ</th><th>พฤ</th>
+          <th>ศ</th><th>ส</th><th class="sun">S</th><th>จ</th><th>อ</th><th>พ</th><th>พฤ</th>
+          <th>ศ</th><th>ส</th><th class="sun">S</th><th>จ</th><th>อ</th><th>พ</th><th>พฤ</th>
+          <th>ศ</th><th>ส</th><th class="sun">S</th><th>จ</th><th>อ</th><th>พ</th><th>พฤ</th>
+          <th>ศ</th><th>ส</th><th class="sun">S</th>
+        </tr>
+        <tr><td>1</td><td class="name">นายพนมชัย ปานจันทร์</td>
+        <td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td>
+        <td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td>
+        <td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td></td><td class="dutycell">✓</td>
+        <td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td>
+        <td></td><td></td><td class="dutycell">✓</td>
+        <td class="totalcol">13</td></tr>
+        <tr><td>2</td><td class="name">นายวสันต์ ปีบ้านใหม่</td>
+        <td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td>
+        <td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td>
+        <td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td></td>
+        <td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td>
+        <td></td><td></td><td class="dutycell">✓</td>
+        <td class="totalcol">13</td></tr>
+        <tr><td>3</td><td class="name">นายคมกริช คำใส</td>
+        <td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td>
+        <td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td>
+        <td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td>
+        <td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td>
+        <td class="dutycell">✓</td><td></td><td></td>
+        <td class="totalcol">12</td></tr>
+        <tr><td>4</td><td class="name">นายนริศ สีลัง</td>
+        <td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td>
+        <td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td>
+        <td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td>
+        <td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td>
+        <td class="dutycell">✓</td><td class="dutycell">✓</td><td></td>
+        <td class="totalcol">12</td></tr>
+        <tr><td>5</td><td class="name">นายนเรนทร์ฤทธิ์ นุคำ</td>
+        <td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td>
+        <td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td>
+        <td class="dutycell">✓</td><td></td><td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td>
+        <td></td><td></td><td class="dutycell">✓</td><td class="dutycell">✓</td><td></td><td></td><td></td>
+        <td></td><td class="dutycell">✓</td><td class="dutycell">✓</td>
+        <td class="totalcol">12</td></tr>
+        <tr><td colspan="2" class="name"><b>จำนวนคนตรวจ/วัน</b></td>
+        <td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td>
+        <td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td>
+        <td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td>
+        <td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td>
+        <td>2</td><td>2</td><td>2</td>
+        <td class="totalcol">62</td></tr>
+      </table>
+      </div>
+      <div class="rpt4-sub">สัญลักษณ์: ✓ = เข้าเวรตรวจเช็ค | S = วันอาทิตย์ | หมุนเวียนแบบ Round-Robin: แต่ละคนทำงาน 2 วันติดต่อกัน แล้วพัก 3 วัน สลับคู่ไปเรื่อยๆ | คอลัมน์วันที่ไฮไลต์สีฟ้า/ช่อง ✓ ขอบเขียว = วันนี้ (คำนวณอัตโนมัติ)</div>
+      </div>
+      <script>
+      window.updateDutyTodayHighlight = function(baseDate, totalDays){
+        try{
+          var start = baseDate || new Date(2026,7,21); // ค่าเริ่มต้น: 21 ส.ค. 2569 (ตารางร่าง Round-Robin)
+          var nDays = totalDays || 31;
+          var today = new Date();
+          today.setHours(0,0,0,0); var start2 = new Date(start); start2.setHours(0,0,0,0);
+          var diffDays = Math.round((today-start2)/86400000)+1; // 1-based day index in roster
+          var box = document.getElementById('dutyTodayBox');
+          var table = document.getElementById('dutyRosterTable');
+          if(!box || !table) return;
+          // เคลียร์ไฮไลต์เก่า
+          table.querySelectorAll('td.dutycell').forEach(function(c){ c.style.outline=''; c.style.outlineOffset=''; });
+          table.querySelectorAll('tr:first-child th').forEach(function(h){ h.style.background=''; h.style.color=''; });
+          if(diffDays<1 || diffDays>nDays){
+            var endLbl = new Date(start2); endLbl.setDate(endLbl.getDate()+nDays-1);
+            box.textContent = 'ℹ️ ตารางนี้ครอบคลุมเฉพาะช่วง ' + fmtThaiShort(start2) + ' – ' + fmtThaiShort(endLbl) + ' — วันนี้อยู่นอกช่วงนี้แล้ว ต้องอัปเดตตาราง Off เดือนถัดไป';
+            box.style.background = '#1a2f45'; box.style.color = '#7ec8f0';
+            return;
+          }
+          var rows = table.querySelectorAll('tr');
+          var headRow = rows[0];
+          var idx = diffDays + 1; // 0-indexed cell position (ที่=0, ชื่อ=1, วันที่1=2, ...)
+          var names = [];
+          for(var i=2;i<rows.length;i++){
+            var cells = rows[i].children;
+            if(cells.length < nDays+3) continue; // ข้ามแถวสรุป "จำนวนคนตรวจ/วัน" (คอลัมน์น้อยกว่าเพราะ colspan)
+            var nameCell = cells[1];
+            if(!nameCell || !nameCell.classList.contains('name')) continue;
+            var cell = cells[idx];
+            if(cell && cell.classList.contains('dutycell')){
+              names.push(nameCell.textContent.trim());
+              cell.style.outline = '2px solid #7ee0a0';
+              cell.style.outlineOffset = '-2px';
+            }
+          }
+          if(headRow.children[idx]){
+            headRow.children[idx].style.background = '#7ec8f0';
+            headRow.children[idx].style.color = '#0a1420';
+          }
+          var dateLabel = headRow.children[idx] ? headRow.children[idx].textContent.trim() : diffDays;
+          box.textContent = names.length
+            ? ('📌 วันนี้เข้าเวรตรวจเช็ค (วันที่ ' + dateLabel + '): ' + names.join(' , '))
+            : ('📌 วันที่ ' + dateLabel + ' — ไม่มีชื่อเข้าเวรในตารางนี้ ตรวจสอบอีกครั้ง');
+        }catch(e){ if(window.console) console.error('dutyToday render error', e); }
+      };
+      function fmtThaiShort(d){
+        var M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+        return d.getDate()+' '+M[d.getMonth()]+' '+(d.getFullYear()+543);
+      }
+      window.updateDutyTodayHighlight();
+      </script>
+
+      <script>
+      (function(){
+        var THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+        var THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+        var DOW_SHORT = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+        var DUTY_EMPLOYEES = ['นายพนมชัย ปานจันทร์','นายวสันต์ ปีบ้านใหม่','นายคมกริช คำใส','นายนริศ สีลัง','นายนเรนทร์ฤทธิ์ นุคำ'];
+        var LEAVE_CODES = ['ปม','กพ','อบ','ป','ก','พ','ข','H']; // เรียงยาวไปสั้นเพื่อจับ 'ปม' ก่อน 'ป' ฯลฯ ('S' ไม่นับ เพราะเป็นแค่สัญลักษณ์วันอาทิตย์)
+
+        function pad2(n){ return (n<10?'0':'')+n; }
+        function isoDate(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+        function fmtThai(d){ return d.getDate()+' '+THAI_MONTHS_SHORT[d.getMonth()]+' '+(d.getFullYear()+543); }
+        function parseThaiMonthYear(text){
+          for (var i=0;i<THAI_MONTHS.length;i++){
+            if (text.indexOf(THAI_MONTHS[i])>=0){
+              var m = /(\d{4})/.exec(text);
+              if (m) return {month:i+1, yearBE:parseInt(m[1],10)};
+            }
+          }
+          return null;
+        }
+
+        function handleOffScheduleFile(input){
+          var file = input.files && input.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function(e){
+            try {
+              if (typeof XLSX==='undefined') throw new Error('ไลบรารีอ่าน Excel (SheetJS) ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง');
+              var wb = XLSX.read(e.target.result, {type:'binary'});
+              var sheet = wb.Sheets[wb.SheetNames[0]];
+              var rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+
+              var monthInfo = null;
+              for (var r=0;r<Math.min(rows.length,8) && !monthInfo;r++){
+                for (var c=0;c<rows[r].length;c++){
+                  var v = String(rows[r][c]||'');
+                  if (v.indexOf('ประจำเดือน')>=0){ monthInfo = parseThaiMonthYear(v); if (monthInfo) break; }
+                }
+              }
+              if (!monthInfo) throw new Error('ไม่พบข้อความ "ประจำเดือน ..." ในไฟล์ ไม่สามารถระบุเดือน/ปีของตาราง Off ได้');
+
+              var dateRowIdx=-1, dateCols=[];
+              for (var r2=0;r2<rows.length;r2++){
+                var cnt=0, cols=[];
+                for (var c2=0;c2<rows[r2].length;c2++){
+                  var raw = rows[r2][c2];
+                  var n = parseInt(raw,10);
+                  if (!isNaN(n) && n>=1 && n<=31 && String(raw).trim()===String(n)){ cnt++; cols.push(c2); }
+                }
+                if (cnt>=15){ dateRowIdx=r2; dateCols=cols; break; }
+              }
+              if (dateRowIdx<0) throw new Error('ไม่พบแถวหมายเลขวันที่ (1-31) ในไฟล์ — รูปแบบไฟล์อาจไม่ตรงกับที่คาดไว้');
+
+              var colDate = {}, prevNum=null, curMonth=monthInfo.month, curYearBE=monthInfo.yearBE;
+              var firstNum = parseInt(rows[dateRowIdx][dateCols[0]],10);
+              if (firstNum > 20) { curMonth -= 1; if (curMonth<1){curMonth=12; curYearBE-=1;} }
+              dateCols.forEach(function(c){
+                var n = parseInt(rows[dateRowIdx][c],10);
+                if (prevNum!==null && n < prevNum) { curMonth += 1; if (curMonth>12){curMonth=1; curYearBE+=1;} }
+                colDate[c] = new Date(curYearBE-543, curMonth-1, n);
+                prevNum = n;
+              });
+
+              var offMap = {}, found = {};
+              for (var r3=dateRowIdx+1;r3<rows.length;r3++){
+                var row = rows[r3];
+                if (!row || row.length===0) continue;
+                var name = (String(row[2]||'').trim()+' '+String(row[3]||'').trim()).replace(/\s+/g,' ').trim();
+                if (!name) continue;
+                var match = DUTY_EMPLOYEES.filter(function(emp){ return emp.indexOf(name)>=0 || name.indexOf(emp)>=0; })[0];
+                if (!match) continue;
+                offMap[match] = offMap[match] || {};
+                dateCols.forEach(function(c){
+                  var val = String(row[c]||'').trim();
+                  if (!val) return;
+                  var code = LEAVE_CODES.filter(function(lc){ return val.indexOf(lc)===0; })[0];
+                  if (code){ offMap[match][isoDate(colDate[c])] = code; }
+                });
+                found[match] = true;
+              }
+              var missing = DUTY_EMPLOYEES.filter(function(emp){ return !found[emp]; });
+
+              var allDates = dateCols.map(function(c){ return colDate[c]; }).sort(function(a,b){return a-b;});
+              var period = {
+                startISO: isoDate(allDates[0]),
+                endISO: isoDate(allDates[allDates.length-1]),
+                monthLabel: THAI_MONTHS[monthInfo.month-1]+' '+monthInfo.yearBE
+              };
+
+              var storeKey = 'ob9_offSchedule_'+monthInfo.yearBE+'-'+pad2(monthInfo.month);
+              localStorage.setItem(storeKey, JSON.stringify({offMap:offMap, period:period, importedAt:new Date().toISOString(), sourceFile:file.name}));
+              localStorage.setItem('ob9_offSchedule_latestKey', storeKey);
+
+              renderDutyRosterFromStore(storeKey);
+              var leaveCount = 0; Object.keys(offMap).forEach(function(n){ leaveCount += Object.keys(offMap[n]).length; });
+              showToast('นำเข้าตาราง Off เดือน '+period.monthLabel+' สำเร็จ — พบวันลา '+leaveCount+' รายการ'+(missing.length?(' (ไม่พบข้อมูลของ: '+missing.join(', ')+' — ใช้ค่าว่าง/ไม่ลาแทน)'):''), missing.length?'⚠️':'✅');
+            } catch(err){
+              if (window.console) console.error('offSchedule parse error', err);
+              showToast('อ่านไฟล์ตาราง Off ไม่สำเร็จ: '+String(err.message||err), '❌');
+            }
+          };
+          reader.readAsBinaryString(file);
+        }
+
+        function buildRosterSchedule(dates, offMap){
+          var state = {}; DUTY_EMPLOYEES.forEach(function(emp){ state[emp]={streak:0,total:0,lastWorked:-99}; });
+          var schedule = [];
+          dates.forEach(function(d,i){
+            var iso = isoDate(d);
+            var available = DUTY_EMPLOYEES.filter(function(emp){ return !(offMap[emp] && offMap[emp][iso]); });
+            available.sort(function(a,b){
+              var sa=state[a], sb=state[b];
+              var ca=(sa.streak===1)?0:1, cb=(sb.streak===1)?0:1;
+              if (ca!==cb) return ca-cb;
+              if (sa.total!==sb.total) return sa.total-sb.total;
+              return sa.lastWorked-sb.lastWorked;
+            });
+            var picked = available.slice(0,2);
+            DUTY_EMPLOYEES.forEach(function(emp){
+              if (picked.indexOf(emp)>=0){
+                state[emp].streak = (state[emp].streak>=2)?1:state[emp].streak+1;
+                state[emp].total++;
+                state[emp].lastWorked = i;
+              } else {
+                state[emp].streak = 0;
+              }
+            });
+            schedule.push({date:d, iso:iso, workers:picked});
+          });
+          return { schedule:schedule, totals: DUTY_EMPLOYEES.map(function(emp){ return {name:emp, total:state[emp].total}; }) };
+        }
+
+        window.renderDutyRosterFromStore = function(storeKey){
+          var raw = localStorage.getItem(storeKey);
+          if (!raw) return;
+          var data = JSON.parse(raw);
+          var dates = [];
+          var start = new Date(data.period.startISO+'T00:00:00'), end = new Date(data.period.endISO+'T00:00:00');
+          for (var d=new Date(start); d<=end; d.setDate(d.getDate()+1)) dates.push(new Date(d));
+          var result = buildRosterSchedule(dates, data.offMap||{});
+
+          var table = document.getElementById('dutyRosterTable');
+          if (!table) return;
+          var html = '<tr><th rowspan="2">ที่</th><th rowspan="2" class="name">ชื่อ-สกุล</th>';
+          dates.forEach(function(d){ html += '<th'+(d.getDay()===0?' class="sun"':'')+'>'+d.getDate()+'</th>'; });
+          html += '<th rowspan="2">รวมเวร</th></tr><tr>';
+          dates.forEach(function(d){ html += '<th'+(d.getDay()===0?' class="sun"':'')+'>'+(d.getDay()===0?'S':DOW_SHORT[d.getDay()])+'</th>'; });
+          html += '</tr>';
+          DUTY_EMPLOYEES.forEach(function(name,idx){
+            html += '<tr><td>'+(idx+1)+'</td><td class="name">'+name+'</td>';
+            dates.forEach(function(d,i){
+              var on = result.schedule[i].workers.indexOf(name)>=0;
+              html += '<td'+(on?' class="dutycell"':'')+'>'+(on?'✓':'')+'</td>';
+            });
+            var tot = result.totals.filter(function(t){ return t.name===name; })[0].total;
+            html += '<td class="totalcol">'+tot+'</td></tr>';
+          });
+          html += '<tr><td colspan="2" class="name"><b>จำนวนคนตรวจ/วัน</b></td>';
+          var grand=0;
+          dates.forEach(function(d,i){ var n=result.schedule[i].workers.length; grand+=n; html += '<td>'+n+'</td>'; });
+          html += '<td class="totalcol">'+grand+'</td></tr>';
+          table.innerHTML = html;
+
+          var titleEl = document.getElementById('rpt4-sec5');
+          if (titleEl) titleEl.textContent = 'ตารางเวรตรวจเช็ค Spreader — '+data.period.monthLabel+' (จัดตามตาราง Off จริง)';
+          var rangeSub = document.getElementById('dutyRangeSub');
+          if (rangeSub) rangeSub.textContent = 'ประจำงวด '+fmtThai(dates[0])+' – '+fmtThai(dates[dates.length-1])+' | เครื่องจักร Spreader ARs 2400/52+50x19 และ Tripper Car Ü2200 (2 คน/วัน) — ไม่รวมพนักงานเมียนมา | นำเข้าจาก "'+data.sourceFile+'" เมื่อ '+new Date(data.importedAt).toLocaleString('th-TH');
+          var banner = document.querySelector('#dutySectionContent .warnbanner');
+          if (banner) banner.textContent = '✅ จัดเวรอัตโนมัติจากตาราง Off จริงที่นำเข้า — เลี่ยงวันที่มีรหัสลา (ป/ปม/ก/กพ/พ/ข/อบ/H) ให้แล้ว ยังคงเป้าหมาย 2 คน/วัน และหมุนเวียนงาน 2 วันติด พัก 3 วัน ตามเท่าที่วันลาเอื้ออำนวย';
+
+          window.updateDutyTodayHighlight(dates[0], dates.length);
+
+          // ถ้า Modal เวรตรวจเปิดอยู่ ให้ก็อปปี้เนื้อหาล่าสุดเข้าไปแสดงด้วย (Modal เป็นสำเนาที่ clone ไว้ตอนเปิด)
+          var modal = document.getElementById('dutyModal');
+          if (modal && modal.style.display !== 'none'){
+            var src = document.getElementById('dutySectionContent');
+            var body = document.getElementById('dutyModalBody');
+            if (src && body) body.innerHTML = src.innerHTML;
+          }
+        };
+
+        window.handleOffScheduleFile = handleOffScheduleFile;
+
+        document.addEventListener('DOMContentLoaded', function(){
+          try{
+            var key = localStorage.getItem('ob9_offSchedule_latestKey');
+            if (key && localStorage.getItem(key)) renderDutyRosterFromStore(key);
+          } catch(e){ if (window.console) console.error('duty roster auto-load error', e); }
+        });
+        if (document.readyState==='complete' || document.readyState==='interactive'){
+          setTimeout(function(){
+            try{
+              var key = localStorage.getItem('ob9_offSchedule_latestKey');
+              if (key && localStorage.getItem(key)) renderDutyRosterFromStore(key);
+            } catch(e){}
+          },0);
+        }
+      })();
+      </script>
+    </div>
     <div id="panel-settings" class="tab-panel" style="display:none;flex-direction:column;overflow-y:auto">
       <div style="max-width:760px;margin:0 auto;padding:20px 24px;width:100%">
 
@@ -3903,7 +4615,6 @@ function _getConfig() {
         <option value="pending">รอดำเนินการ</option>
         <option value="in_progress">กำลังซ่อม</option>
         <option value="completed">เสร็จแล้ว</option>
-        <option value="cancelled">ยกเลิก</option>
       </select>
       <select id="woFilterPri" onchange="renderWOHistory()">
         <option value="">ทุก priority</option>
@@ -5541,25 +6252,6 @@ function _getConfig() {
     document.getElementById('woPos').value = pos;
     document.getElementById('woPart').value = part;
     document.getElementById('woModalSub').textContent = machine + ' › ' + section + ' › ' + part;
-    // ── (17 ส.ค. 69) แก้บั๊ก: openWOModal() รับ machine/section/pos/part เข้ามาแล้ว แต่เดิมเซ็ตแค่ hidden
-    // field (woMachine/woSection/woPos/woPart) กับข้อความสรุปเท่านั้น ไม่เคยเติมลง select ที่ผู้ใช้เห็นจริง
-    // (woFailedSystem/woFailedPart/woFailedPos ในกล่อง "ชิ้นส่วน / Designation — Spare Data Link")
-    // เลย — ทำให้เปิดฟอร์มมาแล้วต้องเลือกซ้ำเองทั้งที่ระบบรู้ข้อมูลอยู่แล้ว (เช่น มาจากคลิกตาราง FMEA
-    // หรือมาจากการตรวจเช็คที่ระบุเครื่อง/ระบบ/ตำแหน่งไว้แล้ว) — เติมให้ตรงนี้เหมือนที่ editWO() ทำกับ WO เดิม
-    if (typeof populateFailedSystems === 'function') populateFailedSystems();
-    var _wfSysEl = document.getElementById('woFailedSystem');
-    if (_wfSysEl && section) {
-      _wfSysEl.value = section;
-      if (typeof populateFailedParts === 'function') populateFailedParts();
-      var _wfPartEl = document.getElementById('woFailedPart');
-      if (_wfPartEl && part) {
-        _wfPartEl.value = part;
-        if (typeof onFailedPartChange === 'function') onFailedPartChange();
-      }
-    }
-    var _wfPosEl = document.getElementById('woFailedPos');
-    if (_wfPosEl) _wfPosEl.value = pos || '';
-    if (typeof updateWOSpareImage === 'function') updateWOSpareImage();
     document.getElementById('woDate').value = new Date().toISOString().slice(0,10);
     updateDateThaiPreview('woDate','woDate-thai');
     document.getElementById('woDesc').value = '';
@@ -5608,21 +6300,11 @@ function _getConfig() {
     var _elEl = document.getElementById('woEquipList'); if (_elEl) _elEl.innerHTML = '';
     if (typeof populateWOEquipNameList === 'function') populateWOEquipNameList();
     if (typeof addLaborRow === 'function') addLaborRow();
-    document.querySelectorAll('.wo-unit-chip').forEach(c => c.classList.remove('sel'));
-    // (17 ส.ค. 69) ถ้า machine ที่ส่งเข้ามาตรงกับ unit chip ตัวไหนพอดี (เช่น "A1.1", "Spreader.A") ให้เลือก
-    // ให้อัตโนมัติเลย แทนที่จะเคลียร์ทิ้งเฉยๆ ทั้งที่รู้อยู่แล้วว่าเป็นเครื่องไหน — ถ้าไม่ตรง (เช่น key แบบ
-    // 'spreader-a' จากปุ่ม "+ แจ้งซ่อมใหม่" ทั่วไปที่ไม่ระบุเครื่อง) จะไม่มี chip ไหนถูกเลือก เหมือนพฤติกรรมเดิม
-    var _matchChip = machine ? document.querySelector('.wo-unit-chip[data-unit="' + machine.replace(/"/g,'\\"') + '"]') : null;
-    if (_matchChip) {
-      _matchChip.classList.add('sel');
-      _woSelectedUnit = _matchChip.dataset.unit || machine;
-      _woUnitCode = _matchChip.dataset.code || UNIT_CODES[machine] || '';
-    } else {
-      _woSelectedUnit = '';
-      _woUnitCode = '';
-    }
+    _woSelectedUnit = '';
+    _woUnitCode = '';
     document.getElementById('woSmuReported').value = '';
     document.getElementById('woSmuCompleted').value = '';
+    document.querySelectorAll('.wo-unit-chip').forEach(c => c.classList.remove('sel'));
     _woModalEl.classList.add('open');
     _woModalEl.style.display = 'flex'; // fallback กัน CSS specificity/ลำดับ stylesheet บังคับ display:none ทับ .open
     // Show existing WO count hint for this part
@@ -5978,10 +6660,6 @@ function _getConfig() {
         if (typeof updateWOSpareImage === 'function') updateWOSpareImage();
       }
     }
-    // (17 ส.ค. 69) เติม "ตำแหน่ง / Position" (woFailedPos) ด้วย — เดิมจุดนี้ยังไม่เคยเติมเลยแม้แต่ตอนแก้บั๊ก
-    // ครั้งก่อน (comment ด้านบน) ทั้งที่ w.failedPos/w.pos มีอยู่จริงเช่นกัน
-    var _wfPosEl2 = document.getElementById('woFailedPos');
-    if (_wfPosEl2) _wfPosEl2.value = w.failedPos || w.pos || '';
     var _woModalEl2 = document.getElementById('woModal');
     if (_woModalEl2) {
       if (_woModalEl2.parentElement !== document.body) document.body.appendChild(_woModalEl2);
@@ -6597,10 +7275,8 @@ function calcRPN() {
     if (!wos.length) { el.innerHTML = '<div style="text-align:center;color:#3a6080;padding:32px 0;font-size:13px">ยังไม่มี Work Order</div>'; return; }
     const priLabel = {critical:'Critical',high:'High',medium:'Medium',low:'Low'};
     const priCls = {critical:'pri-critical',high:'pri-high',medium:'pri-medium',low:'pri-low'};
-    // (18 ส.ค. 69) เพิ่ม cancelled ให้ครบ — เดิมไม่มี ทำให้ WO ที่ถูกยกเลิกโชว์ป้ายสถานะเป็นคำว่า
-    // "undefined" ตรงๆ บนการ์ด (stLabel[w.status] หา key ไม่เจอ) เมื่อกรอง filter แบบไม่จำกัดสถานะ
-    const stLabel = OB9.STATUS_LABEL; // (19 ส.ค. 69) ใช้คำแปลกลางจาก ob9_shared.js แทนชุดของตัวเอง
-    const stCls = {pending:'ws-pending',in_progress:'ws-in_progress',completed:'ws-completed',cancelled:'ws-cancelled'};
+    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว'};
+    const stCls = {pending:'ws-pending',in_progress:'ws-in_progress',completed:'ws-completed'};
     const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};
     const fmLabel = {wear:'Wear',leakage:'Leakage',vibration:'Vibration',overheating:'Overheating',breakage:'Breakage',corrosion:'Corrosion',jamming:'Jamming',other:'Other'};
     const piLabel = {full:'🔴 Full Stop',full_stop:'🔴 Full Stop',partial:'🟡 Partial',none:'🟢 None'};
@@ -6665,9 +7341,9 @@ function calcRPN() {
     const priLabel = {critical:'Critical',high:'High',medium:'Medium',low:'Low'};
     const priColor = {critical:'#dc2626',high:'#d97706',medium:'#d97706',low:'#059669'};
     const priBg = {critical:'#fee2e2',high:'#fef3c7',medium:'#fef3c7',low:'#d1fae5'};
-    const stLabel = OB9.STATUS_LABEL; // (19 ส.ค. 69) ใช้คำแปลกลางจาก ob9_shared.js แทนชุดของตัวเอง
-    const stColor = {pending:'#dc2626',in_progress:'#2563eb',completed:'#059669',cancelled:'#6b7280'};
-    const stBg = {pending:'#fee2e2',in_progress:'#dbeafe',completed:'#d1fae5',cancelled:'#f3f4f6'};
+    const stLabel = {pending:'รอดำเนินการ',in_progress:'กำลังซ่อม',completed:'เสร็จแล้ว'};
+    const stColor = {pending:'#dc2626',in_progress:'#2563eb',completed:'#059669'};
+    const stBg = {pending:'#fee2e2',in_progress:'#dbeafe',completed:'#d1fae5'};
     const mtLabel = {corrective:'Corrective',preventive:'Preventive',predictive:'Predictive',condition_based:'Condition-Based',inspect:'Inspect',replace:'Replace',repair:'Repair',pm:'PM',lube_change:'เปลี่ยนถ่ายน้ำมัน/สารหล่อลื่น'};
     const fmLabel = {wear:'Wear',leakage:'Leakage',vibration:'Vibration',overheating:'Overheating',breakage:'Breakage',corrosion:'Corrosion',jamming:'Jamming',other:'Other'};
     const piLabel = {full:'🔴 Full Stop',full_stop:'🔴 Full Stop',partial:'🟡 Partial',none:'🟢 None'};
@@ -6990,8 +7666,8 @@ function calcRPN() {
   }
 
   // ── After-repair VIDEOS (28 ก.ค. 69) ── มิเรอร์ของ addAfterImages/handleAfterImages แต่เป็นวิดีโอ
-  // เป็นทางเลือกเสริม ไม่บังคับ จำกัดไม่เกิน 1 นาที/คลิป (60 วินาที) ใช้ endpoint type=uploadPhoto เดิม (รองรับทุก mimeType)
-  var VIDEO_MAX_SEC_DASH = 60; // (17 ส.ค. 69) ขยายจาก 30 วิ เป็น 1 นาที ตามที่ผู้ใช้ขอ
+  // เป็นทางเลือกเสริม ไม่บังคับ จำกัดไม่เกิน 30 วิ/คลิป ใช้ endpoint type=uploadPhoto เดิม (รองรับทุก mimeType)
+  var VIDEO_MAX_SEC_DASH = 30;
   function addAfterVideos(id) {
     var inp = document.getElementById('afterVideo_' + id);
     if (inp) inp.click();
@@ -7044,7 +7720,7 @@ function calcRPN() {
       var file = files[i];
       var dur = await _checkVideoDurationDash(file);
       if (dur != null && dur > VIDEO_MAX_SEC_DASH + 0.5) {
-        if (typeof showToast === 'function') showToast('⚠️ วิดีโอยาวเกิน 1 นาที ('+Math.round(dur)+' วิ) — ข้ามคลิปนี้','⚠');
+        if (typeof showToast === 'function') showToast('⚠️ วิดีโอยาวเกิน 30 วิ ('+Math.round(dur)+' วิ) — ข้ามคลิปนี้','⚠');
         continue;
       }
       var dataUrl = await _fileToDataUrlDash(file);
@@ -12729,6 +13405,14 @@ function onFailedPartChange() {
   }
   function closeSmuModal() { document.getElementById('smuModal').style.display = 'none'; }
 
+  function openDutyModal() {
+    var src = document.getElementById('dutySectionContent');
+    var body = document.getElementById('dutyModalBody');
+    if (src && body) { body.innerHTML = src.innerHTML; }
+    document.getElementById('dutyModal').style.display = 'flex';
+  }
+  function closeDutyModal() { document.getElementById('dutyModal').style.display = 'none'; }
+
   function switchSmuTab(tab) {
     if (tab === 'itd') { fetchEquipConfig(function(){ renderSwapCheckbox(); renderEquipmentSmuKwhPanel(); }); }
     ['manual','file','online','itd'].forEach(function(t){
@@ -14457,31 +15141,9 @@ function checkCBMThreshold() {
       var _deepMachine = _qs.get('machine');
       var _deepPanel = _qs.get('panel');   // 'pm' | 'spare' — เปิด Tab เฉพาะหลังเลือกเครื่อง
       var _deepAction = _qs.get('action'); // 'smu' | 'power' | 'predict' | 'export' — เปิด Modal/ไฮไลต์ทันที ไม่ต้องเลือกเครื่อง
-      var _deepEditWO = _qs.get('editWO'); // WO id — เปิด modal แก้ไข/ปิดงานของใบนั้นโดยตรง (มาจาก ob9_pending.html กดการ์ดใบแจ้งซ่อม)
       if (_deepMachine && typeof MACHINES !== 'undefined' && MACHINES[_deepMachine] &&
           typeof selectMachineFromImage === 'function') {
         selectMachineFromImage(_deepMachine);
-      }
-      // ── Deep-link เปิด WO เพื่อแก้ไข/ปิดงานโดยตรง จาก ob9_pending.html ──
-      // ข้อมูล WO เข้า localStorage หลัง syncAllWOs() อัตโนมัติตอนโหลดหน้า (setTimeout 1600ms)
-      // จึง poll รอจนกว่าจะเจอ id นี้ใน loadWOs() แทนที่จะเดา delay ตายตัว (กันกรณีเน็ตช้า)
-      if (_deepEditWO && typeof editWO === 'function' && typeof loadWOs === 'function') {
-        (function () {
-          var _tries = 0;
-          var _maxTries = 30; // 30 x 400ms = 12 วินาที
-          var _poll = setInterval(function () {
-            _tries++;
-            var _found = loadWOs().some(function (w) { return w && w.id === _deepEditWO; });
-            if (_found || _tries >= _maxTries) {
-              clearInterval(_poll);
-              if (_found) {
-                editWO(_deepEditWO);
-              } else if (typeof showToast === 'function') {
-                showToast('ไม่พบใบแจ้งซ่อม ' + _deepEditWO + ' — อาจถูกปิด/ลบไปแล้ว', '⚠');
-              }
-            }
-          }, 400);
-        })();
       }
       // ── Deep-link จากการ์ดในหน้า ob9_home.html: ไปหาเนื้อหาของหัวข้อนั้นๆ โดยตรง ──
       if (_deepPanel === 'pm' || _deepPanel === 'spare') {
@@ -14546,6 +15208,19 @@ function checkCBMThreshold() {
 </div>
 
 <!-- SMU Settings Modal — 3 ช่องทางอัปเดต: กรอกเอง / นำเข้า Excel-CSV / ลิงก์ออนไลน์ (ย้ายมาไว้นอก tab-panel เช่นกัน) -->
+<div id="dutyModal" onclick="if(event.target===this) closeDutyModal();"
+  style="display:none;position:fixed;inset:0;background:#000a;z-index:8000;align-items:center;justify-content:center">
+  <div style="background:#0d2840;border:1px solid #1e7a4a;border-radius:12px;width:1180px;max-width:96vw;max-height:90vh;overflow-y:auto;padding:0">
+    <div style="padding:14px 18px;border-bottom:1px solid #1e3a52;display:flex;align-items:center;gap:8px;position:sticky;top:0;background:#0d2840;z-index:1;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:700;color:#7ee0a0">📅 ตารางเวรตรวจเช็ค Spreader</span>
+      <input type="file" id="offScheduleFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleOffScheduleFile(this)">
+      <button onclick="document.getElementById('offScheduleFileInput').click()" style="background:#12335a;color:#7ec8f0;border:1px solid #1e5a8a;border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer" title="อัปโหลดไฟล์ตาราง Off ประจำเดือน (.xlsx) เพื่อจัดเวรใหม่โดยอัตโนมัติ เลี่ยงวันที่คนติดลา">📥 นำเข้าตาราง Off เดือนนี้</button>
+      <button onclick="closeDutyModal()" style="margin-left:auto;background:none;border:none;color:#4a7090;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div id="dutyModalBody" class="rpt4-wrap" style="padding:14px 18px"></div>
+  </div>
+</div>
+
 <div id="smuModal" onclick="if(event.target===this) closeSmuModal();"
   style="display:none;position:fixed;inset:0;background:#000a;z-index:8000;align-items:center;justify-content:center">
   <div style="background:#0d2840;border:1px solid #2a5a80;border-radius:12px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:0">
@@ -15314,38 +15989,6 @@ function checkCBMThreshold() {
     </div>
   </div>
 </div>
-
-<script>
-  // ══ MOBILE: รวมปุ่มเมนู header-right + ob9-toolbar เป็นเมนูเดียว (⋮) บนจอเล็ก (8 ส.ค. 69) ══
-  // ย้าย element จริง (ไม่ clone) เข้า #mobMenuPanel เพื่อไม่ให้ id/onclick/badge (เช่น #predictBadge)
-  // ซ้ำกัน 2 ที่ — ทำครั้งเดียวตอนโหลดหน้า ถ้าจอกว้าง (desktop/tablet) จะไม่ย้ายอะไรเลย ปุ่มอยู่ที่เดิม
-  function ob9InitMobMenu() {
-    if (window.innerWidth > 768) return;
-    var panel = document.getElementById('mobMenuPanel');
-    var hdrRight = document.querySelector('.header-right');
-    var toolbar = document.getElementById('ob9Toolbar');
-    if (!panel || panel.dataset.built === '1') return;
-    if (hdrRight) {
-      Array.prototype.slice.call(hdrRight.querySelectorAll('button')).forEach(function (b) {
-        if (b.id === 'hdrMoreToggle' || b.classList.contains('btn-live') || b.classList.contains('btn-refresh')) return;
-        panel.appendChild(b);
-      });
-    }
-    if (toolbar) {
-      Array.prototype.slice.call(toolbar.children).forEach(function (el) {
-        if (el.id === 'smuBox') return; // smu-box ซ่อนอยู่แล้วบนมือถือ ไม่ต้องย้าย
-        panel.appendChild(el);
-      });
-    }
-    panel.dataset.built = '1';
-  }
-  function toggleMobMenu() {
-    var panel = document.getElementById('mobMenuPanel');
-    if (!panel) return;
-    panel.classList.toggle('open');
-  }
-  document.addEventListener('DOMContentLoaded', ob9InitMobMenu);
-</script>
 
 </body>
 </html>
