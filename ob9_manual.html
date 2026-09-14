@@ -99,47 +99,68 @@
   .printbtn.alt{background:#fff;color:var(--navy)}
   .printbtn:hover{opacity:.88}
 
-  @page{size:A4 landscape;margin:9mm 8mm}
+  @page{size:A4 landscape;margin:8mm 7mm}
   @media print{
-    body{background:#fff;font-size:9.5pt;color:#000}
+    /* พิมพ์ให้หน้าตาเหมือนบนจอ — คงสีป้ายรอบตรวจ/สถานะเครื่อง และคำอังกฤษกำกับไว้ครบ
+       *ต้องติ๊ก "Background graphics" ในหน้าต่างพิมพ์ของเบราว์เซอร์ สีจึงจะออก */
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    body{background:#fff;font-size:9.5pt;color:var(--text1)}
     .topnav,.hero,.kpis,.filters,.legend,.empty{display:none!important}
     .wrap{max-width:none;padding:0;margin:0}
-    .printhead{display:block;margin-bottom:7px}
-    .ph-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #000;padding-bottom:5px}
-    .ph-t1{font-size:13pt;font-weight:800;line-height:1.25}
-    .ph-t2{font-size:8pt;color:#333;margin-top:2px}
-    .ph-meta{font-size:8pt;text-align:right;line-height:1.55;white-space:nowrap}
+
+    .printhead{display:block;margin-bottom:9px}
+    .ph-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+            background:linear-gradient(135deg,var(--navy) 0%,#0F4C8A 100%);color:#fff;
+            border-radius:8px;padding:9px 13px}
+    .ph-t1{font-size:12.5pt;font-weight:800;line-height:1.3}
+    .ph-t2{font-size:7.5pt;opacity:.8;margin-top:2px;line-height:1.45}
+    .ph-meta{font-size:7.5pt;text-align:right;line-height:1.6;white-space:nowrap;opacity:.95}
     .ph-fields{display:none}
     .ph-sign{display:none}
 
-    .secthead{margin:9px 0 3px;font-size:9.5pt;font-weight:800;page-break-after:avoid;break-after:avoid;color:#000}
-    .secthead .cnt{border:none;background:none;font-size:8pt;color:#444;padding:0 0 0 6px}
+    .secthead{display:flex;align-items:center;gap:7px;margin:10px 0 4px;font-size:10pt;font-weight:800;
+              color:var(--text1);page-break-after:avoid;break-after:avoid}
+    .secthead .cnt{font-size:7.5pt;font-weight:600;color:var(--text3);background:#fff;
+                   border:1px solid var(--border);border-radius:10px;padding:1px 7px}
 
-    table{border:1px solid #000;page-break-inside:auto;border-radius:0}
-    thead{display:table-header-group}          /* หัวตารางซ้ำทุกหน้า */
+    table{border:1.2px solid var(--border);border-radius:8px;overflow:hidden;page-break-inside:auto}
+    thead{display:table-header-group}                    /* หัวตารางซ้ำทุกหน้า */
     tr{page-break-inside:avoid;break-inside:avoid}
-    th{background:#E8E8E8!important;color:#000;font-size:8pt;padding:3px 5px;border:.5px solid #555;
-       -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    td{font-size:8.5pt;padding:3px 5px;border:.5px solid #999;line-height:1.35;color:#000}
+    th{background:#F7F9FC!important;color:var(--text2);font-size:7.5pt;font-weight:800;
+       padding:4px 6px;border-bottom:1.2px solid var(--border)}
+    td{font-size:8.5pt;padding:4px 6px;border-bottom:.7px solid var(--border);
+       line-height:1.4;color:var(--text1);vertical-align:top}
+    tr:last-child td{border-bottom:none}
     tr:hover td{background:transparent}
-    .c-en{font-size:7pt;color:#555}
-    .c-note{font-size:7.5pt;color:#333}
-    .badge{border:.6px solid #333;background:none!important;color:#000!important;font-weight:700;padding:0 4px;border-radius:3px}
-    .op{border:.6px solid #777;background:none!important;color:#000!important;padding:0 3px;border-radius:3px}
+    .c-asm{font-weight:700}
+    .c-comp{color:var(--text2);font-size:8pt}
+    .c-en{display:block;font-size:7pt;font-style:italic;color:var(--text3);margin-top:1px}
+    .c-note{font-size:7.5pt;color:var(--text3);line-height:1.4}
+
+    /* ป้ายสี — เหมือนบนจอ */
+    .badge{display:inline-block;border-radius:5px;padding:1px 7px;font-size:7.5pt;font-weight:800}
+    .bD{background:#FEE2E2!important;color:var(--red)!important}
+    .bW{background:#FEF3C7!important;color:var(--amber)!important}
+    .bM{background:#DBEAFE!important;color:var(--blue)!important}
+    .bO{background:#EDE9FE!important;color:var(--purple)!important}
+    .op{font-size:7pt;font-weight:700;border-radius:4px;padding:1px 5px;white-space:nowrap}
+    .opOn{background:#DCFCE7!important;color:var(--green)!important}
+    .opOff{background:#F1F5F9!important;color:var(--text2)!important}
   }
 
-  /* ── โหมด "ใบตรวจเช็ค" : มีช่องติ๊กผลตรวจ + ช่องบันทึกค่า + หัว/ท้ายกระดาษให้กรอก ── */
+  /* ── โหมด "ใบตรวจเช็ค" : เพิ่มช่องติ๊กผลตรวจ + ช่องบันทึกค่า + หัว/ท้ายกระดาษให้กรอก ── */
   @media print{
     body.pform .pOnly{display:table-cell}
-    body.pform .ph-fields{display:flex;gap:18px;flex-wrap:wrap;font-size:9pt;margin-top:7px;padding-bottom:5px;border-bottom:1px solid #999}
+    body.pform .ph-fields{display:flex;gap:16px;flex-wrap:wrap;font-size:8.5pt;margin-top:8px;
+                          padding:7px 11px;border:1.2px solid var(--border);border-radius:8px;background:#FAFBFD!important}
     body.pform .ph-fields span{white-space:nowrap}
-    body.pform .ph-sign{display:flex;justify-content:flex-end;gap:46px;margin-top:16px;font-size:9pt;page-break-inside:avoid}
-    body.pform .c-en{display:none}                 /* ตัดอังกฤษออก เพิ่มพื้นที่กรอก */
-    body.pform .thNote,body.pform .tdNote{display:none}
-    body.pform .chk{font-size:8.5pt;white-space:nowrap;letter-spacing:.5px}
-    body.pform .wline{display:block;min-height:14px;border-bottom:.5px dotted #999}
+    body.pform .ph-sign{display:flex;justify-content:flex-end;gap:46px;margin-top:16px;font-size:8.5pt;
+                        page-break-inside:avoid;color:var(--text2)}
+    body.pform .thNote,body.pform .tdNote{display:none}   /* ตัดคอลัมน์หมายเหตุ เพิ่มที่เขียน */
+    body.pform .chk{font-size:8pt;white-space:nowrap;letter-spacing:.3px;color:var(--text2)}
+    body.pform .wline{display:block;min-height:15px;border-bottom:.7px dotted var(--text3)}
   }
-  /* ── โหมด "เอกสารอ้างอิง" : ข้อมูลครบ ไม่มีช่องกรอก ── */
+  /* ── โหมด "เอกสารอ้างอิง" : ข้อมูลครบทุกคอลัมน์ ไม่มีช่องกรอก ── */
   @media print{ body.pref .pOnly{display:none} }
 </style>
 </head>
