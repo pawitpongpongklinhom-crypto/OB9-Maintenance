@@ -118,8 +118,12 @@
     .ph-fields{display:none}
     .ph-sign{display:none}
 
-    .secthead{display:flex;align-items:center;gap:7px;margin:10px 0 4px;font-size:10pt;font-weight:800;
-              color:var(--text1);page-break-after:avoid;break-after:avoid}
+    /* ── 1 หมวด = ขึ้นแผ่นใหม่เสมอ (ยกเว้นหมวดแรกที่ต่อจากหัวกระดาษ) ── */
+    .secthead{display:flex;align-items:center;gap:7px;margin:0 0 5px;font-size:10.5pt;font-weight:800;
+              color:var(--text1);page-break-after:avoid;break-after:avoid;
+              page-break-before:always;break-before:page;
+              border-left:4px solid var(--navy);padding-left:8px}
+    .secthead:first-of-type{page-break-before:avoid;break-before:avoid;margin-top:2px}
     .secthead .cnt{font-size:7.5pt;font-weight:600;color:var(--text3);background:#fff;
                    border:1px solid var(--border);border-radius:10px;padding:1px 7px}
 
@@ -137,15 +141,28 @@
     .c-en{display:block;font-size:7pt;font-style:italic;color:var(--text3);margin-top:1px}
     .c-note{font-size:7.5pt;color:var(--text3);line-height:1.4}
 
-    /* ป้ายสี — เหมือนบนจอ */
-    .badge{display:inline-block;border-radius:5px;padding:1px 7px;font-size:7.5pt;font-weight:800}
-    .bD{background:#FEE2E2!important;color:var(--red)!important}
-    .bW{background:#FEF3C7!important;color:var(--amber)!important}
-    .bM{background:#DBEAFE!important;color:var(--blue)!important}
-    .bO{background:#EDE9FE!important;color:var(--purple)!important}
-    .op{font-size:7pt;font-weight:700;border-radius:4px;padding:1px 5px;white-space:nowrap}
-    .opOn{background:#DCFCE7!important;color:var(--green)!important}
-    .opOff{background:#F1F5F9!important;color:var(--text2)!important}
+    /* ป้ายสี — เหมือนบนจอ · ใส่เส้นขอบสีด้วย เพื่อให้ยังแยกออกแม้เครื่องพิมพ์ปิด "Background graphics" */
+    .badge{display:inline-block;border-radius:5px;padding:1px 6px;font-size:7.5pt;font-weight:800}
+    .bD{background:#FEE2E2!important;color:var(--red)!important;border:1px solid var(--red)}
+    .bW{background:#FEF3C7!important;color:var(--amber)!important;border:1px solid var(--amber)}
+    .bM{background:#DBEAFE!important;color:var(--blue)!important;border:1px solid var(--blue)}
+    .bO{background:#EDE9FE!important;color:var(--purple)!important;border:1px solid var(--purple)}
+    .op{font-size:7pt;font-weight:700;border-radius:4px;padding:1px 4px;white-space:nowrap}
+    .opOn{background:#DCFCE7!important;color:var(--green)!important;border:1px solid var(--green)}
+    .opOff{background:#F1F5F9!important;color:var(--text2)!important;border:1px solid var(--text3)}
+
+    /* ── ปรับความหนาแน่นอัตโนมัติ ให้แต่ละหมวดจบใน 2 แผ่น ──
+       d2 = หมวดกลาง (29-45 รายการ) บีบระยะบรรทัด
+       d3 = หมวดใหญ่ (>45 รายการ) บีบเต็มที่ + ย้ายคำอังกฤษมาต่อท้ายบรรทัดเดียวกัน */
+    table.d2 td{font-size:7.8pt;padding:2px 5px;line-height:1.25}
+    table.d2 .c-en{font-size:6.5pt;margin-top:0}
+    table.d2 .c-note{font-size:6.8pt}
+    table.d2 th{padding:3px 5px}
+    table.d3 td{font-size:7.3pt;padding:1.5px 4px;line-height:1.2}
+    table.d3 .c-en{display:inline;font-size:6.3pt;margin-left:4px}
+    table.d3 .c-note{font-size:6.3pt}
+    table.d3 th{padding:2px 4px;font-size:7pt}
+    table.d3 .badge,table.d3 .op{font-size:6.5pt;padding:0 4px}
   }
 
   /* ── โหมด "ใบตรวจเช็ค" : เพิ่มช่องติ๊กผลตรวจ + ช่องบันทึกค่า + หัว/ท้ายกระดาษให้กรอก ── */
@@ -736,8 +753,10 @@ function render(){
   var html = '';
   order.forEach(function(k){
     var g = groups[k];
+    // เลือกความหนาแน่นให้หมวดนี้จบใน 2 แผ่น A4 แนวนอน (≤28 = ปกติ · ≤45 = บีบ · >45 = บีบเต็มที่)
+    var dens = g.length > 45 ? ' class="d3"' : (g.length > 28 ? ' class="d2"' : '');
     html += '<div class="secthead">'+esc(k)+'<span class="cnt">'+g.length+' รายการ</span></div>';
-    html += '<table><thead><tr>'
+    html += '<table'+dens+'><thead><tr>'
           + '<th style="width:15%">ชุดประกอบ</th>'
           + '<th style="width:12%">ชิ้นส่วน</th>'
           + '<th style="width:37%">รายการตรวจ</th>'
@@ -778,9 +797,18 @@ function doPrint(mode){
     + 'ขอบเขต: ' + esc(iName) + (q ? ' · ค้นหา "'+esc(q)+'"' : '') + '<br>'
     + 'จำนวน ' + document.getElementById('kTotal').textContent + ' รายการ · พิมพ์เมื่อ ' + dateStr;
 
+  // เตือนครั้งแรกของ session: ถ้าไม่เปิด "Background graphics" สีป้ายจะไม่ติดกระดาษ
+  if (!window.__printTipShown) {
+    window.__printTipShown = true;
+    alert('ก่อนกดพิมพ์ — ในหน้าต่างพิมพ์ของเบราว์เซอร์\n'
+        + 'กด "ตัวเลือกเพิ่มเติม / More settings" แล้วติ๊ก\n\n'
+        + '    ☑ กราฟิกพื้นหลัง (Background graphics)\n\n'
+        + 'สีป้ายรอบตรวจและสถานะเครื่องจึงจะพิมพ์ออกเหมือนที่เห็นบนจอ\n'
+        + 'และตั้งค่ากระดาษเป็น A4 · แนวนอน (Landscape)');
+  }
   document.body.classList.remove('pform','pref');
   document.body.classList.add(mode);
-  window.print();
+  setTimeout(function(){ window.print(); }, 60);
 }
 window.addEventListener('afterprint', function(){ document.body.classList.remove('pform','pref'); });
 
