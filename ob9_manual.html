@@ -151,18 +151,7 @@
     .opOn{background:#DCFCE7!important;color:var(--green)!important;border:1px solid var(--green)}
     .opOff{background:#F1F5F9!important;color:var(--text2)!important;border:1px solid var(--text3)}
 
-    /* ── ปรับความหนาแน่นอัตโนมัติ ให้แต่ละหมวดจบใน 2 แผ่น ──
-       d2 = หมวดกลาง (29-45 รายการ) บีบระยะบรรทัด
-       d3 = หมวดใหญ่ (>45 รายการ) บีบเต็มที่ + ย้ายคำอังกฤษมาต่อท้ายบรรทัดเดียวกัน */
-    table.d2 td{font-size:7.8pt;padding:2px 5px;line-height:1.25}
-    table.d2 .c-en{font-size:6.5pt;margin-top:0}
-    table.d2 .c-note{font-size:6.8pt}
-    table.d2 th{padding:3px 5px}
-    table.d3 td{font-size:7.3pt;padding:1.5px 4px;line-height:1.2}
-    table.d3 .c-en{display:inline;font-size:6.3pt;margin-left:4px}
-    table.d3 .c-note{font-size:6.3pt}
-    table.d3 th{padding:2px 4px;font-size:7pt}
-    table.d3 .badge,table.d3 .op{font-size:6.5pt;padding:0 4px}
+    /* หมวดที่มีรายการมาก ถูกแบ่งเป็น "ตอนที่ x/y" ในชั้น JS แล้ว — ทุกชุดจึงจบใน 2 แผ่นเสมอ */
   }
 
   /* ── โหมด "ใบตรวจเช็ค" : เพิ่มช่องติ๊กผลตรวจ + ช่องบันทึกค่า + หัว/ท้ายกระดาษให้กรอก ── */
@@ -750,24 +739,21 @@ function render(){
     groups[k].push(r);
   });
 
-  var html = '';
-  order.forEach(function(k){
-    var g = groups[k];
-    // เลือกความหนาแน่นให้หมวดนี้จบใน 2 แผ่น A4 แนวนอน (≤28 = ปกติ · ≤45 = บีบ · >45 = บีบเต็มที่)
-    var dens = g.length > 45 ? ' class="d3"' : (g.length > 28 ? ' class="d2"' : '');
-    html += '<div class="secthead">'+esc(k)+'<span class="cnt">'+g.length+' รายการ</span></div>';
-    html += '<table'+dens+'><thead><tr>'
-          + '<th style="width:15%">ชุดประกอบ</th>'
-          + '<th style="width:12%">ชิ้นส่วน</th>'
-          + '<th style="width:37%">รายการตรวจ</th>'
-          + '<th style="width:9%">รอบ</th>'
-          + '<th style="width:11%">สถานะเครื่อง</th>'
-          + '<th class="thNote" style="width:16%">หมายเหตุ / อ้างอิง</th>'
-          + '<th class="pOnly" style="width:15%">ผลตรวจ</th>'
-          + '<th class="pOnly" style="width:14%">ค่าที่วัดได้ / สิ่งที่พบ</th>'
-          + '</tr></thead><tbody>';
-    g.forEach(function(r){
-      html += '<tr>'
+  /* สร้างตาราง 1 ชุด (= 1 หัวข้อเอกสาร ไม่เกิน 2 แผ่น A4 แนวนอน) */
+  function blockHtml(title, list){
+    var h = '<div class="secthead">'+esc(title)+'<span class="cnt">'+list.length+' รายการ</span></div>';
+    h += '<table><thead><tr>'
+       + '<th style="width:15%">ชุดประกอบ</th>'
+       + '<th style="width:12%">ชิ้นส่วน</th>'
+       + '<th style="width:37%">รายการตรวจ</th>'
+       + '<th style="width:9%">รอบ</th>'
+       + '<th style="width:11%">สถานะเครื่อง</th>'
+       + '<th class="thNote" style="width:16%">หมายเหตุ / อ้างอิง</th>'
+       + '<th class="pOnly" style="width:15%">ผลตรวจ</th>'
+       + '<th class="pOnly" style="width:14%">ค่าที่วัดได้ / สิ่งที่พบ</th>'
+       + '</tr></thead><tbody>';
+    list.forEach(function(r){
+      h += '<tr>'
         + '<td data-l="ชุดประกอบ" class="c-asm">'+esc(r.asm)+'</td>'
         + '<td data-l="ชิ้นส่วน" class="c-comp">'+esc(r.comp||'—')+'</td>'
         + '<td data-l="รายการตรวจ">'+esc(r.th)+'<span class="c-en">'+esc(r.en)+'</span></td>'
@@ -778,7 +764,19 @@ function render(){
         + '<td class="pOnly"><span class="wline"></span></td>'
         + '</tr>';
     });
-    html += '</tbody></table>';
+    return h + '</tbody></table>';
+  }
+
+  /* หมวดใหญ่เกิน 2 แผ่น → แบ่งเป็น "ตอนที่ x/y" ชุดละ 26 รายการ
+     (A4 แนวนอน: หน้าแรกของชุดมีหัวกระดาษ ใส่ได้ ~12 แถว · หน้าที่ 2 ใส่ได้ ~14 แถว) */
+  var LIMIT = 26, CHUNK = 26, html = '';
+  order.forEach(function(k){
+    var g = groups[k];
+    if (g.length <= LIMIT) { html += blockHtml(k, g); return; }
+    var parts = Math.ceil(g.length / CHUNK);
+    for (var i = 0; i < parts; i++){
+      html += blockHtml(k + '  — ตอนที่ ' + (i+1) + '/' + parts, g.slice(i*CHUNK, (i+1)*CHUNK));
+    }
   });
   out.innerHTML = html;
 }
