@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OB9 — คู่มือการตรวจเช็คเครื่องจักร</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A5FA8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --accent:#F4A200; --navy:#1A5FA8; --bg:#F0F4FA; --surface:#fff;
+    --border:#E4E7EF; --text1:#14213D; --text2:#4A5568; --text3:#9AA5B4;
+    --green:#16A34A; --red:#DC2626; --amber:#D97706; --blue:#2563EB;
+    --purple:#7C3AED; --teal:#0D9488;
+    --shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+    --radius:12px;
+  }
+  body{font-family:'Segoe UI','Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--text1);font-size:14px}
+
+  /* TOP NAV */
+  .topnav{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;position:sticky;top:0;z-index:100}
+  .tn-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px}
+  .tn-logo{background:var(--accent);color:#000;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+  .tn-btn{border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 12px;background:transparent;color:#fff;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+
+  .wrap{max-width:1400px;margin:0 auto;padding:20px}
+
+  /* HEADER */
+  .hero{background:linear-gradient(135deg,var(--navy) 0%,#0F4C8A 100%);border-radius:var(--radius);padding:20px 24px;color:#fff;margin-bottom:18px}
+  .hero h1{font-size:19px;font-weight:800;margin-bottom:4px}
+  .hero p{font-size:12px;opacity:.75;line-height:1.6}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+  .kpi{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center}
+  .kpi .n{font-size:22px;font-weight:900;line-height:1.1}
+  .kpi .l{font-size:11px;color:var(--text3);margin-top:3px}
+  .kD .n{color:var(--red)} .kW .n{color:var(--amber)} .kM .n{color:var(--blue)} .kO .n{color:var(--purple)}
+
+  /* FILTERS */
+  .filters{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+  .frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .frow:last-child{margin-bottom:0}
+  .flab{font-size:11.5px;font-weight:700;color:var(--text2);min-width:74px}
+  .chip{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:5px 13px;font-size:12px;cursor:pointer;font-weight:600;color:var(--text2);transition:.12s}
+  .chip:hover{border-color:var(--navy)}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .search{flex:1;min-width:180px;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;font-family:inherit;color:var(--text1)}
+  .search:focus{outline:none;border-color:var(--navy)}
+
+  /* TABLE */
+  .secthead{display:flex;align-items:center;gap:8px;margin:18px 0 8px;font-size:13.5px;font-weight:800;color:var(--text1)}
+  .secthead .cnt{font-size:11px;font-weight:600;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2px 9px}
+  table{width:100%;border-collapse:collapse;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  th{background:#F7F9FC;font-size:11px;font-weight:800;color:var(--text2);text-align:left;padding:9px 10px;border-bottom:1.5px solid var(--border);white-space:nowrap}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:top;line-height:1.5}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#FAFBFD}
+  .c-asm{font-weight:700;white-space:nowrap}
+  .c-comp{color:var(--text2);font-size:12px}
+  .c-en{color:var(--text3);font-size:11px;font-style:italic;margin-top:2px;display:block}
+  .c-note{color:var(--text3);font-size:11px;line-height:1.45}
+  .badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+  .bD{background:#FEE2E2;color:var(--red)} .bW{background:#FEF3C7;color:var(--amber)}
+  .bM{background:#DBEAFE;color:var(--blue)} .bO{background:#EDE9FE;color:var(--purple)}
+  .op{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;white-space:nowrap}
+  .opOn{background:#DCFCE7;color:var(--green)} .opOff{background:#F1F5F9;color:var(--text2)}
+
+  .empty{background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text3);font-size:13px}
+
+  /* LEGEND */
+  .legend{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-top:20px;font-size:11.5px;color:var(--text2);line-height:1.8}
+  .legend b{color:var(--text1)}
+  .src{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:10px}
+
+  /* MOBILE */
+  @media(max-width:768px){
+    .wrap{padding:12px}
+    .hero{padding:16px}
+    .hero h1{font-size:16px}
+    table,thead,tbody,th,td,tr{display:block}
+    thead{display:none}
+    tr{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;margin-bottom:9px;padding:11px 12px}
+    table{border:none;background:transparent}
+    td{border:none;padding:2px 0}
+    tr:hover td{background:transparent}
+    td[data-l]:before{content:attr(data-l);display:block;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;margin-top:6px}
+    td:first-child[data-l]:before{margin-top:0}
+    .flab{min-width:100%}
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="tn-brand"><div class="tn-logo">OB9</div> คู่มือการตรวจเช็คเครื่องจักร</div>
+  <a class="tn-btn" href="ob9_home.html">← กลับหน้าหลัก</a>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h1>📖 คู่มือการตรวจเช็คและบำรุงรักษาเครื่องจักร</h1>
+    <p>รายการตรวจเช็คตามมาตรฐานผู้ผลิต thyssenkrupp Industrial Solutions — Spreader ARs 2400/52+50x19 และ Tripper Car Ü2200<br>
+    ใช้อ้างอิงกำหนดรอบ PM / ตรวจเช็คประจำวัน / จัดทำแผนบำรุงรักษาเชิงป้องกัน</p>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="kTotal">0</div><div class="l">รายการทั้งหมด</div></div>
+    <div class="kpi kD"><div class="n" id="kD">0</div><div class="l">รายวัน (D)</div></div>
+    <div class="kpi kW"><div class="n" id="kW">0</div><div class="l">รายสัปดาห์ (W)</div></div>
+    <div class="kpi kM"><div class="n" id="kM">0</div><div class="l">รายเดือน (M)</div></div>
+    <div class="kpi kO"><div class="n" id="kO">0</div><div class="l">ตามเงื่อนไข</div></div>
+  </div>
+
+  <div class="filters">
+    <div class="frow">
+      <span class="flab">เครื่องจักร</span>
+      <button class="chip on" data-m="ALL" onclick="setM(this,'ALL')">ทั้งหมด</button>
+      <button class="chip" data-m="SPD" onclick="setM(this,'SPD')">Spreader (ARs 2400)</button>
+      <button class="chip" data-m="TC" onclick="setM(this,'TC')">Tripper Car (Ü2200)</button>
+    </div>
+    <div class="frow">
+      <span class="flab">รอบการตรวจ</span>
+      <button class="chip on" data-i="ALL" onclick="setI(this,'ALL')">ทั้งหมด</button>
+      <button class="chip" data-i="D" onclick="setI(this,'D')">รายวัน</button>
+      <button class="chip" data-i="W" onclick="setI(this,'W')">รายสัปดาห์</button>
+      <button class="chip" data-i="M1" onclick="setI(this,'M1')">1 เดือน</button>
+      <button class="chip" data-i="M3" onclick="setI(this,'M3')">3 เดือน</button>
+      <button class="chip" data-i="M4" onclick="setI(this,'M4')">4 เดือน</button>
+      <button class="chip" data-i="M6" onclick="setI(this,'M6')">6 เดือน</button>
+      <button class="chip" data-i="M12" onclick="setI(this,'M12')">12 เดือน</button>
+      <button class="chip" data-i="M24" onclick="setI(this,'M24')">24 เดือน</button>
+      <button class="chip" data-i="OTH" onclick="setI(this,'OTH')">ตามเงื่อนไข</button>
+    </div>
+    <div class="frow">
+      <span class="flab">ค้นหา</span>
+      <input class="search" id="q" placeholder="พิมพ์ชื่อระบบ/ชิ้นส่วน/คำสั่งตรวจ เช่น gearbox, สายพาน, hydraulic, bearing..." oninput="render()">
+    </div>
+  </div>
+
+  <div id="out"></div>
+
+  <div class="legend">
+    <b>รหัสรอบการตรวจ:</b>
+    <span class="badge bD">D</span> รายวัน (Daily) &nbsp;·&nbsp;
+    <span class="badge bW">W</span> รายสัปดาห์ (Weekly) &nbsp;·&nbsp;
+    <span class="badge bM">M1</span> ทุก 1 เดือน &nbsp;·&nbsp;
+    <span class="badge bM">M3</span> ทุก 3 เดือน &nbsp;·&nbsp;
+    <span class="badge bM">M4</span> ทุก 4 เดือน &nbsp;·&nbsp;
+    <span class="badge bM">M6</span> ทุก 6 เดือน &nbsp;·&nbsp;
+    <span class="badge bM">M12</span> ทุก 12 เดือน &nbsp;·&nbsp;
+    <span class="badge bM">M24</span> ทุก 24 เดือน &nbsp;·&nbsp;
+    <span class="badge bO">ตามเงื่อนไข</span> อิงชั่วโมงทำงาน/รอบการใช้งาน/เมื่อจำเป็น<br>
+    <b>สถานะเครื่องขณะตรวจ:</b>
+    <span class="op opOn">เดินเครื่อง</span> ตรวจได้ขณะเครื่องทำงาน (*1 ระบุเฉพาะชิ้นส่วนที่ตรวจได้ระหว่างเดินเครื่อง) &nbsp;·&nbsp;
+    <span class="op opOff">หยุดเครื่อง</span> ต้องหยุดเครื่องและล็อกป้องกันการสตาร์ทโดยไม่ตั้งใจ (*2 Lockout/Tagout)
+    <div class="src">
+      <b>ที่มาข้อมูล:</b> thyssenkrupp Industrial Solutions —
+      "Maintenance list of the Spreader ARs 2400/52+50x19" (6.6 Maintenance list_ARs) และ
+      "Inspection and Maintenance Chart Tripper Car Ü2200" (6.4 Maintenance list TC)<br>
+      หมายเลขหัวข้ออ้างอิง (เช่น section 3.5.1.4) อ้างถึง Maintenance &amp; Repair Manual ของผู้ผลิต — ดูรายละเอียดวิธีปฏิบัติในเล่มคู่มือ
+    </div>
+  </div>
+
+</div>
+
+<script src="ob9_shared.js"></script>
+<script>
+/* ── Access gate: ต้อง login แต่ไม่จำกัดสิทธิ์ (เป็นเอกสารอ้างอิงที่ทุกคนควรเข้าถึงได้) ── */
+if (window.OB9 && OB9.requireLogin) { if (!OB9.requireLogin({target:'manual'})) { throw new Error('redirecting'); } }
+
+/* ═══════════════════════════════════════════════════════════════
+   ข้อมูลจริงจากคู่มือผู้ผลิต — ห้ามแก้ตัวเลข/รอบ โดยไม่มีเอกสารอ้างอิง
+   รูปแบบ: [หมวด, ชุดประกอบหลัก, ชิ้นส่วน, คำสั่งตรวจ(ไทย), instruction(EN), รอบ, สถานะเครื่อง, หมายเหตุ/อ้างอิง]
+   สถานะเครื่อง: 1=เดินเครื่อง(On) 2=หยุดเครื่อง(Off) 3=ได้ทั้งสองแบบ
+   ═══════════════════════════════════════════════════════════════ */
+var SPD = [
+["1. ทั่วไป (Entire Spreader)","Bolted connections","","ตรวจสีที่ข้อต่อโบลต์ HSFG ว่ามีรอยแตกร้าวหรือไม่","Inspect the paint of HSFG bolt connections for cracks","W",3,"section 3.4.3.1 Bolted connections"],
+["1. ทั่วไป (Entire Spreader)","Bolted connections","","ตรวจการขันแน่นของข้อต่อโบลต์","Inspect the bolted connections for a tight fit","W",3,"section 3.4.3.1"],
+["1. ทั่วไป (Entire Spreader)","General checks","","ตรวจเช็คทั่วไปประจำวัน","General checks","D",3,"section 3.2.4 Notes on daily inspection"],
+["1. ทั่วไป (Entire Spreader)","Gearboxes, bearings and couplings","","ฟังเสียงผิดปกติและตรวจการรั่วซึม","Check for running noises and leaks","D",3,"section 3.1 และ 3.2"],
+["1. ทั่วไป (Entire Spreader)","General checks","","ตรวจทางเดิน บันได ราวจับ ว่าสะอาดและใช้งานปลอดภัย","Check walkways, staircases and hand railings for soiling and safe use","W",3,""],
+["1. ทั่วไป (Entire Spreader)","Paintwork","","ตรวจสีลอก แตกร้าว หรือเสื่อมสภาพจากอากาศ","Inspect the paint, if it is peeling-off, cracked or weathered","M12",1,"section 3.4.1"],
+["1. ทั่วไป (Entire Spreader)","Paintwork","","ตรวจสีพองและการกัดกร่อน","Inspect the paint for blisters and corrosion","M12",1,"section 3.4.1"],
+["1. ทั่วไป (Entire Spreader)","Paintwork","","ตรวจว่ามีชั้นสีรองพื้นโผล่ให้เห็นหรือไม่","Inspect, if the primer coat is visible","M12",1,"section 3.4.1"],
+
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","","ตรวจความเสียหาย การผิดรูป และรอยแตกร้าว","Check for damages, deformations and cracks","M1",3,"section 3.4.1"],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","","ตรวจรอยร้าวของโครงสร้างที่รับแรงดึง","Inspect the tension loaded structures for cracks","D",3,"section 3.4.1"],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","","ตรวจประตูนิรภัยให้ทำงานได้ดี","Ensure good working order of safety gates","W",3,"section 3.4.1"],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","","ตรวจค้ำยันว่ายึดแน่นดี","Inspect that bracings are fitted tightly","M1",3,"section 3.4.1"],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","","ตรวจโครงสร้างเหล็ก: ข้อบกพร่อง / รอยร้าว / สีเสียหาย / สนิม-สึกหรอ / ชิ้นส่วนหาย","Inspect the structural steelwork for: defects, cracks, damaged paintwork, signs of corrosion or wear, missing structural parts","M1",3,"section 3.4.1"],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","Welds","ตรวจแนวเชื่อมว่าไม่มีรอยร้าว","Inspect the welds, if they are free of cracks","M6",3,"section 3.4.1"],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","Section and plates","ตรวจเหล็กรูปพรรณและแนวเชื่อมว่าไม่มีรอยร้าว","Inspect section and welds, if they are free of cracks","M6",3,""],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","Walkways, staircases, hand railings","ตรวจความสะอาดและความปลอดภัยในการใช้งาน","Check for soiling and possible safe use","W",3,""],
+["2. โครงสร้างเหล็ก (Structural steel work)","Entire Spreader","Walkways, staircases, hand railings","ตรวจทางเดิน นั่งร้าน ราวจับ ว่าผิดรูป เสียหาย หรือสกปรก","Inspect the walkways, scaffolds and railings for deformations, damages and soil","W",3,""],
+
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Belt misalignment switches","ตรวจการทำงานของสวิตช์สายพานเบี่ยงแนว","Check the operation of the Belt misalignment switches","M3",3,"Electrotechnical Documentation"],
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Electrical equipment","ตรวจความปลอดภัยของปุ่มหยุดฉุกเฉิน สวิตช์สลิงดึง และลิมิตสวิตช์ฉุกเฉิน","Check the operational safety of all emergency-stop buttons, pull-wire switches and emergency-stop limit switches","D",1,"section 3.5.1"],
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Electrical equipment","ตรวจการทำงานของลิมิตสวิตช์หลักและสำรอง","Check the operation of local and back-up limit switches","D",1,"section 3.5.1"],
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Electrical equipment","ขจัดคราบเกาะที่ลิมิตสวิตช์ พร็อกซิมิตี้สวิตช์ และชิ้นส่วนกระตุ้น พร้อมหล่อลื่นถ้าจำเป็น","Remove caked deposits from limit switches, proximity switches and triggering elements, and lubricate if necessary","D",1,"section 3.5.1"],
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Electrical equipment","ตรวจชิ้นส่วนไฟฟ้าที่สึกหรอ เช่น แบริ่ง แปรงถ่าน สลิปริง เปลี่ยน/ซ่อมถ้าชำรุด","Check electrical wear parts such as bearings, brushes, slip rings. Replace or repair damaged or defective components","M1",1,"section 3.5.1"],
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Electrical equipment","ตรวจสายเคลื่อนที่ว่าถลอกหรือเสียหาย เปลี่ยนทันทีถ้าพบ","Check movable cables for abrasion and damage. Immediately replace damaged cables","M1",1,"section 3.5.1"],
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Electrical equipment","ตรวจเทอร์มินัลและจุดต่อว่าแน่น ขันเพิ่มถ้าจำเป็น","Check that terminals and connections have a tight fit and tighten if necessary","M6",1,"section 3.5.1"],
+["3. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Entire Spreader","Pull-wire switches","ตรวจสภาพสลิงและสปริงด้วยสายตา","Subject wires and springs to a visual inspection","D",1,"section 3.5.1"],
+
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Drive tumbler","Cams","ตรวจการสึกหรอของแคมล้อขับ","Check wear of drive tumbler cams","M6",2,"section 3.5.1.4"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up tumbler","Shaft bearing","วัดการสึกหรอแนวแกนและแนวรัศมีของแบริ่งเพลา","Measure axial and radial wear of shaft bearings","M12",2,"section 3.5.1.5"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up tumbler","Adjustment facility","ทำความสะอาดและหล่อลื่นชุดปรับตั้ง","Clean and lubricate the adjustment facility","M12",2,"ทุกครั้งก่อนปรับความตึงสายพาน หรืออย่างช้า 1 ปี"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up tumbler","","ตรวจจาระบีที่ไหลออกมาว่ามีเศษโลหะปนหรือไม่","Check to see if grease which is oozing out of the take-up tumbler contains chips","OTH",2,""],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up tumbler","Tumbler wheel body","วัดการสึกหรอและตรวจสภาพตัวล้อ","Measure amount of wear on tumbler wheel body, check condition","M12",2,""],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","","ทำความสะอาดและอัดจาระบีชุดสไลด์และเกลียวปรับตึง","Clean and grease sliding blocks, sliding guides and take-up spindles","M1",2,""],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Hydraulic cylinder","ตรวจกระบอกไฮดรอลิกด้วยสายตา: ตัวกระบอก/ก้านสูบไม่เสียหายผิดรูป, ข้อต่อสมบูรณ์, ไม่รั่วซึม, เกลียวขันแน่น, คัปปลิ้งครบและขันแน่น, ฝากันฝุ่นครบ, ป้ายเตือนอ่านออก","Inspect hydraulic cylinder of tension device visual (see manual for full checklist)","OTH",2,"หลังใช้งานทุกครั้ง อย่างน้อยปีละ 1 ครั้ง"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Hydraulic cylinder","ทดสอบการทำงาน: ยืด-หดได้เต็มช่วงชัก ราบรื่น ไม่มีเสียงผิดปกติ","Test functional: full stroke, smooth extension/retraction, no suspicious noises","OTH",2,"ทุก 3 ปี"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Hydraulic hose","ตรวจสายไฮดรอลิกว่าเสียหายหรือชำรุด","Check the hydraulic hoses for visible damage and defects","OTH",2,"ก่อนใช้งาน (ทุกครั้งที่ปรับความตึงโซ่ตีนตะขาบ)"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Hydraulic hose","ให้ผู้เชี่ยวชาญตรวจสภาพสาย","Check the condition of the hoses by an expert","M12",2,"section 3.2.5"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Hand pump","ตรวจด้วยสายตา: ข้อต่อแน่น ไม่รั่ว ไม่เสียหาย ระดับน้ำมันอยู่ในเกณฑ์ ไม่มีสนิม คันโยกเคลื่อนที่คล่อง ป้ายอ่านออก","Inspect visual (see manual for full checklist)","M1",3,""],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Hand pump","ทดสอบการทำงาน: ไม่มีเสียงผิดปกติ ทดสอบที่โหลดสูงสุด","Operational check - no suspicious noises, tests at maximum load","M12",2,""],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Distributor valve","ตรวจด้วยสายตา: ข้อต่อแน่น ไม่รั่ว วาล์วไม่เสียหาย ลูกบิดหมุนคล่อง ไม่มีสนิม ป้ายอ่านออก","Visual inspection (see manual for full checklist)","M1",2,""],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Take-up device","Distributor valve","ทดสอบการทำงาน: ไม่มีเสียงผิดปกติ ทดสอบที่โหลดสูงสุด","Function test - no suspicious noises, test for maximum load","M12",2,""],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Crawler frame","Crawler axle bearings","วัดการสึกหรอแนวรัศมีของแบริ่งเพลาตีนตะขาบ","Measure radial wear of the crawler axle bearings","M12",2,"section 3.5.1.8.1"],
+["4. ชุดตีนตะขาบ (Crawler track assembly)","Crawler frame","Middle axle bearings","วัดการสึกหรอแนวรัศมีของแบริ่งเพลากลาง","Measure radial wear of the middle axle bearings","M12",2,"section 3.5.1.8.2"],
+
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Slew bearing","Bolted connections","ตรวจการขันแน่นของโบลต์","Check the bolted connections","M6",2,"ตรวจครั้งแรกที่ 100 ชม. ครั้งที่สองที่ 600 ชม."],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Slew bearing","Flexible seals","ตรวจสภาพซีลยืดหยุ่นของแบริ่งลูกปืน","Check the condition of the flexible seals of the ball bearing","M12",2,"section 3.5.2.1.2"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Slew bearing","","ขจัดจาระบีที่สะสมบริเวณวงในและวงนอก","Remove grease which has accumulated on the inner and outer circle","M12",2,"section 3.5.2.1.3"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Slew bearing","Slewing ring","วัดการสึกหรอของวงแหวนสวิงลูกปืน","Measure the wear on the ball bearing slewing ring","M12",2,"section 6.3.2.1"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Slew bearing","Bolted connections","ตรวจการขันแน่นของโบลต์แบริ่งลูกปืน","Check Bolts of the ball bearing for tight fit","M12",2,"section 6.3.2.1"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Slew bearing","","ขจัดสิ่งสกปรก","Remove dirt","W",1,""],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Gear unit","Gear box","บำรุงรักษาชุดเกียร์: ตรวจอุณหภูมิจุดแบริ่ง / ระดับน้ำมัน / กำกับการเปลี่ยนถ่ายน้ำมัน / ฟังเสียง / ตรวจการรั่ว / ทำความสะอาดช่องระบายอากาศ","Gear unit maintenance: temperature check at bearing points, oil level check, supervision of oil change, inspection for noise generation, inspection for oil-tightness, cleaning of vent and vent hole","W",1,"section 3.5.2.1.1"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Gear unit","","ตรวจการหล่อลื่นของเฟืองวงแหวนและเฟืองขับสวิง","Check the gear rim and slewing drive pinion for proper lubrication","M1",2,"ดูรอบหล่อลื่นแบริ่ง/เกียร์ในคู่มือของชิ้นส่วนนั้น"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Gear unit","","ตรวจการสึกหรอหรือความเสียหายของเฟืองวงแหวนและเฟืองขับสวิง","Check the gear rim and slewing drive pinion for wear or damage","M12",2,"section 3.5.2.1.4"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Gear unit","","วัดความหนาฟันเฟืองที่วงพิตช์","Measure the tooth thickness at the pitch circle","M12",2,"section 3.5.2.1.4"],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Gear unit","Gear box","ตรวจการรั่วซึมด้วยสายตา (ซีลเพลาและปลั๊กอุด)","Visual check for leakage integrity (e.g. radial shaft seals and closing plugs)","D",1,""],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Gear unit","Gear box","ฟังเสียงผิดปกติของชุดเกียร์","Check the gear unit for unusual running noises","D",1,""],
+["5. ชุดสวิงหลัก (Main slewing mechanism)","Gear unit","Gear box","ตรวจความร้อนเกิน อุณหภูมิเสื้อเกียร์ต้องไม่เกิน 95°C และขจัดคราบสกปรกบนผิวเกียร์ (ระวังผิวร้อน)","Check gear unit for overheating. The temperature of the gearbox housing must not exceed 95°C. Remove any soiling on the gearbox surface (Caution: Hot surface)","D",1,""],
+
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Main scraper","","ตรวจใบขูดว่าสึกจนใช้ไม่ได้หรือไม่","Check if the scraper blades are too worn to use","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Main scraper","","ตรวจใบขูดว่าเสียหายหรือไม่","Check if the scraper blades are damaged","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Main scraper","","ตรวจฐานใบขูดว่าหมุนปรับความตึงได้คล่อง","Check if the blade-base still freely turn for tensioning","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Main scraper","","ตรวจการทำงานของชุดขูด","Check the scraper function","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจใบขูดว่าไม่มีเศษวัสดุติดค้าง","Check that the scraper blades are free of residue","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจแรงกดเริ่มต้นว่าถูกต้อง","Check if the pre-tension is correct","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจสกรูทุกตัวว่าขันแน่น","Check that all screws are tight","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจใบขูดว่าแนบสายพานตามสเปก","Check that all scraper blades sit snugly at the belt according to specifications","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจการเคลื่อนที่อิสระของแกนใบขูด","Check freedom of movement of the blade axis","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจใบขูดว่าสึกหมดสภาพหรือไม่","Check if the blades are worn out","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจใบขูดว่าไม่เสียหาย","Check that the scraper blades are free from damage","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจฐานใบขูดว่าหมุนปรับความตึงได้คล่อง","Check that the blade-base can be turned freely for tensioning","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Pre-scraper","","ตรวจการทำงานของชุดขูดหน้า","Check the scraper function","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Plough scraper","","ทำความสะอาดเศษวัสดุที่ติดใบขูด","Clean any residues off the scraper blades","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Plough scraper","","ตรวจการเคลื่อนที่อิสระว่าตรงตามสเปก","Check weather freedom of movement corresponds to specs","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Plough scraper","","ตรวจสกรูทุกตัวว่าขันแน่น","Are all screws tight","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Plough scraper","","ตรวจสลักเชื่อมต่อของแขนนำว่าเสียหายหรือไม่","Check if there is any damage with the connecting pins of the guide arms","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Plough scraper","","ตรวจการสึกหรอของใบยาง","Check rubber blades for wear","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Plough scraper","","ตรวจจุดต่อโซ่กับโครงเหล็กและชุดขูด","Check the chain connection to steel structure and scraper","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Plough scraper","","ตรวจการทำงานของชุดขูดแบบไถ","Check the scraper function","W",2,"หลังหยุดสายพาน"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Steel scrapers","","ตรวจการสึกหรอของใบขูดเหล็ก","Check wear of the steel scraper blade","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Steel scrapers","","ตรวจระยะห่างระหว่าง snub pulley กับใบขูด","Check clearance between snub pulley and scraper blade","W",2,"section 3.5.3.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Hydraulic cylinder","ตรวจกระบอกไฮดรอลิกชุดปรับตึงด้วยสายตา (ตามรายการในคู่มือ)","Inspect hydraulic cylinder of tension device visual","OTH",2,"หลังใช้งานทุกครั้ง อย่างน้อยปีละ 1 ครั้ง"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Hydraulic cylinder","ทดสอบการทำงานของกระบอกไฮดรอลิก","Test functional (full stroke, smooth, no noises)","OTH",2,"ทุก 3 ปี"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Hydraulic hose","ตรวจสายไฮดรอลิกว่าเสียหายหรือชำรุด","Check the hydraulic hoses for visible damage and defects","OTH",2,"ก่อนใช้งาน"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Hydraulic hose","ให้ผู้เชี่ยวชาญตรวจสภาพสาย","Check the condition of the hoses by an expert","M12",2,"section 3.5.3.2.5"],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Hand pump","ตรวจปั๊มมือด้วยสายตา (ตามรายการในคู่มือ)","Inspect visual","M1",3,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Hand pump","ทดสอบการทำงานของปั๊มมือที่โหลดสูงสุด","Operational check - no suspicious noises, tests at maximum load","M12",2,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Distributor valve","ตรวจวาล์วจ่ายด้วยสายตา (ตามรายการในคู่มือ)","Visual inspection","M1",2,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Take-up device","Distributor valve","ทดสอบการทำงานของวาล์วจ่ายที่โหลดสูงสุด","Function test","M12",2,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Receiving chute","","ตรวจการไหลของวัสดุ","Check material flow","D",1,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Receiving chute","","ตรวจแผ่นกันสึกว่าสึกหรอและยึดแน่น","Check wear plates for wear and tight fit","W",2,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Receiving chute","","ตรวจการสึกหรอของชิ้นส่วนยืดหยุ่น","Check elastic elements for wear","M6",2,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Discharge hood","","ตรวจการไหลของวัสดุ","Check material flow","D",1,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Discharge hood","","ตรวจแผ่นกันสึกว่าสึกหรอและยึดแน่น","Check wear plates for wear and tight fit","W",2,""],
+["6. สายพานสะพาน C1 (Bridge conveyor C1)","Discharge hood","","ตรวจการสึกหรอของชิ้นส่วนยืดหยุ่น","Check elastic elements for wear","M6",2,""],
+
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor system","","ตรวจระบบสายพานว่ามีเสียง/อุณหภูมิ/การสั่น/กลิ่น/สัญญาณผิดปกติ","Inspect the conveyor system for unusual: noise, temperature, vibrations, smell, signals","D",1,"section 3.5.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor system","","ตรวจโบลต์ สายไฟ ท่อจาระบี ว่าหลวมหรือไม่","Inspect the conveyor system for loose: bolts, cables, grease lines","D",1,"section 3.5.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor system","","ตรวจข้อบกพร่องที่สายพาน ลูกกลิ้ง พูลเลย์ และอุปกรณ์ไฟฟ้า","Inspect the conveyor system for defects at the belt, idlers, pulleys, electrical components","D",1,"section 3.5.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor system","","ตรวจความสกปรกของระบบสายพาน","Inspect the conveyor system for soiling","D",1,"section 3.5.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","เปลี่ยนไส้กรองอากาศแบบเปียก","Replace the wet-air filter","OTH",2,"เมื่อจำเป็น"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ทำความสะอาดไส้กรองอากาศ","Clean the air filter","OTH",2,"เมื่อจำเป็น"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ทำความสะอาดพัดลมและชุดเกียร์","Clean the fan and the gear unit","OTH",2,"เมื่อจำเป็น / ทุก 2 ปี"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","เปลี่ยนชุดกันถอยหลัง (backstop)","Replace the backstop","OTH",2,"ดูป้ายที่ตัวเกียร์"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจอุณหภูมิน้ำมัน แรงดันน้ำมัน (ถ้ามีระบบหล่อลื่นแรงดัน) และเสียงเกียร์ที่เปลี่ยนไป","Check the oil temperature, the oil pressure (if pressure lubrication is fitted), for changes in the gear unit noise","D",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจการรั่วและระดับน้ำมัน","Check for leaks and the oil level","M1",2,"ก่อนเริ่มเดินเครื่องทุกครั้ง"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจปริมาณน้ำในน้ำมัน","Check the water content of the oil","OTH",2,"400 ชม.หลังเริ่มใช้งาน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","เปลี่ยนถ่ายน้ำมัน (หรือตามผลวิเคราะห์น้ำมัน)","Change the oil (or depending on result of the oil sampling test)","OTH",2,"400 ชม.หลังเริ่มใช้งาน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจโบลต์ยึดทุกตัวว่าขันแน่น","Check that all of the fastening bolts are tight","OTH",2,"400 ชม.หลังเริ่มใช้งาน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจระบบเฝ้าระวังความเร็วของชุดขับสำรอง และตัวชุดขับสำรอง","Check the speed monitoring of the auxiliary drive and the auxiliary drive","M3",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ทำความสะอาดไส้กรองน้ำมันและไส้กรองอากาศ","Clean the oil filter and the air filter","M3",2,"ทุก 3,000 ชม.ทำงาน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","วัดระดับการสั่นสะเทือนของแบริ่งลูกกลิ้ง","Measure the vibration levels of the rolling-contact bearings","M3",2,"ทุก 3,000 ชม.ทำงาน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","อัดจาระบีซีล Taconite และ Tacolab","Regrease Taconite seals and Tacolab seals","M6",2,"ทุก 3,000 ชม. อย่างน้อยทุก 6 เดือน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","เติมจาระบีในท่อกักน้ำมัน","Replenish grease in the oil retaining pipe","OTH",2,"ทุก 5,000 ชม. อย่างน้อยทุก 10 เดือน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจผ้าเบรกของชุดกันถอยแบบจำกัดแรงบิด และปริมาณน้ำในน้ำมัน","Check the friction linings of the torque-limiting backstop and the water content of the oil","M12",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจสายท่อและชุดรัดเพลา (shrink disk)","Inspect the hose lines and the shrink disk","M12",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","เปลี่ยนถ่ายน้ำมัน (น้ำมันแร่ API Group I/II หรือเอสเทอร์สังเคราะห์อิ่มตัว)","Change the oil if using mineral oil of API Group I or II or saturated synthetic esters","OTH",2,"ทุก 10,000 ชม. อย่างน้อยทุก 2 ปี"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจชุดระบายความร้อนน้ำมันด้วยอากาศและด้วยน้ำ","Check the air-oil cooler and the water-oil cooler","OTH",2,"พร้อมกับการเปลี่ยนถ่ายน้ำมัน"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจสภาพทั่วไปของชุดเกียร์","Carry out a general inspection of the gear unit","OTH",2,"ทุก 2 ปี"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","ตรวจน้ำมันหล่อเย็น","Check the cooling oil","OTH",2,"ทุก 2 ปี"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","เปลี่ยนถ่ายน้ำมัน (น้ำมันกึ่งสังเคราะห์ API Group III, PAO หรือ PG)","Change the oil if using semi-synthetic oil of API Group III, PAO or PG oil","OTH",2,"ทุก 20,000 ชม. อย่างน้อยทุก 4 ปี"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Gear box","เปลี่ยนสายท่อ","Change the hoses","OTH",2,"6 ปีนับจากวันที่ผลิตที่ระบุ"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Gear unit","Coupling","เปลี่ยนของเหลวทำงานในคัปปลิ้ง","Change the operating fluid","OTH",2,"ปรับรอบตามสภาพการใช้งาน ดูตารางในคู่มือผู้ผลิต"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจสภาพผ้าเบรกและจานเบรกด้วยสายตา","Visually check the condition of brake linings and brake disc","D",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจระยะสำรองของก้านเบรกขณะเบรกจับ","Check of reserve stroke with brake in closed position","D",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจแรงบิดเบรกที่ตั้งไว้ขณะเบรกจับ","Check of adjusted brake torque with brake in closed position","D",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจโบลต์ปรับคันโยกขณะเบรกปล่อย","Check of lever adjustment bolts with brake in released position","D",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจข้อต่อโบลต์ด้วยสายตา","Visually check bolted connections","W",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจจานเบรกว่าสึกหรอหรือเสียหาย","Check brake discs for wear/damages","W",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจอุปกรณ์เสริม (ลิมิตสวิตช์ ชุดปลดมือ ฯลฯ)","Check of optional features (limit switches, manual release etc.)","W",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจระดับน้ำมันของชุดไฮดรอลิก","Check of hydraulic unit oil level","W",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจระบบเบรกทั้งหมดอย่างละเอียด","Complete check of entire brake system","M3",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจสายไฟระบบจ่ายไฟ","Check of power supply wiring","M3",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจท่อไฮดรอลิกหรือท่อลม","Check of hydraulic or pneumatic piping","M3",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจน้ำมันในชุดไฮดรอลิก (ระดับและสภาพ)","Check of oil in hydraulic unit (level and condition)","M3",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจก้ามเบรก ผ้าเบรก และดรัม/จานเบรก","Check of brake shoes, brake linings and brake drum/disc","M3",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Brakes","","ตรวจแรงจับของเบรกถ้าจำเป็น","Check of brake clamping force if necessary","M3",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor belt","","ตรวจสภาพสายพาน","Check belt condition","D",1,"section 3.5.3.2"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor belt","","ตรวจแนวการวิ่งของสายพาน","Check the belt/belt tracking","D",1,"section 3.5.3.2"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor belt","","ตรวจการเดินของสายพาน","Check belt run","D",1,"section 3.5.3.2"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Conveyor belt","","ตรวจความตึงสายพาน และดึงตึงเพิ่มถ้าจำเป็น","Check belt tension and take up belt if necessary","D",1,"section 3.5.3.2"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Pulleys","","ตรวจพูลเลย์: ความเสียหาย / วัสดุอุดตัน / เสียงผิดปกติ / การสึกของยางหุ้ม / กลิ่นหรืออุณหภูมิแบริ่งผิดปกติ / โบลต์หลวม / ท่อหล่อลื่นหลวม / สายสัญญาณหลวม","Check the conveyor pulleys for: damage, clogging, unusual running noises, wear of the pulley covering, unusual smells or temperature of the bearings, loose bolted connections, loose lubrication line, loose cable connections","D",1,"section 3.5.3.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Pulleys","","ขจัดเศษวัสดุบริเวณลูกกลิ้งเบี่ยงทาง","If necessary, remove the scrapings within the deflection roller area","D",1,"section 3.5.3.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Pulleys","Bearings","อัดจาระบีแบริ่งปรับศูนย์อัตโนมัติ","Relubricate self-aligning roller bearing(s)","W",1,"section 3.5.3.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Pulleys","","ตรวจข้อต่อโบลต์ว่าขันแน่น","Check the bolted connections for tight fitting","W",2,"section 3.5.3.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Pulleys","Bearings","ตรวจแบริ่งว่ามีความเสียหายหรือไม่","Check the bearings for any damage","W",2,"section 3.5.3.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Pulleys","","ตรวจซ่อมใหญ่พูลเลย์สายพาน","Revision of the conveyor belt pulleys","M6",2,"section 3.5.3.3"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Idlers/Garlands","","ตรวจลูกกลิ้ง: เสียงผิดปกติ / ลูกกลิ้งติดขัดไม่หมุน","Check the idlers for: unusual noise, seized idlers","D",1,"section 3.5.3.4"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Idlers/Garlands","","ตรวจลูกกลิ้ง: ลูกกลิ้งหาย / สายพานเสียดสีขาตั้ง / เสียดสีวัสดุเกาะ / ผิวลูกกลิ้งสึก / รอยแยก / แบริ่งเสีย / ลูกกลิ้งเอียง / สายพานออกนอกแนว","Check the idlers for: missing idlers, belt scuffing on holders or bracings, belt scuffing over idler or caked material, scuffed idler shells, slits in faces, damaged bearings, tilting idlers, belt scuffs or runs out of line","D",1,"section 3.5.3.4"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Main scraper","","ตรวจใบขูดว่าไม่มีวัสดุเกาะสะสม","Check that the blades are free if built-up","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Main scraper","","ตรวจแรงกดเริ่มต้นว่าถูกต้อง","Check that the pre-tension is correct","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Main scraper","","ตรวจสกรูทุกตัวว่าขันแน่น","Check that the screws are all tight","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Main scraper","","ตรวจใบขูดว่าแนบสนิทกับสายพาน","Check that the scraper blades lie perfectly against the belt","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Main scraper","","ตรวจการเคลื่อนที่ของแกนชุดขูด","Check the segment axis movement","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Main scraper","","ตรวจใบขูดว่าสึกจนใช้ไม่ได้ / เสียหาย / ฐานหมุนคล่อง / การทำงานของชุดขูด","Check if blades too worn, damaged, blade-base freely turn, scraper function","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Pre-scraper","","ตรวจชุดขูดหน้า: เศษวัสดุติดค้าง / แรงกด / สกรู / การแนบสายพาน / แกนเคลื่อนที่ / การสึก / ความเสียหาย / ฐานหมุน / การทำงาน","Pre-scraper full checklist: residue, pre-tension, screws, snug fit, blade axis movement, wear, damage, blade-base turning, function","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Plough scraper","","ตรวจชุดขูดแบบไถ: ทำความสะอาดใบ / การเคลื่อนที่ / สกรู / สลักแขนนำ / ใบยางสึก / จุดต่อโซ่ / การทำงาน","Plough scraper: clean residues, freedom of movement, screws tight, connecting pins, rubber blade wear, chain connection, function","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Steel scrapers","","ตรวจการสึกของใบขูดเหล็ก และระยะห่างจาก snub pulley","Check wear of the steel scraper blade and clearance between snub pulley and scraper blade","W",2,"section 3.5.3.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Take-up device","Hydraulic cylinder","ตรวจกระบอกไฮดรอลิกชุดปรับตึงด้วยสายตา","Inspect hydraulic cylinder of tension device visual","OTH",2,"หลังใช้งานทุกครั้ง อย่างน้อยปีละ 1 ครั้ง"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Take-up device","Hydraulic cylinder","ทดสอบการทำงานของกระบอกไฮดรอลิก","Test functional","OTH",2,"ทุก 3 ปี"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Take-up device","Hydraulic hose","ตรวจสายไฮดรอลิกว่าเสียหาย / ให้ผู้เชี่ยวชาญตรวจสภาพ","Check hoses for visible damage; check condition by an expert","M12",2,"section 3.5.3.2.5"],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Take-up device","Hand pump","ตรวจปั๊มมือด้วยสายตา","Inspect visual","M1",3,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Take-up device","Hand pump","ทดสอบการทำงานของปั๊มมือ","Operational check","M12",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Take-up device","Distributor valve","ตรวจวาล์วจ่ายด้วยสายตา","Visual inspection","M1",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Take-up device","Distributor valve","ทดสอบการทำงานของวาล์วจ่าย","Function test","M12",2,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Receiving chute","","ตรวจการไหลของวัสดุ / แผ่นกันสึก / ชิ้นส่วนยืดหยุ่น","Check material flow (D), wear plates (W), elastic elements (M6)","D",1,""],
+["7. สายพานปล่อย C2 (Discharge conveyor C2)","Discharge hood","","ตรวจการไหลของวัสดุ / แผ่นกันสึก / ชิ้นส่วนยืดหยุ่น","Check material flow (D), wear plates (W), elastic elements (M6)","D",1,""],
+
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bridge suspension","Slew bearing","ตรวจข้อต่อโบลต์","Check the bolted connections","OTH",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bridge suspension","Slew bearing","ตรวจสภาพซีลยืดหยุ่นของแบริ่งลูกปืน","Check the condition of the flexible seals of the ball bearing","OTH",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bridge suspension","Slew bearing","ขจัดจาระบีที่สะสมบริเวณวงในและวงนอก","Remove grease which has accumulated on the inner and outer circle","OTH",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bridge suspension","Slew bearing","วัดการสึกหรอของวงแหวนสวิงลูกปืน","Measure the wear on the ball bearing slewing ring","OTH",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bridge suspension","Slew bearing","ตรวจโบลต์แบริ่งลูกปืนว่าขันแน่น","Check Bolts of the ball bearing for tight fit","OTH",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Ballast boom guying","","ตรวจสลิงยึดโยงว่ามีรอยร้าว ความเสียหาย และสนิม","Check guying for cracks, damages and corrosion","M4",2,"ต้องให้ผู้เชี่ยวชาญตรวจเพิ่มทุก 24 เดือน — section 3.4.2.3"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Ballast boom guying","","ตรวจแผ่นหูยึดทุกจุดว่ามีรอยร้าว ความเสียหาย และสนิม","Check all eye plates for cracks, damages and corrosion","M4",2,"section 3.4.2.3"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Ballast boom guying","","ตรวจแนวเชื่อมที่จุดยึดโยงว่ามีรอยร้าว ความเสียหาย และสนิม","Check the welds at the guying supports for cracks, damages and corrosion","M4",2,"section 3.4.2.3"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Ballast boom guying","","ตรวจข้อต่อโบลต์ระหว่างเสากับบูมถ่วงว่ามีสนิม/ความเสียหาย","Check bolt connections between tower and ballast boom for corrosion/damages","M4",2,"section 3.4.2.3"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Ballast boom guying","","ตรวจโบลต์หลวม","Check for loose bolts","M12",2,"section 3.4.2.3"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom pivot point","","ตรวจโบลต์ยึดว่าขันแน่น","Check that the attachment bolts fit tight","M6",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom pivot point","","ตรวจการหล่อลื่นว่าเพียงพอ","Check for sufficient lubrication","M1",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom pivot point","","ฟังเสียงผิดปกติขณะยกและลดบูม","Check for unusual noise during lifting and lowering","M12",1,"section 3.4.2.6"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom suspension","","ตรวจสลิงแขวนบูมว่ามีรอยร้าวหรือเสียหาย","Check the suspension ropes for cracks or damages","M6",2,"ผู้เชี่ยวชาญตรวจเพิ่มทุก 24 เดือน — section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom suspension","","ตรวจปลายสลิงว่ามีรอยร้าวและสนิม","Check rope ends for cracks and corrosion","M6",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom suspension","","ตรวจแนวเชื่อมที่จุดยึดสลิงว่ามีรอยร้าวและเสียหาย","Check the welds at the suspension rope supports for cracks and damages","M6",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom suspension","","ตรวจจุดต่อเสากระโดงว่ามีรอยร้าวและสนิม","Check the mast joint for cracks and corrosion","M4",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom suspension","","ตรวจกระบอกปรับความตึงสลิงปลายยึดโยงว่าเสียหายและเป็นสนิม","Check the rope tension cylinders at the end of the guying for damages and corrosion","M4",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom suspension","","ฟังเสียงผิดปกติขณะยกและลดบูม","Check for unusual noise during lifting and lowering","M12",1,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom suspension","","ตรวจโบลต์หลวม","Check for loose bolts","M12",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom bearings","","ตรวจฐานรองแบริ่งว่ามีรอยร้าว สนิม ความเสียหาย และแนวเชื่อมชำรุด","Check bearing support for cracks, corrosion, damages and damaged welds","M4",2,"section 3.4.2.6"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom bearings","","ตรวจฐานรองบูมปล่อยว่ามีรอยร้าว สนิม ความเสียหาย และแนวเชื่อมชำรุด","Check discharge boom support for cracks, corrosion, damages and damaged welds","M4",2,"section 3.4.2.6"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom bearings","","ขจัดสิ่งสกปรก","Remove dirt","W",2,"section 3.4.2.6"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom bearings","","ตรวจโบลต์หลวม","Check for loose bolts","M12",2,"section 3.4.2.6"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom bearings","","ตรวจการหล่อลื่นว่าเพียงพอ","Check for sufficient lubrication","M12",2,"section 3.4.2.6"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom mast with suspension","Hydraulic cylinder mounting","ตรวจสลิงยึดโยงว่ามีรอยร้าวและเสียหาย","Check the guying for cracks and damages","OTH",2,"ผู้เชี่ยวชาญตรวจเพิ่มทุก 24 เดือน — section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom mast with suspension","Hydraulic cylinder mounting","ตรวจแผ่นหูยึดทุกจุดว่ามีรอยร้าวและเสียหาย","Check all eye plates for cracks and damages","OTH",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom mast with suspension","Hydraulic cylinder mounting","ตรวจแนวเชื่อมที่จุดยึดโยงว่ามีรอยร้าวและเสียหาย","Check the welding at the guying for cracks and damages","OTH",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Discharge boom mast with suspension","Hydraulic cylinder mounting","ตรวจสนิมที่สลิงยึดโยงบูมปล่อย","Check the guying of discharge boom for corrosion","OTH",2,"section 3.4.2.4"],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bearings cable saddles","","ตรวจการสึกหรอของจุดรองรับ","Check the bearing points for wear","OTH",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bearings cable saddles","","ตรวจการหล่อลื่นว่าเพียงพอ","Check for sufficient lubrication","OTH",2,""],
+["8. จุดรองรับโครงสร้าง (Bearing points)","Bearings cable saddles","","ตรวจข้อต่อโบลต์","Check the bolted connections","OTH",2,"ตรวจครั้งแรกที่ 100 ชม. ครั้งที่สองที่ 600 ชม."],
+
+["10. สลิง (Ropes)","Tensioning at discharge boom","","บำรุงรักษาสลิงตามกำหนด","Maintain ropes regular","OTH",2,"ตาม DIN 15020 / ISO 4309 หรือข้อบังคับท้องถิ่น"],
+["10. สลิง (Ropes)","Tensioning at discharge boom","","ทำความสะอาดสลิงเหล็กก่อนชโลมน้ำมัน","Clean steel wire ropes","OTH",2,"ก่อนชโลมน้ำมัน (before dressing)"]
+];
+
+var TC = [
+["1. ทั่วไป (General)","Entire tripper car","Gearboxes, bearings and couplings","ฟังเสียงผิดปกติและตรวจการรั่วซึม","Check for running noises and leaks","D",1,""],
+["1. ทั่วไป (General)","Entire tripper car","","ตรวจระดับความสกปรก และทำความสะอาดถ้าจำเป็น","Check degree of soiling and clean if necessary","W",2,""],
+["1. ทั่วไป (General)","Entire tripper car","Walkways, staircases and hand railings","ตรวจความสะอาดและความปลอดภัยในการใช้งาน","Check for soiling and possible safe use","W",2,""],
+["1. ทั่วไป (General)","Entire tripper car","Structural steelwork","ตรวจความเสียหาย การผิดรูป และรอยแตกร้าว","Check for damages, deformations and cracks","M1",2,'ดูหัวข้อ "General inspection"'],
+["1. ทั่วไป (General)","Entire tripper car","Steelwork","ตรวจสีและระบบป้องกันการกัดกร่อน","Check paintwork and corrosion protection","M12",2,""],
+["1. ทั่วไป (General)","Entire tripper car","Junction between tripper car and support car","ตรวจข้อต่อก้านเชื่อมว่าแน่นและทำงานถูกต้อง","Check connections of the rod for tight fit and proper function","M1",2,""],
+["1. ทั่วไป (General)","Trailer I and Trailer II","Connecting pins","ตรวจสภาพสลักเชื่อมต่อระหว่างท่อนของ Tripper Car","Check the condition of the pin connections between the tripper car sections","M1",2,""],
+
+["2. ชุดขับเคลื่อนบนราง (Rail travel mechanism)","Drive units","","ตรวจการยึดของชุดขับ คันแรงบิด และล้อขับ","Check attachment of drive unit, torque lever and driven wheel","M3",2,""],
+["2. ชุดขับเคลื่อนบนราง (Rail travel mechanism)","Bolted connections","","ตรวจการขันแน่นของโบลต์ด้วยสายตา","Inspect visually the bolt connections for tightness","D",1,""],
+["2. ชุดขับเคลื่อนบนราง (Rail travel mechanism)","Bolted connections","","ตรวจข้อต่อโบลต์ว่าขันแน่น","Check the bolted connections for tight fitting","M12",2,"ตรวจครั้งแรก 2 เดือนหลังเริ่มใช้งาน จากนั้นทุก 12 เดือน"],
+["2. ชุดขับเคลื่อนบนราง (Rail travel mechanism)","Supporting segments, travel wheels and rail sweepers","","ตรวจการสึกหรอของแท่นรองรับ ล้อวิ่ง และชุดกวาดราง","Check supporting segments, travel wheels and rail sweepers for wear","M1",2,""],
+["2. ชุดขับเคลื่อนบนราง (Rail travel mechanism)","Support car — Bogie bearings","Spherical plain bearings and shims","ตรวจการสึกหรอของแบริ่งทรงกลมและชิม","Check the spherical plain bearings and shims for wear","OTH",2,"ต้องวัดค่าตอนติดตั้ง บันทึกผล ตรวจซ้ำหลัง 3 เดือน เทียบค่าแล้วปรับรอบการตรวจ — section 3.5.1.4"],
+["2. ชุดขับเคลื่อนบนราง (Rail travel mechanism)","Support car — Bogie bearings","Bushings","ตรวจการสึกหรอแนวรัศมีของบุชชิ่ง","Check the bushings for radial wear","OTH",2,"วัดค่าตอนติดตั้ง ตรวจซ้ำหลัง 3 เดือน — section 3.5.1.4"],
+["2. ชุดขับเคลื่อนบนราง (Rail travel mechanism)","Support car — Bogie bearings","Friction washers","ตรวจการสึกหรอแนวแกนของแหวนเสียดทาน","Check the friction washers for axial wear","OTH",2,"วัดค่าตอนติดตั้ง ตรวจซ้ำหลัง 3 เดือน — section 3.5.1.4"],
+
+["2.1 มอเตอร์เกียร์ (Motor of gear motor)","Motor","","ตรวจคราบสกปรกที่มอเตอร์ซึ่งอาจขวางการระบายความร้อน","Check motor for dirt deposits which could impair cooling","D",1,""],
+["2.1 มอเตอร์เกียร์ (Motor of gear motor)","Motor","","ตรวจเสียงเดินเครื่องและการสั่นสะเทือนที่ผิดปกติ","Check for unusual running noises and/or vibrations","W",1,"ตรวจทุกสัปดาห์ หรือทุก 100 ชม.ทำงาน"],
+["2.1 มอเตอร์เกียร์ (Motor of gear motor)","Motor","","ตรวจแบริ่งลูกกลิ้งและเปลี่ยนตามความจำเป็น","Check roller bearings and replace them as required","OTH",2,"อย่างน้อยทุก 10,000 ชม."],
+["2.1 มอเตอร์เกียร์ (Motor of gear motor)","Motor","","เปลี่ยนซีลเพลา","Replace shaft sealing rings","OTH",2,"ทุก 10,000 ชม."],
+["2.1 มอเตอร์เกียร์ (Motor of gear motor)","Motor","","ยกเครื่องมอเตอร์ (general overhaul)","Carry out a general overhaul of the motor","OTH",2,"ทุก 5 ปี"],
+
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","ตรวจการรั่วซึม เปลี่ยนซีลถ้าจำเป็น","Check gear box for tightness. Replace sealings if necessary","M1",2,""],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","ตรวจสภาพด้วยสายตา","Visual inspection","M6",2,"อย่างน้อยทุก 6 เดือน"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","ฟังเสียงเดินเครื่อง","Check for running noises","M6",1,"อย่างน้อยทุก 6 เดือน"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","ตรวจระดับน้ำมัน","Check the oil level","M6",2,"อย่างน้อยทุก 6 เดือน"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","ตรวจสายท่อด้วยสายตา","Visual inspection of hose","M6",2,"อย่างน้อยทุก 6 เดือน"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","อัดจาระบีใหม่ / ขจัดจาระบีส่วนเกิน","Re-grease / remove excess grease","M6",2,"อย่างน้อยทุก 6 เดือน"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","เปลี่ยนถ่ายน้ำมัน (ใช้น้ำมันสังเคราะห์ยืดรอบได้เท่าตัว)","Change the oil (the interval is doubled if filled with synthetic products)","OTH",2,"อุณหภูมิใช้งานไม่เกิน 80°C: ทุก 10,000 ชม. อย่างน้อยทุก 2 ปี"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","ทำความสะอาดหรือเปลี่ยนปลั๊กระบายอากาศ","Cleaning or replacing the vent plug","OTH",2,"ทุก 10,000 ชม. อย่างน้อยทุก 2 ปี"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","เปลี่ยนซีลเพลา","Replace the shaft sealing rings","OTH",2,"ทุก 10,000 ชม. อย่างน้อยทุก 2 ปี"],
+["2.2 ชุดเกียร์ (Gear box of gear motor)","Gear box","","ยกเครื่องชุดเกียร์ (general overhaul)","General overhaul","OTH",2,"อย่างน้อยทุก 10 ปี"],
+
+["2.3 ล้อวิ่ง (Travel wheels)","Travel wheels","","ตรวจการปรับตั้งและการนำร่องบนราง","Check the adjustment/guiding at the rails","W",2,"section 3.5.1.5"],
+["2.3 ล้อวิ่ง (Travel wheels)","Travel wheels","","ตรวจความเสียหายและการสึกหรอของล้อวิ่ง","Check travel wheel for damages and wear","M3",2,"section 3.5.1.5"],
+["2.3 ล้อวิ่ง (Travel wheels)","Travel wheels","","หล่อลื่นแบริ่งของล้อขับ","Lubricate the bearings of driven wheel","M3",2,"section 3.5.1.5"],
+
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Guide rollers","ตรวจว่าเมื่อปลดล็อก มีเพียงลูกกลิ้งนำเท่านั้นที่สัมผัสราง","Check that guide rollers are the only part of the mechanism in contact with the rail when clamp is released","M1",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Shoes","ตรวจว่าร่องฟันบนก้ามล็อกยังคม ไม่สึกเรียบ","Be sure the serrations on the shoes are sharp and not flattened","M1",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Shoes","ตรวจว่าก้ามล็อกสัมผัสรางเต็มหน้าเมื่อจับล็อก","Check that shoes fully contact rail when clamp is applied","M1",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Guide rods","หล่อลื่นก้านนำชุดสปริง","Lubricate spring assembly guide rods","M1",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Float block assembly","หล่อลื่นชุด float block ผ่านหัวอัดจาระบี และทาจาระบีแกนนำแนวตั้งให้ทั่วด้วยแปรง","Lubricate float block assembly using the grease nipples supplied. Also lubricate vertical guide bar using a small brush","M1",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Springs","ตรวจสปริงให้สะอาด (สิ่งสกปรกทำให้สีลอกเมื่อขดสปริงชนกัน) และหล่อลื่นสปริง","Make sure that the springs are clean, as dirt may peel the paint when spring coils contact each other. Lubricate springs","M1",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Eccentric pins","ตรวจสลักเยื้องศูนย์ และหล่อลื่นตามความจำเป็น","Inspect eccentric pins, lubricate as required","M3",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","","ตรวจว่าชุดล็อกทำงานอยู่ในช่วงที่ระบุบนป้ายแสดงค่า","Check that clamp is operating within prescribed range on indicating label","M3",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","","ปรับลิ่ม/ข้อต่อทบตามคำแนะนำในคู่มือติดตั้ง","Adjust wedge / toggle as per adjustment instructions in installation manual","M12",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Pressure strainer","เปลี่ยนหรือทำความสะอาดกรองแรงดัน","Change or clean pressure strainer","M12",2,""],
+["2.4 ชุดล็อกราง (Rail clamp)","Rail clamp","Guide rollers","ตรวจชุดล้อนำและอัดจาระบีใหม่ถ้าจำเป็น","Inspect guide wheel assembly and repack with grease if necessary","M24",2,""],
+
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","ตรวจระดับน้ำมันไฮดรอลิก","Check hydraulic fluid level","M1",2,"ทุก 500 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","ตรวจแรงดันที่สร้างได้จากเกจวัด","Check pressure developed - pressure gauge","M1",2,"ทุก 500 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","ตรวจท่อและข้อต่อไฮดรอลิกทั้งหมดว่ารั่วหรือไม่","Check all hydraulic lines and fittings for leaks","M1",2,"ทุก 500 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","ตรวจค่าตั้งทั้งหมด","Check all settings","M6",2,"ทุก 1,000 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","ตรวจการทำงานของปั๊มมือ (ดูคำแนะนำในตู้ชุดจ่ายกำลัง)","Check hand pump operation (see instruction inside power unit enclosure)","M12",2,"ทุก 1,000 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","ตรวจเวลาตอบสนองให้ถูกต้อง (ปรับ flow control ถ้าจำเป็น)","Check for correct setting time (adjust flow control if necessary)","M12",2,"ทุก 1,000 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","เปลี่ยนไส้กรองอากาศช่องเติม","Change filler breather","M12",2,"ทุก 2,000 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","ถ่ายน้ำมันออกจากถังและเติมใหม่","Drain hydraulic tank and replace fluid","M12",2,"ทุก 2,000 รอบการทำงาน"],
+["2.5 ชุดไฮดรอลิกล็อกราง (Hydraulic power unit rail clamp)","Hydraulic power unit","","เปลี่ยนไส้กรอง","Replace filter","M12",2,"ทุก 2,000 รอบการทำงาน"],
+
+["2.6 ชุดกวาดราง (Rail sweeper)","Rail sweeper","","ตรวจการยึดแน่นและการทำงานของชุดกวาดราง","Check rail sweeper for tight fixing and proper function","W",2,"section 3.5.1.7"],
+
+["3. ระบบสายพาน (Conveyor)","Conveyor","","ตรวจระบบสายพานว่ามีเสียง/อุณหภูมิ/การสั่น/กลิ่น/สัญญาณผิดปกติ","Inspect the conveyor system for unusual: noise, temperature, vibrations, smell, signals","D",1,"section 3.5.3.3"],
+["3. ระบบสายพาน (Conveyor)","Conveyor","","ตรวจโบลต์ สายไฟ ท่อจาระบี ว่าหลวมหรือไม่","Inspect the conveyor system for loose: bolts, cables, grease lines","D",1,"section 3.5.3.3"],
+["3. ระบบสายพาน (Conveyor)","Conveyor","","ตรวจข้อบกพร่องที่สายพาน ลูกกลิ้ง พูลเลย์ และอุปกรณ์ไฟฟ้า","Inspect the conveyor system for defects at the belt, at the idlers, at the pulleys, at electrical components","D",1,"section 3.5.3"],
+["3. ระบบสายพาน (Conveyor)","Conveyor","","ตรวจความสกปรกของระบบสายพาน","Inspect the conveyor system for soiling","D",1,"section 3.5.3.3"],
+
+["3.1 สายพานลำเลียง (Conveyor belt)","Conveyor belt","","ตรวจสภาพสายพาน","Check belt condition","D",1,""],
+["3.1 สายพานลำเลียง (Conveyor belt)","Conveyor belt","","ตรวจแนวการวิ่งของสายพาน","Check the belt/belt tracking","D",1,""],
+["3.1 สายพานลำเลียง (Conveyor belt)","Conveyor belt","","ตรวจการเดินของสายพาน","Check belt run","D",1,""],
+["3.1 สายพานลำเลียง (Conveyor belt)","Conveyor belt","","ตรวจความตึงสายพาน และดึงตึงเพิ่มถ้าจำเป็น","Check belt tension and take up belt if necessary","D",1,""],
+
+["3.2 พูลเลย์ (Conveyor pulleys)","Pulleys","","ตรวจพูลเลย์: ความเสียหาย / อุดตัน / เสียงผิดปกติ / ยางหุ้มสึก / กลิ่นหรืออุณหภูมิแบริ่งผิดปกติ / โบลต์หลวม / ท่อหล่อลื่นหลวม / สายสัญญาณหลวม","Check the conveyor pulleys for: damage, clogging, unusual running noises, wear of the pulley covering, unusual smells or temperature of the bearings, loose bolted connections, loose lubrication line, loose cable connections","D",1,"section 3.5.3.2"],
+["3.2 พูลเลย์ (Conveyor pulleys)","Pulleys","","ขจัดเศษวัสดุบริเวณลูกกลิ้งเบี่ยงทาง","If necessary, remove the scrapings within the deflection roller area","D",1,"section 3.5.3.2"],
+["3.2 พูลเลย์ (Conveyor pulleys)","Pulleys","","อัดจาระบีแบริ่งปรับศูนย์อัตโนมัติ","Relubricate self-aligning roller bearing(s)","W",2,"section 3.5.3.2"],
+["3.2 พูลเลย์ (Conveyor pulleys)","Pulleys","","ตรวจข้อต่อโบลต์ว่าขันแน่น","Check the bolted connections for tight fitting","W",2,"section 3.5.3.2"],
+["3.2 พูลเลย์ (Conveyor pulleys)","Pulleys","","ตรวจแบริ่งว่ามีความเสียหายหรือไม่","Check the bearings for any damage","W",2,"section 3.5.3.2"],
+["3.2 พูลเลย์ (Conveyor pulleys)","Pulleys","","ตรวจซ่อมใหญ่พูลเลย์สายพาน","Revision of the conveyor belt pulleys","M6",2,"section 3.5.3.2"],
+
+["3.3 ลูกกลิ้ง (Conveyor idlers / garlands)","Conveyor idlers / garlands","","ตรวจลูกกลิ้ง: เสียงผิดปกติ / ลูกกลิ้งติดขัดไม่หมุน","Check the idlers for: unusual noise, seized idlers","D",1,"section 3.5.3.3"],
+["3.3 ลูกกลิ้ง (Conveyor idlers / garlands)","Conveyor idlers / garlands","","ตรวจลูกกลิ้ง: ลูกกลิ้งหาย / สายพานเสียดสีขาตั้งหรือค้ำยัน / เสียดสีลูกกลิ้งหรือวัสดุเกาะ / ผิวลูกกลิ้งสึก / รอยแยกที่หน้าลูกกลิ้ง / แบริ่งเสีย / ลูกกลิ้งเอียง / สายพานออกนอกแนว","Check the idlers for: missing idlers, belt scuffing on holders or bracings, belt scuffing over idler or caked material, scuffed idler shells, slits in faces, damaged bearings, tilting idlers, belt scuffs or runs out of line","D",1,"section 3.5.3.3"],
+
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจใบขูดว่าไม่มีวัสดุเกาะสะสม","Check that the blades are free if built-up","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจแรงกดเริ่มต้นว่าถูกต้อง","Check that the pre-tension is correct","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจสกรูทุกตัวว่าขันแน่น","Check that the screws are all tight","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจใบขูดว่าแนบสนิทกับสายพาน","Check that the scraper blades lie perfectly against the belt","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจการเคลื่อนที่ของแกนชุดขูด","Check the segment axis movement","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจใบขูดว่าสึกจนใช้ไม่ได้","Check if the scraper blades are too worn to use","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจใบขูดว่าเสียหาย","Check if the scraper blades are damaged","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจฐานใบขูดว่าหมุนปรับความตึงได้คล่อง","Check if the blade-base still freely turn for tensioning","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Main scraper","","ตรวจการทำงานของชุดขูด","Check the scraper function","OTH",2,"หลังหยุดสายพาน"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจใบขูดว่าไม่มีเศษวัสดุติดค้าง","Check that the scraper blades are free of residue","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจแรงกดเริ่มต้นว่าถูกต้อง","Check if the pre-tension is correct","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจสกรูทุกตัวว่าขันแน่น","Check that all screws are tight","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจใบขูดว่าแนบสายพานตามสเปก","Check that all scraper blades sit snugly at the belt according to specifications","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจการเคลื่อนที่อิสระของแกนใบขูด","Check freedom of movement of the blade axis","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจใบขูดว่าสึกหมดสภาพ","Check if the blades are worn out","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจใบขูดว่าไม่เสียหาย","Check that the scraper blades are free from damage","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจฐานใบขูดว่าหมุนปรับความตึงได้คล่อง","Check that the blade-base can be turned freely for tensioning","W",2,"section 3.5.3.4.1"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Pre-scraper","","ตรวจการทำงานของชุดขูดหน้า","Check the scraper function","OTH",2,"หลังหยุดสายพาน"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Steel scraper","","ตรวจการสึกหรอของใบขูดเหล็ก","Check wear of the steel scraper blade","W",2,"section 3.5.3.4.2"],
+["3.4 ชุดขูดสายพาน (Conveyor belt scrapers)","Steel scraper","","ตรวจระยะห่างระหว่าง snub pulley กับใบขูด","Check clearance between snub pulley and scraper blade","W",2,"section 3.5.3.4.2"],
+
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Sliding blocks, sliding guides and take-up spindles","","ทำความสะอาดและอัดจาระบีชุดสไลด์และเกลียวปรับตึง","Clean and grease sliding blocks, sliding guides and take-up spindles","M1",2,""],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic system","Hydraulic hoses","ตรวจสายไฮดรอลิกว่าเสียหายหรือชำรุด","Check the hydraulic hoses for visible damage and defects","OTH",2,"ก่อนนำเข้าใช้งาน"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic system","Hydraulic hoses","ให้ผู้เชี่ยวชาญตรวจสภาพสาย","Check the condition of the hoses by an expert","M12",2,"section 3.2.5"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic system","","ตรวจระบบไฮดรอลิกทั้งหมด","Check complete hydraulic system","M3",2,"section 3.2.5 และ 3.5.3.1"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic power unit","","ตรวจระดับน้ำมันในถังพัก","Check oil level of the reservoir","D",1,"ตรวจทุก 8 ชม.ทำงาน"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic power unit","Filters","ตรวจระดับการอุดตันของไส้กรอง","Check contamination level of the filters","D",1,"ตรวจทุก 8 ชม.ทำงาน"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic power unit","Valves","ตรวจวาล์วควบคุมแรงดัน","Check pressure valves","M6",2,"อย่างน้อยทุก 6 เดือน"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic power unit","","เก็บตัวอย่างน้ำมันไฮดรอลิกและส่งวิเคราะห์","Take a hydraulic oil sample and carry out an oil analysis","M12",2,"อย่างน้อยปีละ 1 ครั้ง"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic power unit","","เปลี่ยนน้ำมันไฮดรอลิกตามผลวิเคราะห์","Change hydraulic oil depending on the results of the oil analysis","OTH",2,""],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic cylinders","","ตรวจการสึกหรอของแบริ่งข้อต่อกระบอกไฮดรอลิก","Check articulation bearing of hydraulic cylinder for visible wear","M6",2,"section 3.2.5 และ 3.5.3.1.1"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic cylinders","","ตรวจโบลต์ยึดว่าขันแน่น","Check that attachment bolts fit tightly","M6",2,"section 3.2.5 และ 3.5.3.1.1"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic cylinders","","ตรวจความหนา/สภาพของสายและข้อต่อไฮดรอลิก","Check for thickness of hydraulic hoses and connections","M6",2,"section 3.2.5 และ 3.5.3.1.1"],
+["3.5 ระบบปรับความตึงสายพาน (Belt tensioning system)","Hydraulic cylinders","","ตรวจความหนา/สภาพของกระบอกไฮดรอลิก","Check for thickness of hydraulic cylinder","M6",2,"section 3.2.5 และ 3.5.3.1.1"],
+
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","","ตรวจการไหลของวัสดุ","Check material flow","D",1,""],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","Wear plates","ตรวจแผ่นกันสึกของแผ่นกันกระเด็นว่าสึกและยึดแน่น","Check baffle plate wear plates for wear and tight fit","W",2,"section 3.5.4.2.1"],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","","ตรวจการปรับตั้งแผ่นกันกระเด็น","Check baffle plate adjustment","W",2,"section 3.5.4.2.1"],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","Rubber mat","ตรวจการแขวนยึดของแผ่นยาง","Check rubber mat suspension","W",2,"section 3.5.4.1"],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","","ตรวจวัสดุเกาะติดสะสม","Check for caked material","M1",2,"section 3.5.4.2"],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","","ตรวจทางเดินว่ามีวัสดุหกหล่น","Check walkways for spillage","M1",2,""],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","Wear plates","ตรวจการยึดแน่นของแผ่นกันสึก","Check secure attachment of the wear plates","M1",2,"section 3.5.4.2.1"],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","Wear plates","ตรวจระดับการสึกของแผ่นกันสึก — ถ้าหัวสกรูสึกให้เปลี่ยนแผ่นนั้น","Check the degree of wear of the wear plates. When the screw heads are worn, replace the affected wear plates","M1",2,"section 3.5.4.2.1"],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","Wear plates","ตรวจแผ่นกันสึกที่หลวม","Check for loose wear plates","M6",2,"section 3.5.4.2"],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","","ทำความสะอาดโครงสร้างบริเวณแผ่นกันกระเด็น","Clean structure at the baffle plate area","M6",2,""],
+["4. จุดถ่ายเทวัสดุ (Material transfer points)","Discharge head","Rubber mat","ตรวจการสึกหรอของแผ่นยาง","Check rubber mat for wear","M6",2,"section 3.5.4.1"],
+
+["5. จุดโครงสร้าง/จุดรองรับเฉพาะ","Hydraulic cylinder mounting","","ตรวจกระบอกไฮดรอลิก สาย และท่อ ว่ารั่วซึม","Check hydraulic cylinder, the hoses and pipes for leakages","M4",2,"ปรับรอบตามสภาพใช้งาน ผู้เชี่ยวชาญตรวจเพิ่มทุก 24 เดือน — section 3.2.3, 3.5.3.1.1"],
+["5. จุดโครงสร้าง/จุดรองรับเฉพาะ","Hydraulic cylinder mounting","","ตรวจข้อต่อกระบอกไฮดรอลิกว่าสึกหรอ เป็นสนิม และเสียหาย","Check the hydraulic cylinder joints for wear, corrosion and damages","M4",2,"section 3.2.3, 3.5.3.1.1"],
+["5. จุดโครงสร้าง/จุดรองรับเฉพาะ","Hydraulic cylinder mounting","","ตรวจสีว่ามีรอยแตกร้าว","Check paintwork for cracks","M4",2,"section 3.2.3, 3.5.3.1.1"],
+["5. จุดโครงสร้าง/จุดรองรับเฉพาะ","Hydraulic cylinder mounting","","ตรวจโครงสร้างแท่น โครงสร้างแขวน และกระบอกไฮดรอลิก ว่ามีรอยร้าว","Check platform structure, suspension structure and cylinder for cracks","M4",2,"section 3.2.3, 3.5.3.1.1"],
+["5. จุดโครงสร้าง/จุดรองรับเฉพาะ","Hydraulic cylinder mounting","","ตรวจแนวเชื่อมทั้งหมดว่ามีรอยร้าว","Check all welds for cracks","M4",2,"section 3.2.3, 3.5.3.1.1"],
+
+["6. รางเก็บสายไฟ (Cable duct)","Ball race","Bolts","ตรวจการขันแน่นของโบลต์","Check bolt for tightness","M12",2,"section 3.5.5"],
+["6. รางเก็บสายไฟ (Cable duct)","Ball race","Sealing system","ตรวจระบบซีลว่ารั่วหรือไม่","Check the sealing system for tightness","M12",2,"section 3.5.5"],
+["6. รางเก็บสายไฟ (Cable duct)","Ball race","Raceway system","ตรวจสภาพรางลูกปืน","Check the condition of the raceway system","M12",2,"section 3.5.5"],
+
+["7. Support car","Ball bearing slewing ring","Sealing system","ตรวจระบบซีลว่ารั่วหรือไม่","Check the sealing system for tightness","M6",2,"section 3.5.2.4"],
+["7. Support car","Ball bearing slewing ring","Bolts","ตรวจการขันแน่นของโบลต์","Check bolt for tightness","M12",2,"section 3.5.2.4"],
+["7. Support car","Ball bearing slewing ring","Raceway system","ตรวจสภาพรางลูกปืน","Check the condition of the raceway system","M12",2,"section 3.5.2.4"],
+["7. Support car","Bogies (Bridge support)","Bushings","ตรวจการสึกหรอแนวรัศมีของบุชชิ่ง","Check the bushings for radial wear","OTH",2,"วัดค่าตอนติดตั้ง บันทึกผล ตรวจซ้ำหลัง 3 เดือน แล้วปรับรอบ — section 3.5.2.5"],
+["7. Support car","Bogies (Bridge support)","Friction washers","ตรวจการสึกหรอแนวแกนของแหวนเสียดทาน","Check the friction washers for axial wear","OTH",2,"section 3.5.2.5"],
+["7. Support car","Bogies (Bridge support)","Rollers","ตรวจสภาพลูกกลิ้ง","Check the roller condition","M12",2,""],
+
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Entire lubrication system","Pipes, hoses and components","ตรวจท่อ สาย และชิ้นส่วนของระบบหล่อลื่นส่วนกลางว่ารั่วหรือไม่","Check pipes, hoses and components of the central lubrication systems for leaks","W",2,"section 3.3.3.1"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Entire lubrication system","","ตรวจทุกจุดหล่อลื่นว่ามีจาระบีส่วนเกินไหลออก (เช็คว่าท่อ/สายอุดตันหรือไม่)","Check all lubrication points to see if surplus grease is oozing out (check to see if pipes/hoses are clogged)","W",2,"section 3.3.3.1"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Grease pump","","ตรวจ/เติมถังจาระบี (ตรวจการทำงานของตัวแสดงระดับ)","Check/Top up grease reservoir (check operation of fill indicator)","W",2,"section 3.3.3.1"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Grease pump","","ฟังเสียงผิดปกติของชุดปั๊ม","Check pumping station for unusual noises","W",1,"section 3.3.3.1"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Grease pump","Loading filter","ตรวจไส้กรองเติมว่าสะอาด","Check the loading filter is clean","OTH",2,"ทุก 2,000 ชม.ทำงาน"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Grease pump","","ตรวจตัวชี้การเคลื่อนที่ของชุดจ่ายจาระบีว่าทำงานสมบูรณ์ ยืด-หดจนถึงลิมิตสวิตช์","Check motion indicator of lubricant distributor for perfect functioning, retract and extend it up to limit switching","W",2,"section 3.3.3.1"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Entire lubrication system","","ตรวจด้วยสายตาว่าข้อต่อเกลียวที่ชุดจ่าย จุดหล่อลื่น และท่อ ไม่รั่ว","Visual check for tightness of screw joints at the aggregate, lubrication points and pipelines","M12",2,"section 3.3.3.1"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Entire lubrication system","Pipes, hoses and components","ตรวจด้วยสายตาว่าสายและข้อต่อสายไม่รั่ว","Visual check for tightness of hose pipes and hose fittings","W",2,"section 3.3.3.1"],
+["8. ระบบหล่อลื่นอัตโนมัติ (Lubrication system)","Grease pump","","ตรวจสกรูยึดฐานชุดปั๊มว่าแน่น","Check foundation screws of pumping station for tight fit","M12",2,"section 3.3.3.1"],
+
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Brake","ตรวจการทำงานของเบรกและจานเบรก","Check: Brake function - brake discs","D",1,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Brake","ตรวจและบำรุงรักษาเบรกและจานเบรก","Inspection and maintenance: Brake - brake discs","M3",2,"รอบนี้ใช้กับการทำงานปกติกะเดียว หากใช้งานหนักหรือสภาพแวดล้อมรุนแรง (ร้อน ฝุ่นมาก) ให้ลดรอบลง"],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Toothed wheels","ตรวจและบำรุงรักษาล้อรถเข็น หล่อลื่นเฟือง","Inspection and maintenance: Trolley wheels, lubricate toothed wheels","M3",2,"ลดรอบลงถ้าใช้งานหนัก"],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Load chain","ตรวจโซ่ยก","Check: Load chain","D",1,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Load chain","ทำความสะอาดและชโลมน้ำมันโซ่ยก","Inspection and maintenance: Load chain, clean and oil","M3",2,"ลดรอบลงถ้าใช้งานหนัก"],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Load chain","ตรวจการยืดตัวและการสึกหรอของโซ่ยก","Inspection and maintenance: Load chain, elongation and wear","M3",2,"ลดรอบลงถ้าใช้งานหนัก"],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","","ให้ผู้มีคุณสมบัติตรวจอุปกรณ์ตามกำหนด (periodic inspection)","Inspection of the equipment by a qualified person (periodic inspection)","M12",2,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","","ตรวจและบำรุงรักษาข้อต่อสกรู","Inspection and maintenance: Screw connections","M12",2,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Overload protection","ตรวจชุดป้องกันโหลดเกินแบบคลัตช์ลื่น (ถ้ามี)","Inspection and maintenance: Overload protection as slipping clutch (if relevant)","M12",2,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Overload protection","ตรวจชุดป้องกันโหลดเกินแบบตัดกระแส (รอกไฟฟ้า, ถ้ามี)","Inspection and maintenance: Overload protection by current cut-off (electric hoist) (if relevant)","M12",2,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Overload protection","ตรวจชุดป้องกันโหลดเกินแบบวาล์วระบายลม (รอกลม, ถ้ามี)","Inspection and maintenance: Overload protection by air relieve valve (pneumatic hoist) (if relevant)","M12",2,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Load hook","ตรวจตะขอยกว่ามีรอยร้าวและการผิดรูป","Inspection and maintenance: Load hook, cracks and deformation","M12",2,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Bearings of chain pulleys","ตรวจและหล่อลื่นแบริ่งของล้อโซ่","Inspection and maintenance: Bearings of chain pulleys, check and lubricate","M12",2,""],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Hoist gear","เปลี่ยนถ่ายน้ำมันชุดเกียร์รอก","Inspection and maintenance: Hoist gear, oil change","OTH",2,"ทุก 36/60 เดือน"],
+["9. เครนและรอก (Cranes and hoists)","Chain hoist","Trolley wheels","ตรวจการสึกหรอของล้อรถเข็น","Inspection and maintenance: Trolley wheels, wear","M12",2,""],
+
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","Belt misalignment switches","ตรวจการทำงานของสวิตช์สายพานเบี่ยงแนว","Check the operation of the Belt misalignment switches","M3",3,'ดู "Electrotechnical Documentation"'],
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","","ตรวจความปลอดภัยของปุ่มหยุดฉุกเฉิน สวิตช์สลิงดึง และลิมิตสวิตช์ฉุกเฉิน","Check the operational safety of all emergency-stop buttons, pull-wire switches and emergency-stop limit switches","D",1,"section 3.2.1 และ 3.5.8"],
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","","ตรวจการทำงานของลิมิตสวิตช์หลักและสำรอง","Check the operation of local and back-up limit switches","D",1,"section 3.2.1 และ 3.5.8"],
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","","ขจัดคราบเกาะที่ลิมิตสวิตช์ พร็อกซิมิตี้สวิตช์ และชิ้นส่วนกระตุ้น พร้อมหล่อลื่นถ้าจำเป็น","Remove caked deposits from limit switches, proximity switches and triggering elements, and lubricate if necessary","D",1,"section 3.2.1 และ 3.5.8"],
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","","ตรวจชิ้นส่วนไฟฟ้าที่สึกหรอ เช่น แบริ่ง แปรงถ่าน สลิปริง เปลี่ยน/ซ่อมถ้าชำรุด","Check electrical wear parts such as bearings, brushes, slip rings. Replace or repair damaged or defective components","M1",1,"section 3.2.1 และ 3.5.8"],
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","","ตรวจสายเคลื่อนที่ว่าถลอกหรือเสียหาย เปลี่ยนทันทีถ้าพบ","Check movable cables for abrasion and damage. Immediately replace damaged cables","M1",1,"section 3.2.1 และ 3.5.8"],
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","","ตรวจเทอร์มินัลและจุดต่อว่าแน่น ขันเพิ่มถ้าจำเป็น","Check that terminals and connections have a tight fit and tighten if necessary","M6",2,"ดูข้อควรระวังด้านความปลอดภัย section 3.2.1 และ 3.5.7"],
+["10. อุปกรณ์ความปลอดภัย (Safety and monitoring devices)","Electrical equipment","Pull-wire switches","ตรวจสภาพสลิงและสปริงด้วยสายตา","Subject wires and springs to a visual inspection","D",1,"section 3.2.1 และ 3.5.7"],
+
+["11. ระบบดับเพลิง (Fire fighting system)","Fire extinguishers","","ตรวจถังดับเพลิงว่าอยู่ครบตามจุดและใช้งานได้","Check fire extinguisher for existence in right place and proper function","W",3,""],
+
+["12. ระบบลดฝุ่น (Dust reduction system)","Water pressure boosting system","","ตรวจสภาพทั่วไปของระบบเพิ่มแรงดันน้ำ","General inspection","M6",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ตรวจชิ้นส่วนหลวม การรั่ว และผลกระทบ","Checking for loose parts, leaks and effects","W",1,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","Valve cabinets","ตรวจตู้วาล์ว: การทำงาน การรั่ว การยึดวาล์ว เกจวัดแรงดัน ฯลฯ","Check of valve cabinets for function, tightness, fastening of valves, pressure gauges, etc.","M1",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","Piping","ตรวจท่อน้ำและท่อจ่ายว่ารั่วหรือไม่","Check water pipes and distribution pipes for tightness","M1",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","Cabinet heaters","ตรวจการทำงานของฮีตเตอร์ในตู้","Check cabinet heaters for function","M1",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ตรวจแผงวาล์ว: การทำงาน การรั่ว การยึดวาล์ว มาโนมิเตอร์ ฯลฯ","Check valve panel for function, tightness, fastening of valves, manometer, etc.","M1",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ทดสอบไฟฟ้าของแผงวาล์ว: การต่อลงดิน สายหลวม สายชำรุด การทำงานของโซลินอยด์วาล์ว","Electrical testing of the valve panel for grounding, loose cables, cable damage, function of the solenoid valves","M6",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ตรวจการทำงานและความสมบูรณ์ของระบบทำความร้อน","Check heating for function and intactness","OTH",2,"ก่อนเข้าฤดูที่ต้องใช้ฮีตเตอร์"],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ถอดกรองตะกอนในท่อน้ำออกมาทำความสะอาด เปลี่ยนถ้าจำเป็น","Dismantle dirt trap in water pipes, clean and replace if necessary","M6",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ถอดหัวฉีดมาทำความสะอาด ตรวจรูปแบบการพ่น ซ่อมหรือเปลี่ยนถ้าจำเป็น","Disassembly of the nozzles, cleaning, checking the spray pattern and, if necessary, repair or cleaning replacement","OTH",2,"เมื่อจำเป็น"],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ตรวจหัวพ่นและชุดหัวฉีดว่าเสียหาย และปรับแนวใหม่ถ้าจำเป็น","Check spray heads and nozzle blocks for damage and realignment if necessary","W",2,""],
+["12. ระบบลดฝุ่น (Dust reduction system)","Valve cabinets and piping","","ตรวจการทำงานขณะระบบเดิน","Checking the function while the system is running","W",1,""]
+];
+
+/* ── รวมข้อมูล 2 เครื่อง ── */
+var ALL = [];
+SPD.forEach(function(r){ ALL.push({m:'SPD',mn:'Spreader ARs 2400',sec:r[0],asm:r[1],comp:r[2],th:r[3],en:r[4],iv:r[5],op:r[6],note:r[7]}); });
+TC .forEach(function(r){ ALL.push({m:'TC', mn:'Tripper Car Ü2200', sec:r[0],asm:r[1],comp:r[2],th:r[3],en:r[4],iv:r[5],op:r[6],note:r[7]}); });
+
+var fM='ALL', fI='ALL';
+function setM(el,v){ fM=v; el.parentNode.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on')}); el.classList.add('on'); render(); }
+function setI(el,v){ fI=v; el.parentNode.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on')}); el.classList.add('on'); render(); }
+
+function ivClass(iv){ return iv==='D'?'bD':iv==='W'?'bW':iv==='OTH'?'bO':'bM'; }
+function ivText(iv){ return iv==='OTH'?'ตามเงื่อนไข':iv; }
+function opHtml(op){
+  if(op===1) return '<span class="op opOn">เดินเครื่อง</span>';
+  if(op===2) return '<span class="op opOff">หยุดเครื่อง</span>';
+  return '<span class="op opOn">เดินเครื่อง</span> <span class="op opOff">หยุดเครื่อง</span>';
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function render(){
+  var q = (document.getElementById('q').value||'').trim().toLowerCase();
+  var rows = ALL.filter(function(r){
+    if(fM!=='ALL' && r.m!==fM) return false;
+    if(fI!=='ALL' && r.iv!==fI) return false;
+    if(q){
+      var hay = (r.sec+' '+r.asm+' '+r.comp+' '+r.th+' '+r.en+' '+r.note+' '+r.mn).toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
+    return true;
+  });
+
+  /* KPI — นับจากผลลัพธ์ที่กรองแล้ว */
+  var cD=0,cW=0,cM=0,cO=0;
+  rows.forEach(function(r){
+    if(r.iv==='D') cD++; else if(r.iv==='W') cW++; else if(r.iv==='OTH') cO++; else cM++;
+  });
+  document.getElementById('kTotal').textContent = rows.length;
+  document.getElementById('kD').textContent = cD;
+  document.getElementById('kW').textContent = cW;
+  document.getElementById('kM').textContent = cM;
+  document.getElementById('kO').textContent = cO;
+
+  var out = document.getElementById('out');
+  if(!rows.length){ out.innerHTML = '<div class="empty">ไม่พบรายการที่ตรงกับเงื่อนไข — ลองเปลี่ยนตัวกรองหรือคำค้นหา</div>'; return; }
+
+  /* จัดกลุ่มตาม เครื่องจักร > หมวด */
+  var groups = {}, order = [];
+  rows.forEach(function(r){
+    var k = r.mn + ' ▸ ' + r.sec;
+    if(!groups[k]){ groups[k]=[]; order.push(k); }
+    groups[k].push(r);
+  });
+
+  var html = '';
+  order.forEach(function(k){
+    var g = groups[k];
+    html += '<div class="secthead">'+esc(k)+'<span class="cnt">'+g.length+' รายการ</span></div>';
+    html += '<table><thead><tr>'
+          + '<th style="width:15%">ชุดประกอบ</th>'
+          + '<th style="width:12%">ชิ้นส่วน</th>'
+          + '<th style="width:37%">รายการตรวจ</th>'
+          + '<th style="width:9%">รอบ</th>'
+          + '<th style="width:11%">สถานะเครื่อง</th>'
+          + '<th style="width:16%">หมายเหตุ / อ้างอิง</th>'
+          + '</tr></thead><tbody>';
+    g.forEach(function(r){
+      html += '<tr>'
+        + '<td data-l="ชุดประกอบ" class="c-asm">'+esc(r.asm)+'</td>'
+        + '<td data-l="ชิ้นส่วน" class="c-comp">'+esc(r.comp||'—')+'</td>'
+        + '<td data-l="รายการตรวจ">'+esc(r.th)+'<span class="c-en">'+esc(r.en)+'</span></td>'
+        + '<td data-l="รอบ"><span class="badge '+ivClass(r.iv)+'">'+ivText(r.iv)+'</span></td>'
+        + '<td data-l="สถานะเครื่อง">'+opHtml(r.op)+'</td>'
+        + '<td data-l="หมายเหตุ" class="c-note">'+esc(r.note||'—')+'</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+  });
+  out.innerHTML = html;
+}
+
+render();
+
+/* PWA service worker */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').catch(function(){}); }
+</script>
+</body>
+</html>
