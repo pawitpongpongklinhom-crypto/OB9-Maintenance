@@ -115,6 +115,9 @@
        border-radius:0!important;padding:0!important;margin:0!important}
     th,td{display:table-cell!important}
     td[data-l]:before{content:none!important;display:none!important}
+    /* คอลัมน์ "ผลตรวจ/ค่าที่วัดได้" ซ่อนเป็นค่าเริ่มต้น — เปิดเฉพาะโหมดใบตรวจเช็คเท่านั้น
+       (ต้องมี !important เพราะกฎ th,td ด้านบนใช้ !important) */
+    .pOnly{display:none!important}
     .topnav,.hero,.kpis,.filters,.legend,.empty{display:none!important}
     .wrap{max-width:none;padding:0;margin:0}
 
@@ -166,7 +169,7 @@
 
   /* ── โหมด "ใบตรวจเช็ค" : เพิ่มช่องติ๊กผลตรวจ + ช่องบันทึกค่า + หัว/ท้ายกระดาษให้กรอก ── */
   @media print{
-    body.pform .pOnly{display:table-cell}
+    body.pform .pOnly{display:table-cell!important}
     body.pform .ph-fields{display:flex;gap:16px;flex-wrap:wrap;font-size:8.5pt;margin-top:8px;
                           padding:7px 11px;border:1.2px solid var(--border);border-radius:8px;background:#FAFBFD!important}
     body.pform .ph-fields span{white-space:nowrap}
@@ -176,8 +179,11 @@
     body.pform .chk{font-size:8pt;white-space:nowrap;letter-spacing:.3px;color:var(--text2)}
     body.pform .wline{display:block;min-height:15px;border-bottom:.7px dotted var(--text3)}
   }
-  /* ── โหมด "เอกสารอ้างอิง" : ข้อมูลครบทุกคอลัมน์ ไม่มีช่องกรอก ── */
-  @media print{ body.pref .pOnly{display:none} }
+  /* ── โหมด "เอกสารอ้างอิง" : ข้อมูลครบทุกคอลัมน์ ไม่มีช่องกรอก/ช่องติ๊กใด ๆ ── */
+  @media print{
+    body.pref .pOnly{display:none!important}
+    body.pref .ph-fields,body.pref .ph-sign{display:none!important}
+  }
 </style>
 </head>
 <body>
