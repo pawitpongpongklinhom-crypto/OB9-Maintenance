@@ -74,8 +74,9 @@
   .legend b{color:var(--text1)}
   .src{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:10px}
 
-  /* MOBILE */
-  @media(max-width:768px){
+  /* MOBILE — ต้องระบุ "screen" เท่านั้น! ถ้าไม่ระบุ เวลาพิมพ์ A4 (กว้าง ~733px หลังหักขอบ)
+     จะเข้าเงื่อนไข max-width:768px ทำให้ตารางกลายเป็นการ์ดบนกระดาษ */
+  @media screen and (max-width:768px){
     .wrap{padding:12px}
     .hero{padding:16px}
     .hero h1{font-size:16px}
@@ -105,6 +106,15 @@
        *ต้องติ๊ก "Background graphics" ในหน้าต่างพิมพ์ของเบราว์เซอร์ สีจึงจะออก */
     *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
     body{background:#fff;font-size:9.5pt;color:var(--text1)}
+
+    /* บังคับให้เป็น "ตาราง" เสมอบนกระดาษ (กันโดนสไตล์การ์ดของจอมือถือทับ) */
+    table{display:table!important;width:100%!important;border-collapse:collapse!important;margin:0!important}
+    thead{display:table-header-group!important}
+    tbody{display:table-row-group!important}
+    tr{display:table-row!important;background:transparent!important;border:none!important;
+       border-radius:0!important;padding:0!important;margin:0!important}
+    th,td{display:table-cell!important}
+    td[data-l]:before{content:none!important;display:none!important}
     .topnav,.hero,.kpis,.filters,.legend,.empty{display:none!important}
     .wrap{max-width:none;padding:0;margin:0}
 
