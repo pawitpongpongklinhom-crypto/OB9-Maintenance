@@ -89,6 +89,58 @@
     td:first-child[data-l]:before{margin-top:0}
     .flab{min-width:100%}
   }
+
+  /* ═══════════ สำหรับพิมพ์ (Print) ═══════════
+     2 โหมด: .pform = ใบตรวจเช็คมีช่องติ๊ก · .pref = เอกสารอ้างอิงอ่านอย่างเดียว
+     พิมพ์ตามตัวกรองที่เลือกไว้บนหน้าจอ (WYSIWYG) */
+  .pOnly{display:none}
+  .printhead{display:none}
+  .printbtn{border:1.5px solid var(--navy);background:var(--navy);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  .printbtn.alt{background:#fff;color:var(--navy)}
+  .printbtn:hover{opacity:.88}
+
+  @page{size:A4 landscape;margin:9mm 8mm}
+  @media print{
+    body{background:#fff;font-size:9.5pt;color:#000}
+    .topnav,.hero,.kpis,.filters,.legend,.empty{display:none!important}
+    .wrap{max-width:none;padding:0;margin:0}
+    .printhead{display:block;margin-bottom:7px}
+    .ph-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #000;padding-bottom:5px}
+    .ph-t1{font-size:13pt;font-weight:800;line-height:1.25}
+    .ph-t2{font-size:8pt;color:#333;margin-top:2px}
+    .ph-meta{font-size:8pt;text-align:right;line-height:1.55;white-space:nowrap}
+    .ph-fields{display:none}
+    .ph-sign{display:none}
+
+    .secthead{margin:9px 0 3px;font-size:9.5pt;font-weight:800;page-break-after:avoid;break-after:avoid;color:#000}
+    .secthead .cnt{border:none;background:none;font-size:8pt;color:#444;padding:0 0 0 6px}
+
+    table{border:1px solid #000;page-break-inside:auto;border-radius:0}
+    thead{display:table-header-group}          /* หัวตารางซ้ำทุกหน้า */
+    tr{page-break-inside:avoid;break-inside:avoid}
+    th{background:#E8E8E8!important;color:#000;font-size:8pt;padding:3px 5px;border:.5px solid #555;
+       -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    td{font-size:8.5pt;padding:3px 5px;border:.5px solid #999;line-height:1.35;color:#000}
+    tr:hover td{background:transparent}
+    .c-en{font-size:7pt;color:#555}
+    .c-note{font-size:7.5pt;color:#333}
+    .badge{border:.6px solid #333;background:none!important;color:#000!important;font-weight:700;padding:0 4px;border-radius:3px}
+    .op{border:.6px solid #777;background:none!important;color:#000!important;padding:0 3px;border-radius:3px}
+  }
+
+  /* ── โหมด "ใบตรวจเช็ค" : มีช่องติ๊กผลตรวจ + ช่องบันทึกค่า + หัว/ท้ายกระดาษให้กรอก ── */
+  @media print{
+    body.pform .pOnly{display:table-cell}
+    body.pform .ph-fields{display:flex;gap:18px;flex-wrap:wrap;font-size:9pt;margin-top:7px;padding-bottom:5px;border-bottom:1px solid #999}
+    body.pform .ph-fields span{white-space:nowrap}
+    body.pform .ph-sign{display:flex;justify-content:flex-end;gap:46px;margin-top:16px;font-size:9pt;page-break-inside:avoid}
+    body.pform .c-en{display:none}                 /* ตัดอังกฤษออก เพิ่มพื้นที่กรอก */
+    body.pform .thNote,body.pform .tdNote{display:none}
+    body.pform .chk{font-size:8.5pt;white-space:nowrap;letter-spacing:.5px}
+    body.pform .wline{display:block;min-height:14px;border-bottom:.5px dotted #999}
+  }
+  /* ── โหมด "เอกสารอ้างอิง" : ข้อมูลครบ ไม่มีช่องกรอก ── */
+  @media print{ body.pref .pOnly{display:none} }
 </style>
 </head>
 <body>
@@ -138,9 +190,38 @@
       <span class="flab">ค้นหา</span>
       <input class="search" id="q" placeholder="พิมพ์ชื่อระบบ/ชิ้นส่วน/คำสั่งตรวจ เช่น gearbox, สายพาน, hydraulic, bearing..." oninput="render()">
     </div>
+    <div class="frow">
+      <span class="flab">พิมพ์เอกสาร</span>
+      <button class="printbtn" onclick="doPrint('pform')">🖨️ ใบตรวจเช็ค (มีช่องติ๊ก)</button>
+      <button class="printbtn alt" onclick="doPrint('pref')">🖨️ เอกสารอ้างอิง</button>
+      <span style="font-size:11px;color:var(--text3)">พิมพ์เฉพาะรายการที่กรองไว้ด้านบน · A4 แนวนอน</span>
+    </div>
+  </div>
+
+  <!-- หัวกระดาษ (แสดงเฉพาะตอนพิมพ์) -->
+  <div class="printhead">
+    <div class="ph-top">
+      <div>
+        <div class="ph-t1">คู่มือการตรวจเช็คและบำรุงรักษาเครื่องจักร — OB9</div>
+        <div class="ph-t2">ITD Italian-Thai Development PCL. · Mae Moh Mine Phase 9 · อ้างอิงคู่มือผู้ผลิต thyssenkrupp Industrial Solutions</div>
+      </div>
+      <div class="ph-meta" id="phMeta">—</div>
+    </div>
+    <div class="ph-fields">
+      <span>เครื่องจักร/หน่วย: ......................................</span>
+      <span>วันที่: ......./......./..........</span>
+      <span>กะ: ☐ เช้า 07:00–19:00 &nbsp; ☐ ดึก 19:00–07:00</span>
+      <span>ผู้ตรวจ: ......................................</span>
+      <span>SMU/ชม.เดินเครื่อง: ....................</span>
+    </div>
   </div>
 
   <div id="out"></div>
+
+  <div class="ph-sign">
+    <span>ผู้ตรวจ ............................................ วันที่ ........./........./..........</span>
+    <span>หัวหน้างาน ............................................ วันที่ ........./........./..........</span>
+  </div>
 
   <div class="legend">
     <b>รหัสรอบการตรวจ:</b>
@@ -641,7 +722,9 @@ function render(){
           + '<th style="width:37%">รายการตรวจ</th>'
           + '<th style="width:9%">รอบ</th>'
           + '<th style="width:11%">สถานะเครื่อง</th>'
-          + '<th style="width:16%">หมายเหตุ / อ้างอิง</th>'
+          + '<th class="thNote" style="width:16%">หมายเหตุ / อ้างอิง</th>'
+          + '<th class="pOnly" style="width:15%">ผลตรวจ</th>'
+          + '<th class="pOnly" style="width:14%">ค่าที่วัดได้ / สิ่งที่พบ</th>'
           + '</tr></thead><tbody>';
     g.forEach(function(r){
       html += '<tr>'
@@ -650,13 +733,35 @@ function render(){
         + '<td data-l="รายการตรวจ">'+esc(r.th)+'<span class="c-en">'+esc(r.en)+'</span></td>'
         + '<td data-l="รอบ"><span class="badge '+ivClass(r.iv)+'">'+ivText(r.iv)+'</span></td>'
         + '<td data-l="สถานะเครื่อง">'+opHtml(r.op)+'</td>'
-        + '<td data-l="หมายเหตุ" class="c-note">'+esc(r.note||'—')+'</td>'
+        + '<td data-l="หมายเหตุ" class="c-note tdNote">'+esc(r.note||'—')+'</td>'
+        + '<td class="pOnly chk">☐ ปกติ &nbsp; ☐ ผิดปกติ &nbsp; ☐ แจ้งซ่อม</td>'
+        + '<td class="pOnly"><span class="wline"></span></td>'
         + '</tr>';
     });
     html += '</tbody></table>';
   });
   out.innerHTML = html;
 }
+
+/* ── พิมพ์เอกสาร: 2 โหมด · พิมพ์ตามตัวกรองที่เลือกไว้บนหน้าจอ ── */
+function doPrint(mode){
+  // สรุปเงื่อนไขที่กรองไว้ ใส่หัวกระดาษ เพื่อให้เอกสารที่พิมพ์ออกมาตรวจสอบย้อนกลับได้
+  var mName = fM==='ALL' ? 'ทุกเครื่องจักร' : (fM==='SPD' ? 'Spreader ARs 2400/52+50x19' : 'Tripper Car Ü2200');
+  var iName = fI==='ALL' ? 'ทุกรอบ' : (fI==='OTH' ? 'ตามเงื่อนไข' : 'รอบ ' + fI);
+  var q = (document.getElementById('q').value||'').trim();
+  var d = new Date();
+  var th = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  var dateStr = d.getDate()+' '+th[d.getMonth()]+' '+(d.getFullYear()+543);
+  document.getElementById('phMeta').innerHTML =
+      '<b>' + esc(mName) + '</b><br>'
+    + 'ขอบเขต: ' + esc(iName) + (q ? ' · ค้นหา "'+esc(q)+'"' : '') + '<br>'
+    + 'จำนวน ' + document.getElementById('kTotal').textContent + ' รายการ · พิมพ์เมื่อ ' + dateStr;
+
+  document.body.classList.remove('pform','pref');
+  document.body.classList.add(mode);
+  window.print();
+}
+window.addEventListener('afterprint', function(){ document.body.classList.remove('pform','pref'); });
 
 render();
 
