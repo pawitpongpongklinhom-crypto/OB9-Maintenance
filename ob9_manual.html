@@ -162,24 +162,21 @@
     .c-en{display:block;font-size:7pt;font-style:italic;color:var(--text3);margin-top:1px}
     .c-note{font-size:7.5pt;color:var(--text3);line-height:1.4}
 
-    /* ป้ายรอบตรวจ/สถานะ — ออกแบบให้ "อ่านออกแม้พิมพ์ขาวดำ"
-       ใช้เส้นขอบหนา + ตัวหนา + ข้อความกำกับ (สีเป็นของแถม ไม่ใช่สิ่งที่ต้องพึ่ง) */
-    .badge{display:inline-block;border-radius:4px;padding:1px 6px;font-size:7.5pt;font-weight:800;
-           border:1.3px solid #333;color:#000!important}
-    .bD{background:#FEE2E2!important;border-color:var(--red)}
-    .bW{background:#FEF3C7!important;border-color:var(--amber)}
-    .bM{background:#DBEAFE!important;border-color:var(--blue)}
-    .bO{background:#EDE9FE!important;border-color:var(--purple)}
-    /* เติมคำอธิบายรอบต่อท้ายตัวย่อ เพื่อไม่ต้องเดาจากสี */
-    .bD:after{content:' รายวัน';font-weight:600}
-    .bW:after{content:' สัปดาห์';font-weight:600}
+    /* ป้ายรอบตรวจ/สถานะ — ใช้หน้าตาเดียวกับบนจอ (พื้นสีอ่อน ตัวอักษรสีเข้ม ไม่มีเส้นขอบ)
+       (15 ก.ย. 69) ของเดิมเป็นกรอบดำหนา + ต่อท้ายคำ "รายวัน/สัปดาห์" + สัญลักษณ์ ▶ ■
+       เพื่อให้อ่านออกตอนพิมพ์ขาวดำ แต่ผู้ใช้ต้องการให้กระดาษหน้าตาตรงกับหน้าจอ
+       *ต้องติ๊ก "กราฟิกพื้นหลัง / Background graphics" ในหน้าต่างพิมพ์ สีพื้นจึงจะออก */
+    .badge{display:inline-block;border:none!important;border-radius:5px;padding:1.5px 7px;
+           font-size:7.5pt;font-weight:800;white-space:nowrap}
+    .bD{background:#FEE2E2!important;color:var(--red)!important}
+    .bW{background:#FEF3C7!important;color:var(--amber)!important}
+    .bM{background:#DBEAFE!important;color:var(--blue)!important}
+    .bO{background:#EDE9FE!important;color:var(--purple)!important}
 
-    .op{font-size:7pt;font-weight:700;border-radius:4px;padding:1px 4px;white-space:nowrap;
-        border:1px solid #666;color:#000!important}
-    .opOn{background:#DCFCE7!important;border-color:var(--green)}
-    .opOff{background:#F1F5F9!important;border-color:var(--text3)}
-    .opOn:before{content:'▶ '}      /* สัญลักษณ์นำหน้า — แยกออกแม้ไม่มีสี */
-    .opOff:before{content:'■ '}
+    .op{display:inline-block;border:none!important;border-radius:4px;padding:1px 6px;
+        font-size:7pt;font-weight:700;white-space:nowrap}
+    .opOn{background:#DCFCE7!important;color:var(--green)!important}
+    .opOff{background:#F1F5F9!important;color:var(--text2)!important}
 
     /* หมวดที่มีรายการมาก ถูกแบ่งเป็น "ตอนที่ x/y" ในชั้น JS แล้ว — ทุกชุดจึงจบใน 2 แผ่นเสมอ */
   }
