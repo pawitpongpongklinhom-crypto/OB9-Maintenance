@@ -138,6 +138,13 @@
               page-break-before:always;break-before:page;
               border-left:4px solid var(--navy);padding-left:8px}
     .secthead:first-of-type{page-break-before:avoid;break-before:avoid;margin-top:2px}
+    /* โหมดประหยัดกระดาษ (14 ก.ย. 69) — ใช้เมื่อพิมพ์แบบ "กรองแล้ว"
+       ที่มา: พิมพ์ทั้งหมด หมวดละหลายสิบรายการ บังคับขึ้นแผ่นใหม่ทุกหมวดแล้วเต็มหน้าพอดี
+       แต่พอกรองเหลือรอบ D หมวดละ 2 รายการ ยังเด้งขึ้นแผ่นใหม่ทุกหมวด = 55 รายการกิน 18 แผ่น
+       จึงให้บังคับขึ้นหน้าใหม่เฉพาะตอนไม่ได้กรอง ถ้ากรองแล้วให้ไหลต่อกันในแผ่นเดียว */
+    body.psave .secthead{page-break-before:auto;break-before:auto;margin-top:13px}
+    body.psave .secthead:first-of-type{margin-top:2px}
+    body.psave table{page-break-inside:auto}
     .secthead .cnt{font-size:7.5pt;font-weight:600;color:var(--text3);background:#fff;
                    border:1px solid var(--border);border-radius:10px;padding:1px 7px}
 
@@ -830,11 +837,13 @@ function doPrint(mode){
         + 'สีป้ายรอบตรวจและสถานะเครื่องจึงจะพิมพ์ออกเหมือนที่เห็นบนจอ\n'
         + 'และตั้งค่ากระดาษเป็น A4 · แนวนอน (Landscape)');
   }
-  document.body.classList.remove('pform','pref');
+  document.body.classList.remove('pform','pref','psave');
   document.body.classList.add(mode);
+  // กรองอยู่ = ผลลัพธ์น้อย ให้หมวดไหลต่อกัน ไม่ต้องขึ้นแผ่นใหม่ทุกหมวด
+  if (fM !== 'ALL' || fI !== 'ALL' || q) document.body.classList.add('psave');
   setTimeout(function(){ window.print(); }, 60);
 }
-window.addEventListener('afterprint', function(){ document.body.classList.remove('pform','pref'); });
+window.addEventListener('afterprint', function(){ document.body.classList.remove('pform','pref','psave'); });
 
 render();
 
