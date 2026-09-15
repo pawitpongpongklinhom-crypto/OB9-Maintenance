@@ -60,3 +60,98 @@
   global.OB9.STATUS_LABEL = STATUS_LABEL;
   global.OB9.requireLogin = requireLogin;
 })(window);
+
+
+// ══════════════════════════════════════════════════════════════════════
+// ปุ่มย้อนกลับ 2 แบบ มุมซ้ายบน — ติดหน้าจอตลอด (14 ก.ย. 69)
+// ที่มา: ผู้ใช้เข้าหน้าลึก ๆ แล้วถอยกลับไม่ได้ โดยเฉพาะตอนเปิดผ่าน App (PWA
+// โหมด standalone) ซึ่งไม่มีแถบเบราว์เซอร์ ไม่มีปุ่ม back ของระบบให้กดเลย
+//   ‹ ย้อนกลับ = ถอยทีละหน้าตามประวัติ · ⌂ หน้าหลัก = กลับ ob9_home.html ทันที
+// วางไว้ในไฟล์กลางนี้ ทุกหน้าที่ include ob9_shared.js จึงได้ปุ่มทันทีโดยไม่ต้องแก้ HTML
+// ══════════════════════════════════════════════════════════════════════
+(function (global) {
+  'use strict';
+  var HOME = 'ob9_home.html';
+  var NO_NAV = ['ob9_portal_new.html', 'index.html', '']; // หน้า login ไม่ต้องมีปุ่มถอย
+
+  function initBackNav() {
+    if (document.getElementById('ob9BackNav')) return;        // กันซ้ำถ้าถูกเรียก 2 รอบ
+    var here = (global.location.pathname.split('/').pop() || '').toLowerCase();
+    if (NO_NAV.indexOf(here) !== -1) return;
+    var onHome = (here === HOME);
+
+    function bgOf(el) { return el ? getComputedStyle(el).backgroundColor : ''; }
+    function isClear(c) { return !c || c === 'transparent' || /rgba\(\s*0,\s*0,\s*0,\s*0\s*\)/.test(c); }
+    function lum(c) {
+      var m = (c || '').match(/\d+/g);
+      return m ? (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255 : 1;
+    }
+
+    // เลือกโทนปุ่มตามความสว่างพื้นหลังจริง — ใช้ได้ทั้งแดชบอร์ดมืดและหน้าคู่มือสว่าง
+    var bg = bgOf(document.body);
+    if (isClear(bg)) bg = bgOf(document.documentElement);
+    if (isClear(bg)) bg = 'rgb(255,255,255)';
+    var dark = lum(bg) < 0.5;
+    var face = dark ? 'rgba(28,33,48,.92)'    : 'rgba(255,255,255,.94)';
+    var line = dark ? 'rgba(148,163,184,.35)' : 'rgba(20,33,61,.16)';
+    var ink  = dark ? '#cbd5e1'               : '#14213D';
+
+    // ถ้ามุมซ้ายบนเป็นแถบ fixed/sticky (เช่น topnav) ให้เลื่อนปุ่มลงใต้แถบ กันทับโลโก้
+    var top = 10, probe = document.elementFromPoint(20, 20);
+    while (probe && probe !== document.body) {
+      var pos = getComputedStyle(probe).position;
+      if (pos === 'fixed' || pos === 'sticky') { top = probe.getBoundingClientRect().bottom + 10; break; }
+      probe = probe.parentElement;
+    }
+
+    // เปิดผ่าน App ไม่มีแถบเบราว์เซอร์คั่น ปุ่มจะซ้อนใต้แถบสถานะ/รอยบาก — เว้น safe-area
+    // (บนเบราว์เซอร์ปกติ env() = 0 จึงไม่กระทบ) และขยายปุ่มเมื่อเป็นจอสัมผัส
+    var standalone = (global.matchMedia && matchMedia('(display-mode: standalone)').matches)
+                     || navigator.standalone === true;
+    var touch = standalone || (global.matchMedia && matchMedia('(pointer: coarse)').matches);
+    var topCss = standalone ? 'calc(' + top + 'px + env(safe-area-inset-top, 0px))' : top + 'px';
+
+    var wrap = document.createElement('div');
+    wrap.id = 'ob9BackNav';
+    wrap.setAttribute('aria-label', 'นำทางย้อนกลับ');
+    wrap.style.cssText = 'position:fixed;top:' + topCss + ';'
+      + 'left:calc(10px + env(safe-area-inset-left, 0px));z-index:99999;'
+      + 'display:flex;gap:6px;font-family:inherit';
+
+    function btn(label, title, fn) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = label; b.title = title;
+      b.style.cssText = 'background:' + face + ';color:' + ink + ';border:1px solid ' + line + ';'
+        + 'border-radius:8px;cursor:pointer;'
+        + (touch ? 'padding:11px 15px;font-size:13.5px;' : 'padding:6px 11px;font-size:12px;')
+        + 'font-family:inherit;font-weight:700;line-height:1.2;'
+        + '-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);'
+        + 'box-shadow:0 1px 6px rgba(0,0,0,.18)';
+      b.addEventListener('click', fn);
+      wrap.appendChild(b);
+    }
+
+    // ถ้าเปิดหน้านี้เป็นหน้าแรก (ไม่มีประวัติให้ถอย) ให้พาไปหน้าหลักแทน
+    // กันอาการกดปุ่มแล้วไม่เกิดอะไรขึ้น
+    btn('\u2039 ย้อนกลับ', 'ถอยกลับทีละหน้า', function () {
+      if (history.length > 1) history.back(); else global.location.href = HOME;
+    });
+    if (!onHome) {
+      btn('\u2302 หน้าหลัก', 'กลับหน้าเมนูรวม OB9', function () { global.location.href = HOME; });
+    }
+
+    document.body.appendChild(wrap);
+    var st = document.createElement('style');
+    st.textContent = '@media print{#ob9BackNav{display:none!important}}';
+    document.head.appendChild(st);
+  }
+
+  global.OB9 = global.OB9 || {};
+  global.OB9.initBackNav = initBackNav;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBackNav);
+  } else {
+    initBackNav();
+  }
+})(window);
