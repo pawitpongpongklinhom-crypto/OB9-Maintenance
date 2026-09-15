@@ -96,26 +96,21 @@
     var line = dark ? 'rgba(148,163,184,.35)' : 'rgba(20,33,61,.16)';
     var ink  = dark ? '#cbd5e1'               : '#14213D';
 
-    // ถ้ามุมซ้ายบนเป็นแถบ fixed/sticky (เช่น topnav) ให้เลื่อนปุ่มลงใต้แถบ กันทับโลโก้
-    var top = 10, probe = document.elementFromPoint(20, 20);
-    while (probe && probe !== document.body) {
-      var pos = getComputedStyle(probe).position;
-      if (pos === 'fixed' || pos === 'sticky') { top = probe.getBoundingClientRect().bottom + 10; break; }
-      probe = probe.parentElement;
-    }
 
     // เปิดผ่าน App ไม่มีแถบเบราว์เซอร์คั่น ปุ่มจะซ้อนใต้แถบสถานะ/รอยบาก — เว้น safe-area
     // (บนเบราว์เซอร์ปกติ env() = 0 จึงไม่กระทบ) และขยายปุ่มเมื่อเป็นจอสัมผัส
     var standalone = (global.matchMedia && matchMedia('(display-mode: standalone)').matches)
                      || navigator.standalone === true;
     var touch = standalone || (global.matchMedia && matchMedia('(pointer: coarse)').matches);
-    var topCss = standalone ? 'calc(' + top + 'px + env(safe-area-inset-top, 0px))' : top + 'px';
 
     var wrap = document.createElement('div');
     wrap.id = 'ob9BackNav';
     wrap.setAttribute('aria-label', 'นำทางย้อนกลับ');
-    wrap.style.cssText = 'position:fixed;top:' + topCss + ';'
-      + 'left:calc(10px + env(safe-area-inset-left, 0px));z-index:99999;'
+    // (14 ก.ย. 69) ย้ายจากซ้ายบนมาซ้ายล่าง: ซ้ายบนไปทับหัวข้อของหน้า (เช่นหน้าคู่มือ)
+    // ล่างซ้ายไม่มีเนื้อหาชน และนิ้วโป้งเอื้อมถึงง่ายกว่าตอนถือมือถือ
+    wrap.style.cssText = 'position:fixed;'
+      + 'bottom:calc(14px + env(safe-area-inset-bottom, 0px));'
+      + 'left:calc(12px + env(safe-area-inset-left, 0px));z-index:99999;'
       + 'display:flex;gap:6px;font-family:inherit';
 
     function btn(label, title, fn) {
