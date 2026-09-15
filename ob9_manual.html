@@ -132,24 +132,26 @@
     .ph-fields{display:none}
     .ph-sign{display:none}
 
-    /* ── 1 หมวด = ขึ้นแผ่นใหม่เสมอ (ยกเว้นหมวดแรกที่ต่อจากหัวกระดาษ) ── */
+    /* ── 1 หมวด = ขึ้นแผ่นใหม่เสมอ (ยกเว้นหมวดแรกที่ต่อจากหัวกระดาษ) ──
+       (15 ก.ย. 69) กฎขึ้นหน้าใหม่ต้องอยู่บน .sblock ซึ่งเป็นกล่องนอกสุดของหมวด
+       ไม่ใช่บน .secthead ที่อยู่ข้างใน — เคยวางผิดที่แล้วโหมด "ทั้งหมด" ไหลติดกันหมด
+       (367 รายการ จาก 47 แผ่นเหลือ 30 แผ่น หมวดไม่ขึ้นแผ่นใหม่) */
+    .sblock{page-break-before:always;break-before:page}
+    .sblock:first-of-type{page-break-before:avoid;break-before:avoid}
     .secthead{display:flex;align-items:center;gap:7px;margin:0 0 5px;font-size:10.5pt;font-weight:800;
               color:var(--text1);page-break-after:avoid;break-after:avoid;
-              page-break-before:always;break-before:page;
               border-left:4px solid var(--navy);padding-left:8px}
-    .secthead:first-of-type{page-break-before:avoid;break-before:avoid;margin-top:2px}
-    /* โหมดประหยัดกระดาษ (14 ก.ย. 69) — ใช้เมื่อพิมพ์แบบ "กรองแล้ว"
-       ที่มา: พิมพ์ทั้งหมด หมวดละหลายสิบรายการ บังคับขึ้นแผ่นใหม่ทุกหมวดแล้วเต็มหน้าพอดี
-       แต่พอกรองเหลือรอบ D หมวดละ 2 รายการ ยังเด้งขึ้นแผ่นใหม่ทุกหมวด = 55 รายการกิน 18 แผ่น
-       จึงให้บังคับขึ้นหน้าใหม่เฉพาะตอนไม่ได้กรอง ถ้ากรองแล้วให้ไหลต่อกันในแผ่นเดียว */
-    body.psave .secthead{page-break-before:auto;break-before:auto;margin-top:13px}
-    body.psave .secthead:first-of-type{margin-top:2px}
+    .sblock:first-of-type .secthead{margin-top:2px}
+
+    /* โหมดประหยัดกระดาษ (14 ก.ย. 69) — ใช้เมื่อพิมพ์แบบ "กรองแล้ว" เท่านั้น
+       ที่มา: พิมพ์ทั้งหมด หมวดละหลายสิบรายการ ขึ้นแผ่นใหม่ทุกหมวดแล้วเต็มหน้าพอดี
+       แต่พอกรองเหลือรอบ D หมวดละ 2 รายการ ยังเด้งขึ้นแผ่นใหม่ = 55 รายการกิน 18 แผ่น
+       โหมดนี้จึงปิดการบังคับขึ้นหน้าใหม่ ให้หมวดไหลต่อกัน แต่ยังห้ามหั่นหมวดคาหน้า
+       (กันหัวข้อค้างท้ายหน้าแล้วแถวที่เหลือโผล่หน้าถัดไปแบบไม่มีหัวข้อกำกับ) */
+    body.psave .sblock{page-break-before:auto;break-before:auto;
+                       page-break-inside:avoid;break-inside:avoid;margin-top:13px}
+    body.psave .sblock:first-of-type{margin-top:0}
     body.psave table{page-break-inside:auto}
-    /* กันหมวดโดนหั่นคาหน้า (15 ก.ย. 69) — ที่มา: หัวข้อ "5. ชุดสลิงหลัก" ค้างท้ายหน้า
-       แถวที่เหลือไปโผล่หน้าถัดไปโดยไม่มีหัวข้อกำกับ อ่านแล้วไม่รู้ว่าเป็นหมวดไหน
-       มัดหัวข้อ+ตารางเป็นก้อนเดียว ถ้าที่เหลือท้ายหน้าไม่พอ ให้ยกทั้งหมวดไปหน้าใหม่
-       (หมวดที่ยาวเกิน 1 หน้าจริง ๆ เบราว์เซอร์จะยอมหั่นเอง แต่ JS แบ่ง "ตอนที่ x/y" ดักไว้แล้ว) */
-    body.psave .sblock{page-break-inside:avoid;break-inside:avoid}
     .secthead .cnt{font-size:7.5pt;font-weight:600;color:var(--text3);background:#fff;
                    border:1px solid var(--border);border-radius:10px;padding:1px 7px}
 
