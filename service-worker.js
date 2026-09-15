@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════
-// OB9 — Service Worker (1 ก.ย. 69)
+// OB9 — Service Worker (แก้ 14 ก.ย. 69)
 // ที่มา: ผู้ใช้ขอให้ทำเป็น App ที่ติดตั้งได้ (PWA) — ไฟล์นี้คือสิ่งที่ทำให้เบราว์เซอร์เสนอ
 // "ติดตั้งแอป"/"Add to Home Screen" ได้ (ร่วมกับ manifest.json) และทำให้เปิดแอปได้แม้
 // เน็ตหลุดชั่วขณะ (โหลด shell เดิมจาก cache แทนหน้าเปล่า)
@@ -10,7 +10,11 @@
 // ไม่แตะ request ไป Google Sheets/Apps Script (cross-origin) และไม่แตะ POST เด็ดขาด — ปล่อยผ่านตรงเสมอ
 // ═══════════════════════════════════════════════════════════════════════
 
-var CACHE_NAME = 'ob9-shell-v1';
+// (14 ก.ย. 69) บั๊กที่เจอจริง: อัปเดต ob9_shared.js ขึ้น GitHub แล้ว ผู้ใช้ยังได้โค้ดเก่า
+// สาเหตุ: fetch(req) เปล่า ๆ ยังใช้ HTTP cache ของเบราว์เซอร์ตามปกติ GitHub Pages ส่ง
+// max-age มาด้วย ตัว SW จึงหยิบไฟล์เก่าจากดิสก์แคชมาให้ ทั้งที่ตั้งใจให้เป็น network-first
+// แก้โดยบังคับ cache:'no-store' ตอนยิงเน็ต — "network-first" จึงแปลว่าสดจริง
+var CACHE_NAME = 'ob9-shell-v2';   // บั๊มเวอร์ชัน → ล้างแคชชุดเก่าทิ้งตอน activate
 var APP_SHELL = [
   'ob9_portal_new.html',
   'ob9_home.html',
@@ -54,7 +58,9 @@ self.addEventListener('fetch', function (event) {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    fetch(req).then(function (res) {
+    // no-store = ข้าม HTTP cache ของเบราว์เซอร์ ไปเอาจากเซิร์ฟเวอร์จริงเสมอ
+    // (ไฟล์ระบบเป็น HTML/JS ไม่กี่ร้อย KB ผลต่อความเร็วน้อยมาก แต่กันโค้ดเก่าค้างได้จริง)
+    fetch(req, { cache: 'no-store' }).then(function (res) {
       // สำเนาสำเร็จ ถืออัปเดต cache ไว้เป็นสำรองสำหรับตอนออฟไลน์ครั้งถัดไป
       var resClone = res.clone();
       caches.open(CACHE_NAME).then(function (cache) { cache.put(req, resClone); });
