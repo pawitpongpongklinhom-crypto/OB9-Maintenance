@@ -145,6 +145,11 @@
     body.psave .secthead{page-break-before:auto;break-before:auto;margin-top:13px}
     body.psave .secthead:first-of-type{margin-top:2px}
     body.psave table{page-break-inside:auto}
+    /* กันหมวดโดนหั่นคาหน้า (15 ก.ย. 69) — ที่มา: หัวข้อ "5. ชุดสลิงหลัก" ค้างท้ายหน้า
+       แถวที่เหลือไปโผล่หน้าถัดไปโดยไม่มีหัวข้อกำกับ อ่านแล้วไม่รู้ว่าเป็นหมวดไหน
+       มัดหัวข้อ+ตารางเป็นก้อนเดียว ถ้าที่เหลือท้ายหน้าไม่พอ ให้ยกทั้งหมวดไปหน้าใหม่
+       (หมวดที่ยาวเกิน 1 หน้าจริง ๆ เบราว์เซอร์จะยอมหั่นเอง แต่ JS แบ่ง "ตอนที่ x/y" ดักไว้แล้ว) */
+    body.psave .sblock{page-break-inside:avoid;break-inside:avoid}
     .secthead .cnt{font-size:7.5pt;font-weight:600;color:var(--text3);background:#fff;
                    border:1px solid var(--border);border-radius:10px;padding:1px 7px}
 
@@ -771,7 +776,7 @@ function render(){
 
   /* สร้างตาราง 1 ชุด (= 1 หัวข้อเอกสาร ไม่เกิน 2 แผ่น A4 แนวนอน) */
   function blockHtml(title, list){
-    var h = '<div class="secthead">'+esc(title)+'<span class="cnt">'+list.length+' รายการ</span></div>';
+    var h = '<div class="sblock"><div class="secthead">'+esc(title)+'<span class="cnt">'+list.length+' รายการ</span></div>';
     h += '<table><thead><tr>'
        + '<th style="width:15%">ชุดประกอบ</th>'
        + '<th style="width:12%">ชิ้นส่วน</th>'
@@ -794,7 +799,7 @@ function render(){
         + '<td class="pOnly"><span class="wline"></span></td>'
         + '</tr>';
     });
-    return h + '</tbody></table>';
+    return h + '</tbody></table></div>';
   }
 
   /* หมวดใหญ่เกิน 2 แผ่น → แบ่งเป็น "ตอนที่ x/y" ชุดละ 26 รายการ
